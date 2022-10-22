@@ -1,0 +1,12 @@
+use piqued::query::query::Query;
+
+#[tokio::main]
+async fn main() {
+    let query = Query::new().await.unwrap();
+
+    let result = query.client.query("SELECT name FROM \"user\"", &[]).await.unwrap();
+    for row in result {
+        let col0: &str = row.get(0);
+        println!("Result: {:#?}", col0);
+    }
+}

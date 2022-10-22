@@ -1,0 +1,312 @@
+use std::fmt;
+
+use pg_query::{protobuf::{self, RawStmt, ScanToken, Token}, Node, NodeEnum};
+use tokio_postgres::types::{Type,Kind};
+use tower_lsp::lsp_types::{Range, Position};
+
+
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub enum PiquedError {
+    ParseErrorAt(String),
+    PostgresError(String),
+    OtherError(String),
+}
+
+impl fmt::Display for PiquedError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "({:#?})", self)
+    }
+}
+
+impl From<pg_query::Error> for PiquedError {
+    fn from(err: pg_query::Error) -> Self {
+        match err {
+            pg_query::Error::Parse(str) => {
+                if str.starts_with("syntax error at or near \"") {
+                    let location =
+                        str
+                            .trim_start_matches("syntax error at or near \"")
+                            .split("\"")
+                            .next();
+
+                    match location {
+                        Some(data) => Self::ParseErrorAt(data.to_string()),
+                        None => Self::OtherError(str)
+                    }
+                } else {
+                    Self::OtherError(str)
+                }
+            },
+            _ => PiquedError::OtherError(format!("{:#?}", err))
+        }
+    }
+}
+
+impl From<std::io::Error> for PiquedError {
+    fn from(err: std::io::Error) -> Self {
+        PiquedError::OtherError(format!("{:#?}", err))
+    }
+}
+
+impl From<tokio_postgres::Error> for PiquedError {
+    fn from(err: tokio_postgres::Error) -> Self {
+        match err.as_db_error() {
+            None => PiquedError::OtherError(format!("{:#?}", err)),
+            Some(db_err) => PiquedError::PostgresError(db_err.message().to_string())
+        }
+    }
+}
+
+pub type Result<T> = core::result::Result<T, PiquedError>;
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct RelocatedStmt {
+    pub stmt: Result<RawStmt>,
+
+    pub range: Range,
+    pub index_start: u32,
+    pub index_len: u32,
+}
+
+pub struct ParsedFile {
+    pub statements: Vec<RelocatedStmt>,
+    pub tokens: Vec<ScanToken>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct ParsedDetails {
+    pub comment: String,
+    pub name: Option<String>,
+}
+
+pub struct ParsedPreparedQuery {
+    pub query: RawStmt,
+    pub variables: Vec<Node>,
+    pub details: ParsedDetails,
+}
+
+pub fn parse_single_query<'a>(query: &str) -> Result<RawStmt> {
+    Ok(pg_query::parse(query)?.protobuf.stmts[0].clone())
+}
+
+pub fn load_file(contents: &String) -> Result<ParsedFile> {
+    let queries = pg_query::split_with_scanner(&contents.as_str())?;
+    let index_by_line: &Vec<u32> =
+        &contents
+            .split("\n")
+            .scan(0, |acc, line| {
+                let result = acc.clone();
+                *acc += line.len() + 1;
+                Some(result as u32)
+            })
+            .collect();
+
+    let get_position = |index: u32| {
+        let line = index_by_line
+            .iter()
+            .enumerate()
+            .find(|(_, &x)| x > index)
+            .map(|(i, _)| i - 1)
+            .unwrap_or(0);
+
+        let column = index - index_by_line[line];
+
+        Position::new(line as u32, column as u32)
+    };
+
+    let get_range = |start: u32, len: u32| {
+        Range::new(
+            get_position(start),
+            get_position(start + len),
+        )
+    };
+
+    let parsed_statements: Vec<Result<RawStmt>> = queries
+        .iter()
+        .map(|query| parse_single_query(query))
+        .collect();
+
+    let relocated_statements: Vec<RelocatedStmt> = parsed_statements
+        .iter()
+        .zip(queries.iter())
+        .scan(0, |state, (stmt, query)| {
+            let mut whitespace = 0;
+            for c in query.chars() {
+                if c.is_whitespace() {
+                    whitespace += 1;
+                } else {
+                    break;
+                }
+            }
+
+            let location = *state;
+            let len = query.len() as u32 + 1; // Add one for the semicolon
+            *state += &len;
+
+            let index_start = location + whitespace as u32;
+            let index_len = len - whitespace as u32;
+
+            Some(RelocatedStmt {
+                stmt: stmt.clone(),
+                range: get_range(index_start, index_len),
+                index_start,
+                index_len,
+            })
+        })
+        .collect();
+
+    let tokens = pg_query::scan(&contents)?.tokens;
+
+    return Ok(ParsedFile {
+        statements: relocated_statements,
+        tokens,
+    })
+}
+
+fn parse_comment(string: &String) -> ParsedDetails {
+    let mut name: Option<String> = None;
+    let mut comment_lines: Vec<String> = vec![];
+
+    for line in string.lines() {
+        let trimmed_comment =
+            line
+                .trim_start_matches("/**")
+                .trim_start_matches("/*")
+                .trim_end_matches("*/")
+                .trim_start_matches(vec![' ', '\t'].as_slice())
+                .trim_start_matches("-- ")
+                .trim_start_matches("* ")
+                .trim_end()
+                ;
+
+        if trimmed_comment.starts_with("@name") {
+            name = trimmed_comment
+                .split(" ")
+                .nth(1)
+                .map(|s| s.to_string());
+        } else {
+            comment_lines.push(trimmed_comment.to_string());
+        }
+    }
+
+    return ParsedDetails {
+        comment: comment_lines.join("\n"),
+        name,
+    }
+}
+
+
+pub fn get_prepared_statement(
+    obj: RelocatedStmt,
+    tokens: &Vec<ScanToken>,
+    content: &str,
+) -> Result<ParsedPreparedQuery> {
+    let start = obj.index_start;
+    // let end = &start + obj.len;
+
+    let stmt = obj.stmt?;
+
+    let mut comments: Vec<String> = vec![];
+
+    for token in tokens {
+        if token.start as u32 >= start {
+            match token.token() {
+                Token::CComment | Token::SqlComment => {
+                    let comment = &content[token.start as usize .. token.end as usize];
+                    comments.push(comment.to_string());
+                },
+                _ => break
+            }
+        }
+    };
+
+    let comments = comments.join("\n");
+    let mut details = parse_comment(&comments);
+
+    if let Some(box_stmt) = stmt.stmt {
+        return match *box_stmt {
+            protobuf::Node{
+                node: Some(
+                    protobuf::node::Node::PrepareStmt(prep_stmt)
+                )
+            } => {
+                let statement = protobuf::RawStmt {
+                    stmt: prep_stmt.query.clone(),
+                    stmt_location: 0,
+                    stmt_len: 0,
+                };
+
+                if details.name.is_none() {
+                    details.name = Some(prep_stmt.name);
+                }
+
+                Ok(ParsedPreparedQuery {
+                    query: statement,
+                    variables: prep_stmt.argtypes.clone(),
+                    details,
+                })
+            },
+
+            stmt => {
+                let statement = protobuf::RawStmt {
+                    stmt: Some(Box::new(stmt)),
+                    stmt_location: 0,
+                    stmt_len: 0,
+                };
+
+                Ok(ParsedPreparedQuery {
+                    query: statement,
+                    variables: vec![],
+                    details,
+                })
+            },
+        }
+    } else {
+        Err(PiquedError::OtherError("No statement found".to_string()))
+    }
+}
+
+fn node_to_string(node: Node) -> Option<String> {
+    match node.node {
+        Some(NodeEnum::String(str)) => Some(str.str),
+        _ => None,
+    }
+}
+
+pub fn parse_arg(node: Node) -> Option<Type> {
+    let typ = node.node?;
+
+    match typ {
+        NodeEnum::TypeName(tn) => {
+            let last_name = tn.names.last()?;
+            let name = node_to_string(last_name.clone())?;
+
+            match name.as_str() {
+                "int4" => Some(Type::INT4),
+                "int8" => Some(Type::INT8),
+                "text" => Some(Type::TEXT),
+                "bool" => Some(Type::BOOL),
+                "float4" => Some(Type::FLOAT4),
+                "float8" => Some(Type::FLOAT8),
+                "numeric" => Some(Type::NUMERIC),
+                "date" => Some(Type::DATE),
+                "time" => Some(Type::TIME),
+                "timestamp" => Some(Type::TIMESTAMP),
+                "timestamptz" => Some(Type::TIMESTAMPTZ),
+                "interval" => Some(Type::INTERVAL),
+                "uuid" => Some(Type::UUID),
+                "json" => Some(Type::JSON),
+                "jsonb" => Some(Type::JSONB),
+                "bytea" => Some(Type::BYTEA),
+                "varchar" => Some(Type::VARCHAR),
+                "char" => Some(Type::CHAR),
+
+                n =>
+                    Some(
+                        Type::new(n.to_string(), tn.type_oid, Kind::Simple, "pg_catalog".to_string())
+                    )
+            }
+        },
+        _ => None,
+    }
+}
