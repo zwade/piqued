@@ -13,12 +13,12 @@ use super::utils::get_diagnostics;
 #[derive(Debug)]
 pub struct Backend {
     pub client: Client,
-    pub query: Query,
+    pub query: Query<'static>,
     file_cache: Mutex<HashMap<String, String>>,
 }
 
 impl Backend {
-    pub fn new(client: Client, query: Query) -> Self {
+    pub fn new(client: Client, query: Query<'static>) -> Self {
         Backend {
             client,
             query,
@@ -86,8 +86,6 @@ impl LanguageServer for Backend {
     async fn hover(&self, params: HoverParams) -> jsonrpc::Result<Option<Hover>> {
         let position = params.text_document_position_params.position;
         let file_name = params.text_document_position_params.text_document.uri.to_string();
-
-        self.client.log_message(MessageType::INFO, "starting the hover process").await;
 
         let cache = self.file_cache.try_lock().unwrap();
         let file_data = cache.get(&file_name);

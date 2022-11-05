@@ -3,6 +3,8 @@ use piqued::{parser::parser, query::query::Query};
 use tokio::fs;
 use std::env;
 
+use piqued::config::config::Config;
+
 #[tokio::main]
 async fn main() {
     let args: Vec<String> = env::args().collect();
@@ -12,9 +14,14 @@ async fn main() {
         return;
     }
 
+    let config = Config::load(None).await.unwrap();
+
     let contents = fs::read_to_string(&args[1]).await.unwrap();
     let data = parser::load_file(&contents);
-    let query = Query::new().await.unwrap();
+    let query = Query::new(&config).await.unwrap();
+
+    // println!("Tables: {:#?}", query.tables);
+    // println!("Types: {:#?}", query.custom_types_by_name);
 
     match data {
         Ok(data) => {

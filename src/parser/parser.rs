@@ -1,7 +1,6 @@
 use std::fmt;
 
 use pg_query::{protobuf::{self, RawStmt, ScanToken, Token}, Node, NodeEnum};
-use tokio_postgres::types::{Type,Kind};
 use tower_lsp::lsp_types::{Range, Position};
 
 
@@ -266,47 +265,9 @@ pub fn get_prepared_statement(
     }
 }
 
-fn node_to_string(node: Node) -> Option<String> {
+pub fn node_to_string(node: Node) -> Option<String> {
     match node.node {
         Some(NodeEnum::String(str)) => Some(str.str),
-        _ => None,
-    }
-}
-
-pub fn parse_arg(node: Node) -> Option<Type> {
-    let typ = node.node?;
-
-    match typ {
-        NodeEnum::TypeName(tn) => {
-            let last_name = tn.names.last()?;
-            let name = node_to_string(last_name.clone())?;
-
-            match name.as_str() {
-                "int4" => Some(Type::INT4),
-                "int8" => Some(Type::INT8),
-                "text" => Some(Type::TEXT),
-                "bool" => Some(Type::BOOL),
-                "float4" => Some(Type::FLOAT4),
-                "float8" => Some(Type::FLOAT8),
-                "numeric" => Some(Type::NUMERIC),
-                "date" => Some(Type::DATE),
-                "time" => Some(Type::TIME),
-                "timestamp" => Some(Type::TIMESTAMP),
-                "timestamptz" => Some(Type::TIMESTAMPTZ),
-                "interval" => Some(Type::INTERVAL),
-                "uuid" => Some(Type::UUID),
-                "json" => Some(Type::JSON),
-                "jsonb" => Some(Type::JSONB),
-                "bytea" => Some(Type::BYTEA),
-                "varchar" => Some(Type::VARCHAR),
-                "char" => Some(Type::CHAR),
-
-                n =>
-                    Some(
-                        Type::new(n.to_string(), tn.type_oid, Kind::Simple, "pg_catalog".to_string())
-                    )
-            }
-        },
         _ => None,
     }
 }

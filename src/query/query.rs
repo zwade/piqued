@@ -1,12 +1,46 @@
-use pg_query::{protobuf::{RawStmt, ParseResult}};
-use tokio::spawn;
-use tokio_postgres::{NoTls, connect, Client, types::Type};
+use std::{collections::HashMap, sync::Arc};
 
-use crate::parser::parser::{ParsedPreparedQuery, parse_arg, Result};
+use pg_query::{protobuf::{RawStmt, ParseResult}, NodeEnum, Node};
+use tokio::spawn;
+use tokio_postgres::{NoTls, connect, Client, types::{Type, Kind}};
+
+use crate::{parser::parser::{ParsedPreparedQuery, Result, node_to_string}, config::config::Config};
 
 #[derive(Debug)]
-pub struct Query {
+pub struct Query<'a> {
     pub client: Client,
+    pub tables: HashMap<String, Vec<Column>>,
+    pub custom_types_by_oid: HashMap<u32, Arc<CustomType>>,
+    pub custom_types_by_name: HashMap<String, Arc<CustomType>>,
+    pub config: &'a Config,
+}
+
+#[derive(Debug)]
+pub struct Column {
+    pub name: String,
+    pub type_name: String,
+    pub type_oid: u32,
+    pub nullable: bool,
+}
+
+#[derive(Debug)]
+pub struct CompositeType {
+    pub oid: u32,
+    pub name: String,
+    pub fields: Vec<Column>,
+}
+
+#[derive(Debug)]
+pub struct EnumType {
+    pub oid: u32,
+    pub name: String,
+    pub values: Vec<String>,
+}
+
+#[derive(Debug)]
+pub enum CustomType {
+    Composite(CompositeType),
+    Enum(EnumType),
 }
 
 #[derive(Debug)]
@@ -16,10 +50,10 @@ pub struct ProbeResponse {
     pub column_names: Vec<String>,
 }
 
-impl Query {
-    pub async fn new() -> Result<Query> {
+impl<'a> Query<'a> {
+    pub async fn new(config: &'a Config) -> Result<Query> {
         let (client, connection) =
-            connect("postgresql://postgres:hola12@127.0.0.1:5432/postgres", NoTls).await?;
+            connect(&config.postgres.uri, NoTls).await?;
 
         spawn(async move {
             if let Err(e) = connection.await {
@@ -27,7 +61,17 @@ impl Query {
             }
         });
 
-        Ok(Query { client })
+        let mut query = Query {
+            client,
+            tables: HashMap::new(),
+            custom_types_by_oid: HashMap::new(),
+            custom_types_by_name: HashMap::new(),
+            config,
+        };
+        query.load_table_schema(config).await?;
+        query.load_custom_types(config).await?;
+
+        Ok(query)
     }
 
     pub async fn probe_type(&self, stmt: &ParsedPreparedQuery) -> Result<ProbeResponse> {
@@ -47,7 +91,7 @@ impl Query {
         let argtypes: Vec<Type> =
             stmt.variables
             .iter()
-            .filter_map(|node| parse_arg(node.clone()))
+            .filter_map(|node| self.parse_arg(node.clone()))
             .collect();
 
         let results = self.client
@@ -63,6 +107,273 @@ impl Query {
             column_types,
             column_names,
         });
+    }
+
+    async fn load_table_schema(&mut self, config: &Config) -> Result<()> {
+        let columns = self.client.query(
+            "
+                SELECT
+                    table_name,
+                    column_name,
+                    data_type,
+                    coalesce(pg_type.oid, -1) as type_oid,
+                    is_nullable,
+                    ordinal_position
+                FROM information_schema.columns
+                    LEFT JOIN pg_type ON pg_type.typname = data_type
+                WHERE table_schema = $1
+                ORDER BY table_name, ordinal_position
+            ",
+            &[&config.postgres.schema.as_str()]
+        ).await?;
+
+        let tables: HashMap<String, Vec<Column>> =
+            columns
+                .into_iter()
+                .fold(
+                    HashMap::new(),
+                    |mut acc, row| {
+                        let table_name = row.get(0);
+                        let column_name = row.get(1);
+                        let type_name = row.get(2);
+                        let type_oid = row.get(3);
+                        let is_nullable_str = row.get(4);
+
+                        let nullable = match is_nullable_str {
+                            "YES" => true,
+                            "NO" => false,
+                            _ => false,
+                        };
+
+                        let column = Column {
+                            name: column_name,
+                            type_name,
+                            type_oid,
+                            nullable,
+                        };
+
+                        acc
+                            .entry(table_name)
+                            .or_insert_with(Vec::new)
+                            .push(column);
+
+                        acc
+                    },
+                );
+
+        self.tables = tables;
+        Ok(())
+    }
+
+    async fn load_custom_types(&mut self, config: &Config) -> Result<()> {
+        let composite_types_query = self.client.query(
+            "
+                SELECT
+                    pg_type.typname as type_name,
+                    pg_type.oid as type_oid,
+                    pg_attribute.attname as col_name,
+                    pg_attribute.atttypid as col_type_oid,
+                    col_type.typname as col_type_name,
+                    not pg_attribute.attnotnull as col_nullable
+                FROM pg_type
+                INNER JOIN pg_namespace
+                    ON pg_type.typnamespace = pg_namespace.oid
+                INNER JOIN pg_attribute
+                    ON pg_type.typrelid = pg_attribute.attrelid
+                INNER JOIN pg_type col_type
+                    ON pg_attribute.atttypid = col_type.oid
+                WHERE pg_namespace.nspname = $1
+                    AND pg_type.typcategory = 'C'
+                    AND pg_attribute.attnum > 0
+                ORDER BY
+                    pg_type.oid ASC,
+                    pg_attribute.attnum ASC
+            ",
+            &[&config.postgres.schema.as_str()]
+        ).await?;
+
+        let composite_types_by_oid =
+            composite_types_query
+                .into_iter()
+                .fold(
+                    HashMap::new(),
+                    |mut acc, row| {
+                        let type_name = row.get(0);
+                        let type_oid = row.get(1);
+                        let col_name = row.get(2);
+                        let col_type_oid = row.get(3);
+                        let col_type_name = row.get(4);
+                        let col_nullable = row.get(5);
+
+                        let column = Column {
+                            name: col_name,
+                            type_name: col_type_name,
+                            type_oid: col_type_oid,
+                            nullable: col_nullable,
+                        };
+
+                        let composite_type = acc
+                            .entry(type_oid)
+                            .or_insert_with(|| {
+                                CompositeType {
+                                    oid: type_oid,
+                                    name: type_name,
+                                    fields: Vec::new(),
+                                }
+                            });
+
+                        composite_type.fields.push(column);
+
+                        acc
+                    }
+                )
+                .into_iter()
+                .map(|(oid, composite_type)| (oid, Arc::new(CustomType::Composite(composite_type))))
+                .collect::<HashMap<_, _>>();
+
+        let composite_types_by_name =
+            composite_types_by_oid
+                .iter()
+                .map(|(_, composite_type)|
+                    match composite_type.as_ref() {
+                        CustomType::Composite(t) => (t.name.clone(), Arc::clone(composite_type)),
+                        _ => panic!("Expected composite type"),
+                    }
+                )
+                .collect::<HashMap<_, _>>();
+
+
+        let enum_types_query = self.client.query(
+            "
+                SELECT
+                    pg_type.typname as type_name,
+                    pg_type.oid as type_oid,
+                    pg_enum.enumlabel as enum_value
+                FROM pg_type
+                INNER JOIN pg_namespace
+                    ON pg_type.typnamespace = pg_namespace.oid
+                INNER JOIN pg_enum
+                    ON pg_type.oid = pg_enum.enumtypid
+                WHERE pg_namespace.nspname = $1
+                    AND pg_type.typcategory = 'E'
+                ORDER BY
+                    pg_type.oid ASC,
+                    pg_enum.enumsortorder ASC
+            ",
+            &[&config.postgres.schema.as_str()]
+        ).await?;
+
+        let enum_types_by_oid =
+            enum_types_query
+                .into_iter()
+                .fold(
+                    HashMap::new(),
+                    |mut acc, row| {
+                        let type_name = row.get(0);
+                        let type_oid = row.get(1);
+                        let enum_value = row.get(2);
+
+                        let enum_type = acc
+                            .entry(type_oid)
+                            .or_insert_with(|| {
+                                EnumType {
+                                    oid: type_oid,
+                                    name: type_name,
+                                    values: Vec::new(),
+                                }
+                            });
+
+                        enum_type.values.push(enum_value);
+
+                        acc
+                    }
+                )
+                .into_iter()
+                .map(|(oid, composite_type)| (oid, Arc::new(CustomType::Enum(composite_type))))
+                .collect::<HashMap<_, _>>();
+
+        let enum_types_by_name =
+            enum_types_by_oid
+                .iter()
+                .map(|(_, composite_type)|
+                    match composite_type.as_ref() {
+                        CustomType::Enum(t) => (t.name.clone(), Arc::clone(composite_type)),
+                        _ => panic!("Expected composite type"),
+                    }
+                )
+                .collect::<HashMap<_, _>>();
+
+        let mut custom_types_by_oid = HashMap::new();
+        custom_types_by_oid.extend(composite_types_by_oid);
+        custom_types_by_oid.extend(enum_types_by_oid);
+
+        let mut custom_types_by_name = HashMap::new();
+        custom_types_by_name.extend(composite_types_by_name);
+        custom_types_by_name.extend(enum_types_by_name);
+
+        self.custom_types_by_oid = custom_types_by_oid;
+        self.custom_types_by_name = custom_types_by_name;
+
+        Ok(())
+    }
+
+    pub fn parse_arg(&self, node: Node) -> Option<Type> {
+        let typ = node.node?;
+
+        match typ {
+            NodeEnum::TypeName(tn) => {
+                let last_name = tn.names.last()?;
+                let name = node_to_string(last_name.clone())?;
+
+                if let Some(custom_type) = self.custom_types_by_name.get(&name) {
+                    let type_ = match custom_type.as_ref() {
+                        CustomType::Composite(t) =>
+                            Some(Type::new(
+                                t.name.clone(),
+                                t.oid,
+                                Kind::Simple,
+                                "public".to_string(),
+                            )),
+                        CustomType::Enum(t) =>
+                            Some(Type::new(
+                                t.name.clone(),
+                                t.oid,
+                                Kind::Simple,
+                                "public".to_string(),
+                            )),
+                    };
+
+                    return type_;
+                };
+
+                match name.as_str() {
+                    "int4" => Some(Type::INT4),
+                    "int8" => Some(Type::INT8),
+                    "text" => Some(Type::TEXT),
+                    "bool" => Some(Type::BOOL),
+                    "float4" => Some(Type::FLOAT4),
+                    "float8" => Some(Type::FLOAT8),
+                    "numeric" => Some(Type::NUMERIC),
+                    "date" => Some(Type::DATE),
+                    "time" => Some(Type::TIME),
+                    "timestamp" => Some(Type::TIMESTAMP),
+                    "timestamptz" => Some(Type::TIMESTAMPTZ),
+                    "interval" => Some(Type::INTERVAL),
+                    "uuid" => Some(Type::UUID),
+                    "json" => Some(Type::JSON),
+                    "jsonb" => Some(Type::JSONB),
+                    "bytea" => Some(Type::BYTEA),
+                    "varchar" => Some(Type::VARCHAR),
+                    "char" => Some(Type::CHAR),
+
+                    n =>
+                        Some(
+                            Type::new(n.to_string(), tn.type_oid, Kind::Simple, "pg_catalog".to_string())
+                        )
+                }
+            },
+            _ => None,
+        }
     }
 }
 

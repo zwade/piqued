@@ -83,7 +83,7 @@ pub async fn get_hover_data(
 
             let probed_type = backend.query.probe_type(&prepared_statement).await?;
 
-            backend.client.log_message(MessageType::INFO, "Finished probing type").await;
+            backend.client.log_message(MessageType::INFO, format!("Finished probing type:\n{:#?}", probed_type)).await;
 
             let mut arg_string_vec: Vec<String> = vec![];
             let mut i = 1;

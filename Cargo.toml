@@ -14,3 +14,6 @@ pg_query = "0.7"
 tokio = { version = "1.17.0", features = ["full"] }
 tower-lsp = "0.17.0"
 tokio-postgres = "0.7.7"
+serde = "1.0.147"
+serde_derive = "1.0.147"
+toml = "0.5.9"
