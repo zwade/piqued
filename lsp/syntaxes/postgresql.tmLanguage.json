@@ -1,0 +1,179 @@
+{
+  "scopeName": "source.sql.pgsql",
+  "patterns": [{ "include": "#expression" }],
+  "repository": {
+    "select": {
+      "begin": "(?i)select",
+      "end": "(?i)from",
+      "beginCaptures": {
+        "0": { "name": "support.function.select.sql" }
+      },
+      "endCaptures": {
+        "0": { "name": "support.function.from.sql" }
+      },
+      "patterns": [
+        { "include": "#expression" }
+      ]
+    },
+
+    "raw_select": {
+      "match": "(?i)\\bselect\\b",
+      "name": "support.function"
+    },
+
+    "insert": {
+      "match": "(?i)\\binsert into\\b",
+      "name": "support.function"
+    },
+
+    "delete": {
+      "match": "(?i)\\bdelete from\\b",
+      "name": "support.function"
+    },
+
+    "update": {
+      "match": "(?i)\\bupdate\\b",
+      "name": "support.function"
+    },
+
+    "create": {
+      "match": "(?i)\\bcreate (table|type)\\b",
+      "name": "support.function"
+    },
+
+    "alter": {
+      "match": "(?i)\\balter\\b",
+      "name": "support.function"
+    },
+
+    "conditions": {
+      "match": "(?i)\\b(where|values|set|group by|limit|order|distinct|inner|outer|left|cross|join|with|create|prepare)\\b",
+      "name": "support.function.condition.sql"
+    },
+
+    "verb": {
+      "patterns": [
+        { "include": "#select" },
+        { "include": "#raw_select" },
+        { "include": "#insert" },
+        { "include": "#update" },
+        { "include": "#delete" },
+        { "include": "#create" },
+        { "include": "#alter" },
+        { "include": "#conditions" },
+        { "include": "#operator" },
+        { "include": "#type" }
+      ]
+    },
+
+    "comment-operator": {
+      "match": "(@)(name|option)((\\s+\\w+)*)",
+      "captures": {
+        "1": { "name": "keyword.operator.comment.sql" },
+        "2": { "name": "keyword.operator.comment.sql" },
+        "3": { "name": "variable.parameter.comment.sql" }
+      }
+    },
+
+    "line-comment": {
+      "begin": "-- ",
+      "end": "$",
+      "name": "comment.line.double-dash.sql",
+      "patterns": [
+        { "include": "#comment-operator" }
+      ]
+    },
+
+    "block-comment": {
+      "begin": "/\\*",
+      "end": "\\*/",
+      "name": "comment.block.sql",
+      "patterns": [
+        { "include": "#comment-operator" }
+      ]
+    },
+
+    "comment": {
+      "patterns": [
+        { "include": "#line-comment" },
+        { "include": "#block-comment" }
+      ]
+    },
+
+    "symbol": {
+      "match": "(?i)[a-zA-Z_][a-zA-Z0-9_]*",
+      "name": "variable.other"
+    },
+
+    "quoted_symbol": {
+      "match": "(?i)\"[^\"]*\"",
+      "name": "variable.other"
+    },
+
+    "single_quote_string": {
+      "match": "'[^']*'",
+      "name": "string.quoted.single"
+    },
+
+    "paren-expression": {
+      "begin": "\\(",
+      "end": "\\)",
+      "beginCaptures": {
+        "0": { "name": "punctuation.paren.open" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.paren.close" }
+      },
+      "name": "expression.group",
+      "patterns": [{ "include": "#expression" }]
+    },
+
+    "numeral": {
+      "match": "\\b\\d+\\b",
+      "name": "constant.numeric"
+    },
+
+    "semicolon": {
+      "match": ";",
+      "name": "punctuation.terminator.sql"
+    },
+
+    "operator": {
+      "match": "(?i)\\b(and|or|not|in|like|ilike|between|is|exists|case|when|then|else|end|asc|desc|union|intersect|except|as)\\b",
+      "name": "keyword.operator.sql"
+    },
+
+    "operator_symbol": {
+      "match": "=|<>|<|>|<=|>=|\\+|-|\\*|/|\\^|\\|\\||\\&\\&|\\|\\|",
+      "name": "keyword.operator.sql"
+    },
+
+    "type": {
+      "match": "(?i)\\b(INT|TEXT|CHAR|VARCHAR|DATE|TIME|TIMESTAMP|BOOLEAN|FLOAT|DOUBLE|DECIMAL|NUMERIC|SERIAL|BIGSERIAL|SMALLSERIAL|MONEY|BYTEA|POINT|LINE|LSEG|BOX|PATH|POLYGON|CIRCLE|PRIMARY KEY|REFERENCES|FOREIGN KEY|INT4|BOOL)\\b",
+      "name": "support.type.sql"
+    },
+
+    "param": {
+      "match": "\\$\\d+",
+      "name": "variable.parameter"
+    },
+
+    "expression": {
+      "patterns": [
+        { "include": "#paren-expression" },
+        { "include": "#comment" },
+        { "include": "#literal-symbol" },
+        { "include": "#quoted_symbol" },
+        { "include": "#single_quote_string" },
+        { "include": "#numeral" },
+        { "include": "#verb" },
+        { "include": "#semicolon" },
+        { "include": "#operator" },
+        { "include": "#operator_symbol" },
+        { "include": "#type" },
+        { "include": "#param" },
+        { "include": "#symbol" }
+      ]
+    }
+  }
+}
