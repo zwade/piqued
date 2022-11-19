@@ -185,6 +185,7 @@ impl<'a> Query<'a> {
                 WHERE pg_namespace.nspname = $1
                     AND pg_type.typcategory = 'C'
                     AND pg_attribute.attnum > 0
+                    AND pg_type.typname NOT LIKE '%_seq' -- CR zwade for zwade: is there a better way to do this?
                 ORDER BY
                     pg_type.oid ASC,
                     pg_attribute.attnum ASC

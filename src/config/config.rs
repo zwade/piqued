@@ -8,6 +8,9 @@ use tokio::fs;
 pub struct Config {
     #[serde(default = "default_postgres_obj")]
     pub postgres: PostgresConfig,
+
+    #[serde(default = "default_emit_obj")]
+    pub emit: EmitConfig
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Deserialize, Default)]
@@ -17,6 +20,13 @@ pub struct PostgresConfig {
     pub uri: String,
     #[serde(default = "default_schema")]
     pub schema: String,
+}
+
+#[derive(Debug, Eq, PartialEq, Clone, Deserialize, Default)]
+#[serde(rename_all = "camelCase", default)]
+pub struct EmitConfig {
+    #[serde(default = "default_type_file")]
+    pub type_file: String
 }
 
 #[derive(Debug)]
@@ -45,10 +55,20 @@ fn default_schema() -> String {
     "public".to_string()
 }
 
+fn default_type_file() -> String {
+    "./postgres".to_string()
+}
+
 fn default_postgres_obj() -> PostgresConfig {
     PostgresConfig {
         uri: default_postgres_uri(),
         schema: default_schema(),
+    }
+}
+
+fn default_emit_obj() -> EmitConfig {
+    EmitConfig {
+        type_file: default_type_file(),
     }
 }
 

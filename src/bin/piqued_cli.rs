@@ -1,7 +1,6 @@
 
-use piqued::{parser::parser, query::query::Query};
-use tokio::fs;
-use std::env;
+use piqued::codegen::{codegen::CodeGenerationContext, ts::schema::TSGenerator};
+use std::env::{self, current_dir};
 
 use piqued::config::config::Config;
 
@@ -10,34 +9,26 @@ async fn main() {
     let args: Vec<String> = env::args().collect();
 
     if args.len() < 2 {
-        println!("Usage: {} <file>", args[0]);
+        println!("Usage: {} [working_dir]", args[0]);
         return;
     }
 
-    let config = Config::load(None).await.unwrap();
+    let relative_path =
+        if args.len() >= 2 {
+            &args[1].as_str()
+        } else {
+            "."
+        };
 
-    let contents = fs::read_to_string(&args[1]).await.unwrap();
-    let data = parser::load_file(&contents);
-    let query = Query::new(&config).await.unwrap();
+    let working_dir = current_dir().unwrap().join(relative_path);
+    let config_path = working_dir.join(".piqued.toml");
 
-    // println!("Tables: {:#?}", query.tables);
-    // println!("Types: {:#?}", query.custom_types_by_name);
+    let config = Config::load(config_path.as_path().to_str()).await.unwrap();
+    let codegen = CodeGenerationContext::new(working_dir.as_path(), &config).await;
 
-    match data {
-        Ok(data) => {
-            for stmt in data.statements {
-                // println!("{:#?}", stmt.stmt.clone());
-                let prepared_statement = parser::get_prepared_statement(stmt.clone(), &data.tokens, &contents);
+    let ts_generator = TSGenerator::new();
 
-                if let Ok(stmt) = prepared_statement {
-                    let res = query.probe_type(&stmt).await.unwrap();
-                    println!("Details: {:#?}", stmt.details);
-                    println!("{:#?}", res);
-                }
-            }
-        },
-        Err(e) => {
-            println!("Error: {:#?}", e);
-        }
-    }
+    codegen.generate_system_types(&ts_generator).await;
+    codegen.generate_queries(&ts_generator).await;
+
 }

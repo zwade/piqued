@@ -1,6 +1,6 @@
 use std::fmt;
 
-use pg_query::{protobuf::{self, RawStmt, ScanToken, Token}, Node, NodeEnum};
+use pg_query::{protobuf::{self, RawStmt, ScanToken, Token, ParseResult}, Node, NodeEnum};
 use tower_lsp::lsp_types::{Range, Position};
 
 
@@ -82,6 +82,7 @@ pub struct ParsedPreparedQuery {
     pub query: RawStmt,
     pub variables: Vec<Node>,
     pub details: ParsedDetails,
+    pub contents: String,
 }
 
 pub fn parse_single_query<'a>(query: &str) -> Result<RawStmt> {
@@ -201,7 +202,6 @@ pub fn get_prepared_statement(
     content: &str,
 ) -> Result<ParsedPreparedQuery> {
     let start = obj.index_start;
-    // let end = &start + obj.len;
 
     let stmt = obj.stmt?;
 
@@ -240,6 +240,7 @@ pub fn get_prepared_statement(
                 }
 
                 Ok(ParsedPreparedQuery {
+                    contents: deparse_statement(&statement),
                     query: statement,
                     variables: prep_stmt.argtypes.clone(),
                     details,
@@ -254,6 +255,7 @@ pub fn get_prepared_statement(
                 };
 
                 Ok(ParsedPreparedQuery {
+                    contents: deparse_statement(&statement),
                     query: statement,
                     variables: vec![],
                     details,
@@ -263,6 +265,22 @@ pub fn get_prepared_statement(
     } else {
         Err(PiquedError::OtherError("No statement found".to_string()))
     }
+}
+
+fn deparse_statement(stmt: &RawStmt) -> String {
+    let as_prepared_statement = ParseResult {
+        stmts: vec![
+            RawStmt {
+                stmt: stmt.stmt.clone(),
+
+                stmt_len: 0,
+                stmt_location: 0,
+            },
+        ],
+        version: 130003,
+    };
+
+    as_prepared_statement.deparse().unwrap()
 }
 
 pub fn node_to_string(node: Node) -> Option<String> {
