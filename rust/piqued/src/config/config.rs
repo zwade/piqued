@@ -10,7 +10,7 @@ pub struct Config {
     pub postgres: PostgresConfig,
 
     #[serde(default = "default_emit_obj")]
-    pub emit: EmitConfig
+    pub emit: EmitConfig,
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Deserialize, Default)]
@@ -26,7 +26,7 @@ pub struct PostgresConfig {
 #[serde(rename_all = "camelCase", default)]
 pub struct EmitConfig {
     #[serde(default = "default_type_file")]
-    pub type_file: String
+    pub type_file: String,
 }
 
 #[derive(Debug)]
@@ -82,15 +82,10 @@ impl Config {
             }
         };
 
-        let config: Self =
-            match fs::read_to_string(path).await {
-                Ok(data) => {
-                    toml::from_str(&data)?
-                },
-                Err(_) => {
-                    toml::from_str("")?
-                }
-            };
+        let config: Self = match fs::read_to_string(path).await {
+            Ok(data) => toml::from_str(&data)?,
+            Err(_) => toml::from_str("")?,
+        };
 
         Ok(config)
     }

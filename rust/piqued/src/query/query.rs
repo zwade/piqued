@@ -1,10 +1,20 @@
 use std::{collections::HashMap, sync::Arc};
 
-use pg_query::{protobuf::{RawStmt, ParseResult}, NodeEnum, Node};
+use pg_query::{
+    protobuf::{ParseResult, RawStmt},
+    Node, NodeEnum,
+};
 use tokio::spawn;
-use tokio_postgres::{NoTls, connect, Client, types::{Type, Kind}};
+use tokio_postgres::{
+    connect,
+    types::{Kind, Type},
+    Client, NoTls,
+};
 
-use crate::{parser::parser::{ParsedPreparedQuery, Result, node_to_string}, config::config::Config};
+use crate::{
+    config::config::Config,
+    parser::parser::{node_to_string, ParsedPreparedQuery, Result},
+};
 
 #[derive(Debug)]
 pub struct Query<'a> {
@@ -52,8 +62,7 @@ pub struct ProbeResponse {
 
 impl<'a> Query<'a> {
     pub async fn new(config: &'a Config) -> Result<Query> {
-        let (client, connection) =
-            connect(&config.postgres.uri, NoTls).await?;
+        let (client, connection) = connect(&config.postgres.uri, NoTls).await?;
 
         spawn(async move {
             if let Err(e) = connection.await {
@@ -76,31 +85,42 @@ impl<'a> Query<'a> {
 
     pub async fn probe_type(&self, stmt: &ParsedPreparedQuery) -> Result<ProbeResponse> {
         let as_prepared_statement: ParseResult = ParseResult {
-            stmts: vec![
-                RawStmt {
-                    stmt: stmt.query.stmt.clone(),
+            stmts: vec![RawStmt {
+                stmt: stmt.query.stmt.clone(),
 
-                    stmt_len: 0,
-                    stmt_location: 0,
-                },
-            ],
+                stmt_len: 0,
+                stmt_location: 0,
+            }],
             version: 130003,
         };
 
         let prepared_statement = as_prepared_statement.deparse().unwrap();
-        let argtypes: Vec<Type> =
-            stmt.variables
+        let argtypes: Vec<Type> = stmt
+            .variables
             .iter()
             .filter_map(|node| self.parse_arg(node.clone()))
             .collect();
 
-        let results = self.client
+        let results = self
+            .client
             .prepare_typed(&prepared_statement, argtypes.as_slice())
             .await?;
 
-        let args = results.params().into_iter().map(|typ| type_to_string(typ).to_string()).collect::<Vec<String>>();
-        let column_types = results.columns().into_iter().map(|col| type_to_string(col.type_()).to_string()).collect::<Vec<String>>();
-        let column_names = results.columns().into_iter().map(|col| col.name().to_string()).collect::<Vec<String>>();
+        let args = results
+            .params()
+            .into_iter()
+            .map(|typ| type_to_string(typ).to_string())
+            .collect::<Vec<String>>();
+        let column_types = results
+            .columns()
+            .into_iter()
+            .map(|col| type_to_string(col.type_()).to_string())
+            .collect::<Vec<String>>();
+        let column_names = results
+            .columns()
+            .into_iter()
+            .map(|col| col.name().to_string())
+            .collect::<Vec<String>>();
 
         return Ok(ProbeResponse {
             args,
@@ -110,8 +130,10 @@ impl<'a> Query<'a> {
     }
 
     async fn load_table_schema(&mut self, config: &Config) -> Result<()> {
-        let columns = self.client.query(
-            "
+        let columns = self
+            .client
+            .query(
+                "
                 SELECT
                     table_name,
                     column_name,
@@ -124,42 +146,35 @@ impl<'a> Query<'a> {
                 WHERE table_schema = $1
                 ORDER BY table_name, ordinal_position
             ",
-            &[&config.postgres.schema.as_str()]
-        ).await?;
+                &[&config.postgres.schema.as_str()],
+            )
+            .await?;
 
         let tables: HashMap<String, Vec<Column>> =
-            columns
-                .into_iter()
-                .fold(
-                    HashMap::new(),
-                    |mut acc, row| {
-                        let table_name = row.get(0);
-                        let column_name = row.get(1);
-                        let type_name = row.get(2);
-                        let type_oid = row.get(3);
-                        let is_nullable_str = row.get(4);
+            columns.into_iter().fold(HashMap::new(), |mut acc, row| {
+                let table_name = row.get(0);
+                let column_name = row.get(1);
+                let type_name = row.get(2);
+                let type_oid = row.get(3);
+                let is_nullable_str = row.get(4);
 
-                        let nullable = match is_nullable_str {
-                            "YES" => true,
-                            "NO" => false,
-                            _ => false,
-                        };
+                let nullable = match is_nullable_str {
+                    "YES" => true,
+                    "NO" => false,
+                    _ => false,
+                };
 
-                        let column = Column {
-                            name: column_name,
-                            type_name,
-                            type_oid,
-                            nullable,
-                        };
+                let column = Column {
+                    name: column_name,
+                    type_name,
+                    type_oid,
+                    nullable,
+                };
 
-                        acc
-                            .entry(table_name)
-                            .or_insert_with(Vec::new)
-                            .push(column);
+                acc.entry(table_name).or_insert_with(Vec::new).push(column);
 
-                        acc
-                    },
-                );
+                acc
+            });
 
         self.tables = tables;
         Ok(())
@@ -193,59 +208,49 @@ impl<'a> Query<'a> {
             &[&config.postgres.schema.as_str()]
         ).await?;
 
-        let composite_types_by_oid =
-            composite_types_query
-                .into_iter()
-                .fold(
-                    HashMap::new(),
-                    |mut acc, row| {
-                        let type_name = row.get(0);
-                        let type_oid = row.get(1);
-                        let col_name = row.get(2);
-                        let col_type_oid = row.get(3);
-                        let col_type_name = row.get(4);
-                        let col_nullable = row.get(5);
+        let composite_types_by_oid = composite_types_query
+            .into_iter()
+            .fold(HashMap::new(), |mut acc, row| {
+                let type_name = row.get(0);
+                let type_oid = row.get(1);
+                let col_name = row.get(2);
+                let col_type_oid = row.get(3);
+                let col_type_name = row.get(4);
+                let col_nullable = row.get(5);
 
-                        let column = Column {
-                            name: col_name,
-                            type_name: col_type_name,
-                            type_oid: col_type_oid,
-                            nullable: col_nullable,
-                        };
+                let column = Column {
+                    name: col_name,
+                    type_name: col_type_name,
+                    type_oid: col_type_oid,
+                    nullable: col_nullable,
+                };
 
-                        let composite_type = acc
-                            .entry(type_oid)
-                            .or_insert_with(|| {
-                                CompositeType {
-                                    oid: type_oid,
-                                    name: type_name,
-                                    fields: Vec::new(),
-                                }
-                            });
+                let composite_type = acc.entry(type_oid).or_insert_with(|| CompositeType {
+                    oid: type_oid,
+                    name: type_name,
+                    fields: Vec::new(),
+                });
 
-                        composite_type.fields.push(column);
+                composite_type.fields.push(column);
 
-                        acc
-                    }
-                )
-                .into_iter()
-                .map(|(oid, composite_type)| (oid, Arc::new(CustomType::Composite(composite_type))))
-                .collect::<HashMap<_, _>>();
+                acc
+            })
+            .into_iter()
+            .map(|(oid, composite_type)| (oid, Arc::new(CustomType::Composite(composite_type))))
+            .collect::<HashMap<_, _>>();
 
-        let composite_types_by_name =
-            composite_types_by_oid
-                .iter()
-                .map(|(_, composite_type)|
-                    match composite_type.as_ref() {
-                        CustomType::Composite(t) => (t.name.clone(), Arc::clone(composite_type)),
-                        _ => panic!("Expected composite type"),
-                    }
-                )
-                .collect::<HashMap<_, _>>();
+        let composite_types_by_name = composite_types_by_oid
+            .iter()
+            .map(|(_, composite_type)| match composite_type.as_ref() {
+                CustomType::Composite(t) => (t.name.clone(), Arc::clone(composite_type)),
+                _ => panic!("Expected composite type"),
+            })
+            .collect::<HashMap<_, _>>();
 
-
-        let enum_types_query = self.client.query(
-            "
+        let enum_types_query = self
+            .client
+            .query(
+                "
                 SELECT
                     pg_type.typname as type_name,
                     pg_type.oid as type_oid,
@@ -261,48 +266,38 @@ impl<'a> Query<'a> {
                     pg_type.oid ASC,
                     pg_enum.enumsortorder ASC
             ",
-            &[&config.postgres.schema.as_str()]
-        ).await?;
+                &[&config.postgres.schema.as_str()],
+            )
+            .await?;
 
-        let enum_types_by_oid =
-            enum_types_query
-                .into_iter()
-                .fold(
-                    HashMap::new(),
-                    |mut acc, row| {
-                        let type_name = row.get(0);
-                        let type_oid = row.get(1);
-                        let enum_value = row.get(2);
+        let enum_types_by_oid = enum_types_query
+            .into_iter()
+            .fold(HashMap::new(), |mut acc, row| {
+                let type_name = row.get(0);
+                let type_oid = row.get(1);
+                let enum_value = row.get(2);
 
-                        let enum_type = acc
-                            .entry(type_oid)
-                            .or_insert_with(|| {
-                                EnumType {
-                                    oid: type_oid,
-                                    name: type_name,
-                                    values: Vec::new(),
-                                }
-                            });
+                let enum_type = acc.entry(type_oid).or_insert_with(|| EnumType {
+                    oid: type_oid,
+                    name: type_name,
+                    values: Vec::new(),
+                });
 
-                        enum_type.values.push(enum_value);
+                enum_type.values.push(enum_value);
 
-                        acc
-                    }
-                )
-                .into_iter()
-                .map(|(oid, composite_type)| (oid, Arc::new(CustomType::Enum(composite_type))))
-                .collect::<HashMap<_, _>>();
+                acc
+            })
+            .into_iter()
+            .map(|(oid, composite_type)| (oid, Arc::new(CustomType::Enum(composite_type))))
+            .collect::<HashMap<_, _>>();
 
-        let enum_types_by_name =
-            enum_types_by_oid
-                .iter()
-                .map(|(_, composite_type)|
-                    match composite_type.as_ref() {
-                        CustomType::Enum(t) => (t.name.clone(), Arc::clone(composite_type)),
-                        _ => panic!("Expected composite type"),
-                    }
-                )
-                .collect::<HashMap<_, _>>();
+        let enum_types_by_name = enum_types_by_oid
+            .iter()
+            .map(|(_, composite_type)| match composite_type.as_ref() {
+                CustomType::Enum(t) => (t.name.clone(), Arc::clone(composite_type)),
+                _ => panic!("Expected composite type"),
+            })
+            .collect::<HashMap<_, _>>();
 
         let mut custom_types_by_oid = HashMap::new();
         custom_types_by_oid.extend(composite_types_by_oid);
@@ -328,20 +323,18 @@ impl<'a> Query<'a> {
 
                 if let Some(custom_type) = self.custom_types_by_name.get(&name) {
                     let type_ = match custom_type.as_ref() {
-                        CustomType::Composite(t) =>
-                            Some(Type::new(
-                                t.name.clone(),
-                                t.oid,
-                                Kind::Simple,
-                                "public".to_string(),
-                            )),
-                        CustomType::Enum(t) =>
-                            Some(Type::new(
-                                t.name.clone(),
-                                t.oid,
-                                Kind::Simple,
-                                "public".to_string(),
-                            )),
+                        CustomType::Composite(t) => Some(Type::new(
+                            t.name.clone(),
+                            t.oid,
+                            Kind::Simple,
+                            "public".to_string(),
+                        )),
+                        CustomType::Enum(t) => Some(Type::new(
+                            t.name.clone(),
+                            t.oid,
+                            Kind::Simple,
+                            "public".to_string(),
+                        )),
                     };
 
                     return type_;
@@ -367,12 +360,14 @@ impl<'a> Query<'a> {
                     "varchar" => Some(Type::VARCHAR),
                     "char" => Some(Type::CHAR),
 
-                    n =>
-                        Some(
-                            Type::new(n.to_string(), tn.type_oid, Kind::Simple, "pg_catalog".to_string())
-                        )
+                    n => Some(Type::new(
+                        n.to_string(),
+                        tn.type_oid,
+                        Kind::Simple,
+                        "pg_catalog".to_string(),
+                    )),
                 }
-            },
+            }
             _ => None,
         }
     }
@@ -381,4 +376,3 @@ impl<'a> Query<'a> {
 pub fn type_to_string<'a>(type_: &'a Type) -> &'a str {
     type_.name()
 }
-

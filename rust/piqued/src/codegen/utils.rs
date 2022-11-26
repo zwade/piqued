@@ -46,3 +46,16 @@ pub fn to_snake_case(identifier: &String) -> String {
 
     chars.iter().collect()
 }
+
+pub fn indent_block(block: &String) -> String {
+    let mut lines: Vec<String> = vec![];
+    for line in block.lines() {
+        lines.push(format!("    {}", line));
+    }
+
+    if block.ends_with("\n") {
+        lines.push("".to_string());
+    }
+
+    lines.join("\n")
+}

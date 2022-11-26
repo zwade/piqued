@@ -1,10 +1,18 @@
-use std::{path::{Path, PathBuf}, collections::HashSet};
+use std::{
+    collections::HashSet,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use async_recursion::async_recursion;
 use string_builder::Builder;
 use tokio::fs;
 
-use crate::{query::query::{CustomType, Query, ProbeResponse}, config::config::Config, parser::parser::{self, ParsedPreparedQuery}};
+use crate::{
+    config::config::Config,
+    parser::parser::{self, ParsedPreparedQuery},
+    query::query::{CustomType, ProbeResponse, Query},
+};
 
 pub struct ImportResult {
     pub generated_code: String,
@@ -16,18 +24,56 @@ pub struct SerializationResult {
     pub requires_import: Vec<String>,
 }
 
-pub trait CodeGenerator {
-    fn serialize_import(&self, ctx: &CodeGenerationContext, path: &PathBuf, identifiers: &Vec<String>) -> ImportResult;
-    fn serialize_preamble(&self, ctx: &CodeGenerationContext) -> String;
+pub struct QueryContext(pub ParsedPreparedQuery, pub ProbeResponse);
 
-    fn serialize_type(&self, ctx: &CodeGenerationContext, type_: &CustomType) -> SerializationResult;
+pub trait CodeGenerator {
+    fn serialize_import(
+        &self,
+        ctx: &CodeGenerationContext,
+        path: &PathBuf,
+        identifiers: &Vec<String>,
+    ) -> ImportResult;
+    fn resolve_file_path(&self, ctx: &CodeGenerationContext, path: &PathBuf) -> String;
+
+    fn serialize_type_prefix(
+        &self,
+        _ctx: &CodeGenerationContext,
+        _types: &Vec<Arc<CustomType>>,
+    ) -> Option<String> {
+        None
+    }
+    fn serialize_type(
+        &self,
+        ctx: &CodeGenerationContext,
+        type_: &CustomType,
+    ) -> SerializationResult;
+    fn serialize_type_suffix(
+        &self,
+        _ctx: &CodeGenerationContext,
+        _types: &Vec<Arc<CustomType>>,
+    ) -> Option<String> {
+        None
+    }
+
+    fn serialize_query_prefix(
+        &self,
+        _ctx: &CodeGenerationContext,
+        _queries: &Vec<QueryContext>,
+    ) -> Option<String> {
+        None
+    }
     fn serialize_query(
         &self,
         ctx: &CodeGenerationContext,
-        parsed_query: &ParsedPreparedQuery,
-        probe_result: &ProbeResponse
+        query: &QueryContext,
     ) -> SerializationResult;
-    fn resolve_file_path(&self, ctx: &CodeGenerationContext, path: &PathBuf) -> String;
+    fn serialize_query_suffix(
+        &self,
+        _ctx: &CodeGenerationContext,
+        _queries: &Vec<QueryContext>,
+    ) -> Option<String> {
+        None
+    }
 }
 
 pub struct CodeGenerationContext<'a> {
@@ -51,7 +97,18 @@ impl<'a> CodeGenerationContext<'a> {
         let mut b = Builder::default();
         let mut imports: Vec<String> = vec![];
 
-        b.append(generator.serialize_preamble(self).as_bytes());
+        let all_types = self
+            .query
+            .custom_types_by_name
+            .values()
+            .into_iter()
+            .map(|refrence| refrence.clone())
+            .collect::<Vec<Arc<CustomType>>>();
+
+        if let Some(prefix) = generator.serialize_type_prefix(self, &all_types) {
+            b.append(prefix.as_bytes());
+        }
+
         b.append("\n");
 
         for type_ in self.query.custom_types_by_name.values() {
@@ -59,6 +116,10 @@ impl<'a> CodeGenerationContext<'a> {
             b.append(res.generated_code);
             b.append("\n\n");
             imports.extend(res.requires_import);
+        }
+
+        if let Some(prefix) = generator.serialize_type_suffix(self, &all_types) {
+            b.append(prefix.as_bytes());
         }
 
         let base_path = self.get_root_path();
@@ -74,7 +135,8 @@ impl<'a> CodeGenerationContext<'a> {
             let mut dst_file = query_file.clone();
             dst_file.set_extension("ts");
 
-            self.generate_query_file(generator, &query_file, &dst_file).await;
+            self.generate_query_file(generator, &query_file, &dst_file)
+                .await;
         }
     }
 
@@ -97,8 +159,8 @@ impl<'a> CodeGenerationContext<'a> {
                         if ext == "sql" || ext == "psql" || ext == "pgsql" || ext == "pg" {
                             file_results.push(path);
                         }
-                    },
-                    _ => ()
+                    }
+                    _ => (),
                 }
             }
         }
@@ -111,32 +173,55 @@ impl<'a> CodeGenerationContext<'a> {
         self.working_dir.join(&self.config.emit.type_file)
     }
 
-    async fn generate_query_file(&self, generator: &dyn CodeGenerator, src_file: &PathBuf, dst_file: &PathBuf) {
+    async fn generate_query_file(
+        &self,
+        generator: &dyn CodeGenerator,
+        src_file: &PathBuf,
+        dst_file: &PathBuf,
+    ) {
         let contents = fs::read_to_string(src_file).await.unwrap();
         let data = parser::load_file(&contents);
 
         let mut imports: Vec<String> = vec![];
         let mut code_segments: Vec<String> = vec![];
 
-        match data {
+        let statements = match data {
             Ok(data) => {
-                for stmt in data.statements {
-                    let prepared_statement = parser::get_prepared_statement(stmt.clone(), &data.tokens, &contents);
+                let mut results = vec![];
+                for (i, stmt) in data.statements.iter().enumerate() {
+                    let prep_result =
+                        parser::get_prepared_statement(&stmt, &data.tokens, &contents, || {
+                            format!("query_{i}")
+                        });
 
-                    if let Ok(stmt) = prepared_statement {
-                        let probed_type = self.query.probe_type(&stmt).await.unwrap();
-                        let res = generator.serialize_query(self, &stmt, &probed_type);
+                    if let Ok(prepared_statement) = prep_result {
+                        let probed_type = self.query.probe_type(&prepared_statement).await.unwrap();
 
-                        imports.extend(res.requires_import);
-                        code_segments.push(res.generated_code);
-
+                        results.push(QueryContext(prepared_statement, probed_type))
                     }
                 }
-            },
+
+                results
+            }
 
             Err(e) => {
                 println!("Error: {:#?}", e);
+                return;
             }
+        };
+
+        if let Some(prefix) = generator.serialize_query_prefix(self, &statements) {
+            code_segments.push(prefix);
+        }
+
+        for stmt in &statements {
+            let res = generator.serialize_query(self, stmt);
+            imports.extend(res.requires_import);
+            code_segments.push(res.generated_code);
+        }
+
+        if let Some(suffix) = generator.serialize_query_suffix(self, &statements) {
+            code_segments.push(suffix);
         }
 
         let needed_imports = imports
@@ -146,8 +231,17 @@ impl<'a> CodeGenerationContext<'a> {
             .collect::<Vec<String>>();
 
         let mut b = Builder::default();
-        let base_path = Path::new(&self.config.emit.type_file).to_path_buf();
-        let import = generator.serialize_import(self, &base_path, &needed_imports);
+
+        let type_file_path = self.working_dir.join(&self.config.emit.type_file);
+        let mut start_file_path = dst_file.clone();
+        start_file_path.pop();
+
+        let mut relative_path = pathdiff::diff_paths(type_file_path, start_file_path).unwrap();
+        if !relative_path.starts_with("../") {
+            relative_path = Path::new("./").join(relative_path);
+        }
+
+        let import = generator.serialize_import(self, &relative_path, &needed_imports);
 
         b.append(import.generated_code);
         b.append("\n\n");

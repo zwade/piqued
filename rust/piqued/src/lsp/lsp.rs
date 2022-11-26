@@ -2,11 +2,15 @@ use std::collections::HashMap;
 
 use tokio::sync::Mutex;
 use tower_lsp::jsonrpc;
-use tower_lsp::lsp_types::{TextDocumentSyncKind, TextDocumentSyncCapability, HoverProviderCapability, ServerCapabilities, InitializeResult, InitializeParams, InitializedParams, HoverParams, Hover, MessageType, DidChangeTextDocumentParams, DidOpenTextDocumentParams, Url};
+use tower_lsp::lsp_types::{
+    DidChangeTextDocumentParams, DidOpenTextDocumentParams, Hover, HoverParams,
+    HoverProviderCapability, InitializeParams, InitializeResult, InitializedParams, MessageType,
+    ServerCapabilities, TextDocumentSyncCapability, TextDocumentSyncKind, Url,
+};
 use tower_lsp::{Client, LanguageServer};
 
-use crate::query::query::Query;
 use crate::lsp::utils;
+use crate::query::query::Query;
 
 use super::utils::get_diagnostics;
 
@@ -33,10 +37,14 @@ impl Backend {
 
         match diagnostics {
             Ok(diagnostics) => {
-                self.client.publish_diagnostics(uri, diagnostics, None).await;
-            },
+                self.client
+                    .publish_diagnostics(uri, diagnostics, None)
+                    .await;
+            }
             Err(e) => {
-                self.client.log_message(MessageType::ERROR, e.to_string()).await;
+                self.client
+                    .log_message(MessageType::ERROR, e.to_string())
+                    .await;
             }
         }
     }
@@ -48,7 +56,9 @@ impl LanguageServer for Backend {
         Ok(InitializeResult {
             capabilities: ServerCapabilities {
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
-                text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::FULL)),
+                text_document_sync: Some(TextDocumentSyncCapability::Kind(
+                    TextDocumentSyncKind::FULL,
+                )),
                 ..Default::default()
             },
             ..Default::default()
@@ -66,7 +76,10 @@ impl LanguageServer for Backend {
             .log_message(MessageType::INFO, format!("Document Opened: {:#?}", params))
             .await;
 
-        self.file_cache.try_lock().unwrap().insert(params.text_document.uri.to_string(), params.text_document.text);
+        self.file_cache.try_lock().unwrap().insert(
+            params.text_document.uri.to_string(),
+            params.text_document.text,
+        );
         self.run_diagnostics(params.text_document.uri).await;
     }
 
@@ -75,7 +88,10 @@ impl LanguageServer for Backend {
             .log_message(MessageType::INFO, format!("Did change: {:#?}", params))
             .await;
 
-        self.file_cache.try_lock().unwrap().insert(params.text_document.uri.to_string(), params.content_changes[0].text.clone());
+        self.file_cache.try_lock().unwrap().insert(
+            params.text_document.uri.to_string(),
+            params.content_changes[0].text.clone(),
+        );
         self.run_diagnostics(params.text_document.uri).await;
     }
 
@@ -85,19 +101,23 @@ impl LanguageServer for Backend {
 
     async fn hover(&self, params: HoverParams) -> jsonrpc::Result<Option<Hover>> {
         let position = params.text_document_position_params.position;
-        let file_name = params.text_document_position_params.text_document.uri.to_string();
+        let file_name = params
+            .text_document_position_params
+            .text_document
+            .uri
+            .to_string();
 
         let cache = self.file_cache.try_lock().unwrap();
         let file_data = cache.get(&file_name);
 
         match utils::get_hover_data(self, file_data, &position).await {
             Err(e) => {
-                self.client.log_message(MessageType::ERROR, format!("{:#?}", e)).await;
+                self.client
+                    .log_message(MessageType::ERROR, format!("{:#?}", e))
+                    .await;
                 Ok(None)
-            },
-            Ok(hov) => {
-                Ok(Some(hov))
             }
+            Ok(hov) => Ok(Some(hov)),
         }
     }
 }

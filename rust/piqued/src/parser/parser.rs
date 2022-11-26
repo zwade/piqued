@@ -1,8 +1,10 @@
 use std::fmt;
 
-use pg_query::{protobuf::{self, RawStmt, ScanToken, Token, ParseResult}, Node, NodeEnum};
-use tower_lsp::lsp_types::{Range, Position};
-
+use pg_query::{
+    protobuf::{self, ParseResult, RawStmt, ScanToken, Token},
+    Node, NodeEnum,
+};
+use tower_lsp::lsp_types::{Position, Range};
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum PiquedError {
@@ -13,7 +15,7 @@ pub enum PiquedError {
 
 impl fmt::Display for PiquedError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            write!(f, "({:#?})", self)
+        write!(f, "({:#?})", self)
     }
 }
 
@@ -22,21 +24,20 @@ impl From<pg_query::Error> for PiquedError {
         match err {
             pg_query::Error::Parse(str) => {
                 if str.starts_with("syntax error at or near \"") {
-                    let location =
-                        str
-                            .trim_start_matches("syntax error at or near \"")
-                            .split("\"")
-                            .next();
+                    let location = str
+                        .trim_start_matches("syntax error at or near \"")
+                        .split("\"")
+                        .next();
 
                     match location {
                         Some(data) => Self::ParseErrorAt(data.to_string()),
-                        None => Self::OtherError(str)
+                        None => Self::OtherError(str),
                     }
                 } else {
                     Self::OtherError(str)
                 }
-            },
-            _ => PiquedError::OtherError(format!("{:#?}", err))
+            }
+            _ => Self::OtherError(format!("{:#?}", err)),
         }
     }
 }
@@ -51,7 +52,7 @@ impl From<tokio_postgres::Error> for PiquedError {
     fn from(err: tokio_postgres::Error) -> Self {
         match err.as_db_error() {
             None => PiquedError::OtherError(format!("{:#?}", err)),
-            Some(db_err) => PiquedError::PostgresError(db_err.message().to_string())
+            Some(db_err) => PiquedError::PostgresError(db_err.message().to_string()),
         }
     }
 }
@@ -75,7 +76,8 @@ pub struct ParsedFile {
 #[derive(Debug, PartialEq, Clone)]
 pub struct ParsedDetails {
     pub comment: String,
-    pub name: Option<String>,
+    pub name: String,
+    pub params: Option<Vec<String>>,
 }
 
 pub struct ParsedPreparedQuery {
@@ -91,15 +93,14 @@ pub fn parse_single_query<'a>(query: &str) -> Result<RawStmt> {
 
 pub fn load_file(contents: &String) -> Result<ParsedFile> {
     let queries = pg_query::split_with_scanner(&contents.as_str())?;
-    let index_by_line: &Vec<u32> =
-        &contents
-            .split("\n")
-            .scan(0, |acc, line| {
-                let result = acc.clone();
-                *acc += line.len() + 1;
-                Some(result as u32)
-            })
-            .collect();
+    let index_by_line: Vec<u32> = (contents.clone() + "\n")
+        .split("\n")
+        .scan(0, |acc, line| {
+            let result = acc.clone();
+            *acc += line.len() + 1;
+            Some(result as u32)
+        })
+        .collect();
 
     let get_position = |index: u32| {
         let line = index_by_line
@@ -114,12 +115,8 @@ pub fn load_file(contents: &String) -> Result<ParsedFile> {
         Position::new(line as u32, column as u32)
     };
 
-    let get_range = |start: u32, len: u32| {
-        Range::new(
-            get_position(start),
-            get_position(start + len),
-        )
-    };
+    let get_range =
+        |start: u32, len: u32| Range::new(get_position(start), get_position(start + len));
 
     let parsed_statements: Vec<Result<RawStmt>> = queries
         .iter()
@@ -160,30 +157,37 @@ pub fn load_file(contents: &String) -> Result<ParsedFile> {
     return Ok(ParsedFile {
         statements: relocated_statements,
         tokens,
-    })
+    });
 }
 
-fn parse_comment(string: &String) -> ParsedDetails {
+fn parse_comment<F>(string: &String, default_name: F) -> ParsedDetails
+where
+    F: FnOnce() -> String,
+{
     let mut name: Option<String> = None;
+    let mut params: Option<Vec<String>> = None;
     let mut comment_lines: Vec<String> = vec![];
 
     for line in string.lines() {
-        let trimmed_comment =
-            line
-                .trim_start_matches("/**")
-                .trim_start_matches("/*")
-                .trim_end_matches("*/")
-                .trim_start_matches(vec![' ', '\t'].as_slice())
-                .trim_start_matches("-- ")
-                .trim_start_matches("* ")
-                .trim_end()
-                ;
+        let trimmed_comment = line
+            .trim_start_matches("/**")
+            .trim_start_matches("/*")
+            .trim_end_matches("*/")
+            .trim_start_matches(vec![' ', '\t'].as_slice())
+            .trim_start_matches("-- ")
+            .trim_start_matches("* ")
+            .trim_end();
 
         if trimmed_comment.starts_with("@name") {
             name = trimmed_comment
                 .split(" ")
                 .nth(1)
-                .map(|s| s.to_string());
+                .map(|s| s.trim().to_string());
+        } else if trimmed_comment.starts_with("@params") {
+            let mut param_iter = trimmed_comment.split(" ").into_iter();
+
+            param_iter.next();
+            params = Some(param_iter.map(|val| val.trim().to_string()).collect());
         } else {
             comment_lines.push(trimmed_comment.to_string());
         }
@@ -191,19 +195,22 @@ fn parse_comment(string: &String) -> ParsedDetails {
 
     return ParsedDetails {
         comment: comment_lines.join("\n"),
-        name,
-    }
+        name: name.unwrap_or_else(default_name),
+        params,
+    };
 }
 
-
-pub fn get_prepared_statement(
-    obj: RelocatedStmt,
+pub fn get_prepared_statement<F>(
+    obj: &RelocatedStmt,
     tokens: &Vec<ScanToken>,
     content: &str,
-) -> Result<ParsedPreparedQuery> {
+    default_name: F,
+) -> Result<ParsedPreparedQuery>
+where
+    F: FnOnce() -> String,
+{
     let start = obj.index_start;
-
-    let stmt = obj.stmt?;
+    let stmt = obj.stmt.clone()?;
 
     let mut comments: Vec<String> = vec![];
 
@@ -211,23 +218,19 @@ pub fn get_prepared_statement(
         if token.start as u32 >= start {
             match token.token() {
                 Token::CComment | Token::SqlComment => {
-                    let comment = &content[token.start as usize .. token.end as usize];
+                    let comment = &content[token.start as usize..token.end as usize];
                     comments.push(comment.to_string());
-                },
-                _ => break
+                }
+                _ => break,
             }
         }
-    };
+    }
 
     let comments = comments.join("\n");
-    let mut details = parse_comment(&comments);
-
     if let Some(box_stmt) = stmt.stmt {
         return match *box_stmt {
-            protobuf::Node{
-                node: Some(
-                    protobuf::node::Node::PrepareStmt(prep_stmt)
-                )
+            protobuf::Node {
+                node: Some(protobuf::node::Node::PrepareStmt(prep_stmt)),
             } => {
                 let statement = protobuf::RawStmt {
                     stmt: prep_stmt.query.clone(),
@@ -235,9 +238,7 @@ pub fn get_prepared_statement(
                     stmt_len: 0,
                 };
 
-                if details.name.is_none() {
-                    details.name = Some(prep_stmt.name);
-                }
+                let details = parse_comment(&comments, || prep_stmt.name.clone());
 
                 Ok(ParsedPreparedQuery {
                     contents: deparse_statement(&statement),
@@ -245,7 +246,7 @@ pub fn get_prepared_statement(
                     variables: prep_stmt.argtypes.clone(),
                     details,
                 })
-            },
+            }
 
             stmt => {
                 let statement = protobuf::RawStmt {
@@ -254,14 +255,16 @@ pub fn get_prepared_statement(
                     stmt_len: 0,
                 };
 
+                let details = parse_comment(&comments, default_name);
+
                 Ok(ParsedPreparedQuery {
                     contents: deparse_statement(&statement),
                     query: statement,
                     variables: vec![],
                     details,
                 })
-            },
-        }
+            }
+        };
     } else {
         Err(PiquedError::OtherError("No statement found".to_string()))
     }
@@ -269,14 +272,12 @@ pub fn get_prepared_statement(
 
 fn deparse_statement(stmt: &RawStmt) -> String {
     let as_prepared_statement = ParseResult {
-        stmts: vec![
-            RawStmt {
-                stmt: stmt.stmt.clone(),
+        stmts: vec![RawStmt {
+            stmt: stmt.stmt.clone(),
 
-                stmt_len: 0,
-                stmt_location: 0,
-            },
-        ],
+            stmt_len: 0,
+            stmt_location: 0,
+        }],
         version: 130003,
     };
 

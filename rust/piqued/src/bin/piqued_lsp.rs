@@ -1,5 +1,5 @@
-use piqued::{lsp::lsp::{Backend}, query::query::Query, config::config::Config};
-use tower_lsp::{LspService,Server};
+use piqued::{config::config::Config, lsp::lsp::Backend, query::query::Query};
+use tower_lsp::{LspService, Server};
 
 #[tokio::main]
 async fn main() {

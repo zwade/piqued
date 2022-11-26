@@ -1,4 +1,4 @@
-use piqued::{query::query::Query, config::config::Config};
+use piqued::{config::config::Config, query::query::Query};
 
 #[tokio::main]
 async fn main() {
@@ -7,7 +7,11 @@ async fn main() {
     println!("Current config: {:#?}", config);
 
     let query = Query::new(&config).await.unwrap();
-    let result = query.client.query("SELECT name FROM \"user\"", &[]).await.unwrap();
+    let result = query
+        .client
+        .query("SELECT name FROM \"user\"", &[])
+        .await
+        .unwrap();
     for row in result {
         let col0: &str = row.get(0);
         println!("Result: {:#?}", col0);
