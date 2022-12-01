@@ -1,3 +1,5 @@
+#![feature(try_trait_v2)]
+
 pub mod parser {
     pub mod parser;
 }
@@ -17,4 +19,9 @@ pub mod codegen {
     pub mod ts {
         pub mod schema;
     }
+}
+pub mod loose_parser {
+    pub mod parse;
+    pub mod parse_cf;
+    pub mod old_loose_parser;
 }

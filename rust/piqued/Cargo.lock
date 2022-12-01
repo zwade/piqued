@@ -734,6 +734,7 @@ dependencies = [
  "pg_query",
  "serde",
  "serde_derive",
+ "sqlparser",
  "string-builder",
  "tokio",
  "tokio-postgres",
@@ -1053,6 +1054,15 @@ checksum = "02e2d2db9033d13a1567121ddd7a095ee144db4e1ca1b1bda3419bc0da294ebd"
 dependencies = [
  "libc",
  "winapi",
+]
+
+[[package]]
+name = "sqlparser"
+version = "0.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aba319938d4bfe250a769ac88278b629701024fe16f34257f9563bc628081970"
+dependencies = [
+ "log",
 ]
 
 [[package]]
