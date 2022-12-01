@@ -23,5 +23,4 @@ pub mod codegen {
 pub mod loose_parser {
     pub mod parse;
     pub mod parse_cf;
-    pub mod old_loose_parser;
 }

@@ -1,4 +1,8 @@
-use std::{ops::{Try, ControlFlow, FromResidual}, sync::Arc, convert::Infallible};
+use std::{
+    convert::Infallible,
+    ops::{ControlFlow, FromResidual, Try},
+    sync::Arc,
+};
 
 use sqlparser::tokenizer::Token;
 
@@ -23,15 +27,39 @@ pub enum ColumnExpression {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub enum TableLike {
+    Table(String),
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub struct FromExpression {
+    pub table: Arc<TableLike>,
+    pub alias: Option<String>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub struct SelectQuery {
+    pub columns: Vec<Arc<ColumnExpression>>,
+    pub from: Option<Vec<Arc<FromExpression>>>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub enum LR1Kind {
     Token(Token),
     Column(Column),
     ColumnExpression(Arc<ColumnExpression>),
     ExpressionList(Vec<Arc<ColumnExpression>>),
     Expression(Arc<Expression>),
+    TableLike(Arc<TableLike>),
+    FromExpression(Arc<FromExpression>),
+    FromExpressionList(Vec<Arc<FromExpression>>),
+
+    SelectStmt(Vec<Arc<ColumnExpression>>),
+    FromStmt(Vec<Arc<FromExpression>>),
+
+    SelectQuery(Arc<SelectQuery>),
 }
 
-// We don't reference the token directly, only by index
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct LR1State {
     pub start: u32,
@@ -39,7 +67,6 @@ pub struct LR1State {
     pub kind: LR1Kind,
     pub children: Vec<Arc<LR1State>>,
 }
-
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub enum ParseCF {
