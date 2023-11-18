@@ -2,7 +2,8 @@
   "name": "piqued",
   "packageManager": "yarn@3.3.0",
   "workspaces": [
-    "*"
+    "client",
+    "lsp"
   ],
   "devDependencies": {
     "typescript": "^4.9.3"

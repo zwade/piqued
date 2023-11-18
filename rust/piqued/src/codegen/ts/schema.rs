@@ -316,22 +316,22 @@ impl CodeGenerator for TSGenerator {
         b.append("};\n\n");
 
         b.append(format!("export namespace {} {{\n", identifier));
-        b.append(indent_block(&format!(
-            "export type InputArray = {};\n",
-            input_array_type
-        )));
-        b.append(indent_block(&format!(
-            "export type InputObject = {};\n",
-            input_object_type
-        )));
-        b.append(indent_block(&format!(
-            "export type OutputArray = {};\n",
-            output_array_type
-        )));
-        b.append(indent_block(&format!(
-            "export type OutputObject = {};\n",
-            output_object_type
-        )));
+        b.append(indent_block(
+            &format!("export type InputArray = {};\n", input_array_type),
+            1,
+        ));
+        b.append(indent_block(
+            &format!("export type InputObject = {};\n", input_object_type),
+            1,
+        ));
+        b.append(indent_block(
+            &format!("export type OutputArray = {};\n", output_array_type),
+            1,
+        ));
+        b.append(indent_block(
+            &format!("export type OutputObject = {};\n", output_object_type),
+            1,
+        ));
         b.append("}");
 
         SerializationResult {

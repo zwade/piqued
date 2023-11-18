@@ -1,3 +1,5 @@
+#![feature(try_trait_v2)]
+
 use piqued::codegen::{codegen::CodeGenerationContext, ts::schema::TSGenerator};
 use std::env::{self, current_dir};
 

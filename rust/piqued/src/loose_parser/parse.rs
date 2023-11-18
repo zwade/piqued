@@ -1,23 +1,29 @@
 use std::sync::Arc;
 
 use sqlparser::{
+    dialect::PostgreSqlDialect,
     keywords::Keyword,
-    tokenizer::{Token, Word},
+    tokenizer::{Token, Tokenizer, Word},
 };
+use tower_lsp::lsp_types::Position;
 
 use super::parse_cf::{
-    Column, ColumnExpression, Expression, FromExpression, LR1Kind, LR1State, ParseCF, TableLike, SelectQuery,
+    BinopExpression, ColumnExpression, Expression, FromExpression, LR1Kind, LR1State, Operator,
+    ParseCF, SelectQuery, TableLike, UnopExpression,
 };
 
-pub struct ParserContext<'a> {
-    tokens: &'a Vec<Token>,
+pub struct ParserContext {
+    tokens: Vec<Token>,
 
     next_token: usize,
     stack: Vec<Arc<LR1State>>,
 }
 
-impl<'a> ParserContext<'a> {
-    pub fn new(tokens: &'a Vec<Token>) -> Self {
+impl ParserContext {
+    pub fn new(sql: &String) -> Self {
+        let dialect = PostgreSqlDialect {};
+        let tokens = Tokenizer::new(&dialect, sql).tokenize().unwrap();
+
         ParserContext {
             tokens,
             next_token: 0,
@@ -25,11 +31,8 @@ impl<'a> ParserContext<'a> {
         }
     }
 
-    pub fn parse(&mut self) -> &Vec<Arc<LR1State>> {
-        let mut iter_count = 0;
-
+    pub fn parse<'a>(&'a mut self) -> ParserResult<'a> {
         loop {
-            iter_count += 1;
             let result = self.iterate_once();
             match result {
                 ParseCF::NotApplicable => {
@@ -95,17 +98,18 @@ impl<'a> ParserContext<'a> {
             }
         }
 
-        println!("Iterated {} times", iter_count);
-        &self.stack
+        ParserResult::new(&self.tokens, self.stack.clone())
     }
 
     fn iterate_once(&mut self) -> ParseCF {
         let tok = self.tokens.get(self.next_token).unwrap_or(&Token::EOF);
 
-        self.shift_whitespace(tok)?;
+        self.reduce_expression_1(tok)?;
+        self.reduce_operators(tok)?;
+        self.reduce_wildcard(tok)?;
 
-        self.reduce_expressions(tok)?;
-        self.reduce_table_column(tok)?;
+        self.shift_operators(tok)?;
+
         self.reduce_expression_list(tok)?;
         self.reduce_from_expression_list(tok)?;
         self.reduce_select_stmt(tok)?;
@@ -114,6 +118,7 @@ impl<'a> ParserContext<'a> {
 
         self.shift_identifier(tok)?;
         self.shift_keyword(tok)?;
+        self.shift_whitespace(tok)?;
 
         if let Token::EOF = tok {
             ParseCF::NotApplicable
@@ -134,8 +139,11 @@ impl<'a> ParserContext<'a> {
         match tok {
             Token::Word(Word {
                 keyword: Keyword::NoKeyword,
+                value,
                 ..
-            }) => ParseCF::Shifted(LR1Kind::Token(tok.clone())),
+            }) => ParseCF::Shifted(LR1Kind::Expression(Arc::new(Expression::Identifier(
+                value.clone(),
+            )))),
 
             _ => ParseCF::NotApplicable,
         }
@@ -152,12 +160,8 @@ impl<'a> ParserContext<'a> {
         }
     }
 
-    fn reduce_expressions(&self, _tok: &Token) -> ParseCF {
-        if self.stack.len() < 1 {
-            return ParseCF::NotApplicable;
-        }
-
-        let first = self.stack.get(self.stack.len() - 1).unwrap();
+    fn reduce_expression_1(&self, _tok: &Token) -> ParseCF {
+        let first = self.get_1()?;
 
         match &first.kind {
             LR1Kind::Token(Token::SingleQuotedString(string)) => ParseCF::Reduced((
@@ -190,9 +194,111 @@ impl<'a> ParserContext<'a> {
                 ..
             })) => ParseCF::Reduced((1, LR1Kind::Expression(Arc::new(Expression::NullLiteral)))),
 
-            LR1Kind::Column(c) => ParseCF::Reduced((
+            _ => ParseCF::NotApplicable,
+        }
+    }
+
+    fn reduce_binop(&self, _tok: &Token) -> ParseCF {
+        let (_third, second, first) = self.get_3_opt();
+
+        let preceding_token = second.map(|state| state.kind.clone());
+        let binop = match &first?.kind {
+            LR1Kind::Token(op) => Operator::binop_from_token(op)?,
+            _ => None?,
+        };
+
+        match (preceding_token, binop) {
+            (Some(LR1Kind::Expression(_)), binop) => {
+                ParseCF::Reduced((1, LR1Kind::Operator(binop)))
+            }
+
+            _ => ParseCF::NotApplicable,
+        }
+    }
+
+    fn reduce_unop(&self, _tok: &Token) -> ParseCF {
+        let first = self.get_1()?;
+        let unop = match &first.kind {
+            LR1Kind::Token(op) => Operator::unop_from_token(op)?,
+            _ => None?,
+        };
+
+        ParseCF::Reduced((1, LR1Kind::Operator(unop)))
+    }
+
+    fn reduce_binop_expression(&self, tok: &Token) -> ParseCF {
+        let (third, second, first) = self.get_3()?;
+        let upcoming_precedence = Operator::precedence_from_token(tok).map_or(255, |p| p);
+
+        match (&third.kind, &second.kind, &first.kind) {
+            (
+                LR1Kind::Expression(left),
+                LR1Kind::Operator(Operator::Binop(binop)),
+                LR1Kind::Expression(right),
+            ) => {
+                let current_precedence = binop.precedence;
+                if current_precedence > upcoming_precedence {
+                    ParseCF::NotApplicable
+                } else {
+                    ParseCF::Reduced((
+                        3,
+                        LR1Kind::Expression(Arc::new(Expression::BinopExpression(
+                            BinopExpression {
+                                left: left.clone(),
+                                right: right.clone(),
+                                operator: binop.clone(),
+                            },
+                        ))),
+                    ))
+                }
+            }
+
+            _ => ParseCF::NotApplicable,
+        }
+    }
+
+    fn reduce_unop_expression(&self, tok: &Token) -> ParseCF {
+        let (second, first) = self.get_2()?;
+        let upcoming_precedence = Operator::precedence_from_token(tok).map_or(127, |p| p);
+
+        match (&second.kind, &first.kind) {
+            (LR1Kind::Operator(Operator::Unop(unop)), LR1Kind::Expression(expr)) => {
+                let current_precedence = unop.precedence;
+                if current_precedence > upcoming_precedence {
+                    ParseCF::NotApplicable
+                } else {
+                    ParseCF::Reduced((
+                        2,
+                        LR1Kind::Expression(Arc::new(Expression::UnopExpression(UnopExpression {
+                            expression: expr.clone(),
+                            operator: unop.clone(),
+                        }))),
+                    ))
+                }
+            }
+
+            _ => ParseCF::NotApplicable,
+        }
+    }
+
+    fn reduce_operators(&self, tok: &Token) -> ParseCF {
+        self.reduce_binop(tok)?;
+        self.reduce_unop(tok)?;
+        self.reduce_binop_expression(tok)?;
+        self.reduce_unop_expression(tok)?;
+
+        ParseCF::NotApplicable
+    }
+
+    fn reduce_wildcard(&self, _tok: &Token) -> ParseCF {
+        let (second, first) = self.get_2()?;
+
+        match (&second.kind, &first.kind) {
+            (LR1Kind::Expression(_), LR1Kind::Token(Token::Mul)) => ParseCF::NotApplicable,
+
+            (_, LR1Kind::Token(Token::Mul)) => ParseCF::Reduced((
                 1,
-                LR1Kind::Expression(Arc::new(Expression::Column(c.clone()))),
+                LR1Kind::Expression(Arc::new(Expression::WildcardLiteral)),
             )),
 
             _ => ParseCF::NotApplicable,
@@ -482,32 +588,23 @@ impl<'a> ParserContext<'a> {
         ParseCF::NotApplicable
     }
 
-    fn reduce_table_column(&self, _tok: &Token) -> ParseCF {
-        let (third, second, first) = self.get_3()?;
+    fn shift_operators(&self, tok: &Token) -> ParseCF {
+        let first = self.get_1()?;
 
-        match (&third.kind, &second.kind, &first.kind) {
-            (
-                LR1Kind::Token(Token::Word(Word {
-                    keyword: Keyword::NoKeyword,
-                    value: table_name,
-                    ..
-                })),
-                LR1Kind::Token(Token::Period),
-                LR1Kind::Token(Token::Word(Word {
-                    keyword: Keyword::NoKeyword,
-                    value: column_name,
-                    ..
-                })),
-            ) => ParseCF::Reduced((
-                3,
-                LR1Kind::Column(Column {
-                    name: column_name.clone(),
-                    table: Some(table_name.clone()),
-                }),
-            )),
-
-            _ => ParseCF::NotApplicable,
+        if let Some(op) = Operator::binop_from_token(tok) {
+            // This is weird, we do a bit of "lexer hack"ing here
+            // We only want to shift in a binop if there's an expression to the left.
+            // Otherwise, we want to shift it as a unop
+            if let LR1Kind::Expression(_) = first.kind {
+                return ParseCF::Shifted(LR1Kind::Operator(op));
+            }
         }
+
+        if let Some(op) = Operator::unop_from_token(tok) {
+            return ParseCF::Shifted(LR1Kind::Operator(op));
+        }
+
+        ParseCF::NotApplicable
     }
 
     fn reduce_select_stmt(&self, tok: &Token) -> ParseCF {
@@ -520,10 +617,10 @@ impl<'a> ParserContext<'a> {
                     ..
                 })),
                 LR1Kind::ExpressionList(from_expression_list),
-                next
+                next,
             ) if token_is_select_clause_boundary(next) => {
                 ParseCF::Reduced((2, LR1Kind::SelectStmt(from_expression_list.clone())))
-            },
+            }
 
             _ => ParseCF::NotApplicable,
         }
@@ -539,7 +636,7 @@ impl<'a> ParserContext<'a> {
                     ..
                 })),
                 LR1Kind::FromExpressionList(from_expression_list),
-                next
+                next,
             ) if token_is_select_clause_boundary(next) => {
                 ParseCF::Reduced((2, LR1Kind::FromStmt(from_expression_list.clone())))
             }
@@ -569,10 +666,7 @@ impl<'a> ParserContext<'a> {
         let (second, first) = self.get_2()?;
 
         match (&second.kind, &first.kind) {
-            (
-                LR1Kind::SelectQuery(select_query),
-                LR1Kind::FromStmt(from_stmt),
-            ) => {
+            (LR1Kind::SelectQuery(select_query), LR1Kind::FromStmt(from_stmt)) => {
                 let mut new_query = select_query.as_ref().clone();
                 new_query.from = Some(from_stmt.clone());
 
@@ -621,6 +715,109 @@ impl<'a> ParserContext<'a> {
         let first = self.stack.get(self.stack.len() - 1).unwrap();
 
         Some((third, second, first))
+    }
+
+    fn get_3_opt(
+        &self,
+    ) -> (
+        Option<&Arc<LR1State>>,
+        Option<&Arc<LR1State>>,
+        Option<&Arc<LR1State>>,
+    ) {
+        let third = if self.stack.len() >= 3 {
+            self.stack.get(self.stack.len() - 3)
+        } else {
+            None
+        };
+
+        let second = if self.stack.len() >= 2 {
+            self.stack.get(self.stack.len() - 2)
+        } else {
+            None
+        };
+
+        let first = if self.stack.len() >= 1 {
+            self.stack.get(self.stack.len() - 1)
+        } else {
+            None
+        };
+
+        (third, second, first)
+    }
+}
+
+pub struct ParserResult<'a> {
+    pub states: Vec<Arc<LR1State>>,
+    _tokens: &'a Vec<Token>,
+    token_locations: Vec<Position>,
+}
+
+impl<'a> ParserResult<'a> {
+    pub fn new(tokens: &'a Vec<Token>, results: Vec<Arc<LR1State>>) -> Self {
+        let mut token_locations = Vec::new();
+
+        let mut row = 0;
+        let mut column = 0;
+        for token in tokens {
+            token_locations.push(Position {
+                line: row,
+                character: column,
+            });
+
+            let as_str = token.to_string();
+            let has_newline = as_str.contains('\n');
+
+            if has_newline {
+                let split_strings = as_str.split('\n');
+                row += (split_strings.count() - 1) as u32;
+
+                let last_line = as_str.split('\n').last().unwrap();
+                column = last_line.len() as u32;
+            } else {
+                column += as_str.len() as u32;
+            }
+        }
+
+        Self {
+            _tokens: tokens,
+            states: results,
+            token_locations,
+        }
+    }
+
+    pub fn inspect(&self, cursor_position: &Position) -> Option<Vec<Arc<LR1State>>> {
+        let index = self
+            .token_locations
+            .iter()
+            .enumerate()
+            .fold(None, |acc, (i, position)| {
+                if position > cursor_position {
+                    acc
+                } else {
+                    Some(i)
+                }
+            })?;
+
+        fn search_tree<'a>(states: &Vec<Arc<LR1State>>, index: u32) -> Vec<Arc<LR1State>> {
+            for state in states {
+                if index >= state.start && index < state.end {
+                    let mut rec = search_tree(&state.children, index);
+                    rec.push(state.clone());
+
+                    return rec;
+                }
+            }
+
+            Vec::new()
+        }
+
+        let res = search_tree(&self.states, index as u32);
+
+        if res.len() == 0 {
+            None
+        } else {
+            Some(res)
+        }
     }
 }
 

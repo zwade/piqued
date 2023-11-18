@@ -1,20 +1,24 @@
 use piqued::loose_parser::parse::ParserContext;
-use sqlparser::dialect::PostgreSqlDialect;
-use sqlparser::tokenizer::Tokenizer;
+use tower_lsp::lsp_types::Position;
 
 fn partially_parse() {
-    let dialect = PostgreSqlDialect {};
-    let sql = "
-        SELECT
-        FROM company as foo, other bar;
+    // let sql = "
+    //     SELECT 1->>2, foo.bar as column_sample, |/3 as number_sample, -3 <=> +2
+    //     FROM company as foo, other bar;
+    // ";
+    let sql: &str = "
+        SELECT * FROM \"user\";
     ";
-    let tokens = Tokenizer::new(&dialect, sql).tokenize().unwrap();
-
     println!("Attempting to parse: {}", sql);
-    let mut token_prediction = ParserContext::new(&tokens);
+    let mut token_prediction = ParserContext::new(&sql.to_string());
     let predictions = token_prediction.parse();
+    let stack = predictions.inspect(&Position {
+        line: 1,
+        character: 9,
+    });
+    println!("Stack: {:#?}", stack);
 
-    predictions.iter().for_each(|pred| {
+    predictions.states.iter().for_each(|pred| {
         println!("{:#?}", pred.kind);
     });
 }

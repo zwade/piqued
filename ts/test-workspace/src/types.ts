@@ -4,19 +4,43 @@
 // Or file a bug report on our definitely-extant github
 
 
-export interface PersonalGuaranty {
+export type Signaturekind =
+    | "PERSONAL_GUARANTY"
+    | "CREDIT_APP_FINAL_STEP"
+    ;
+
+export interface User {
+    "id": number;
     "created_at": Date;
+    "email": string;
+    "password_hash": string;
+    "name": string;
+    "title": string;
+    "should_reset_password": boolean;
+    "notification_setting": Usernotificationsetting;
+}
+
+export interface MonitoringItem {
     "id": number;
     "name": string;
-    "email": string;
-    "phone": string;
-    "title": string;
-    "ssn": string;
-    "agreed_to_terms": boolean;
-    "accepted_on": Date;
-    "credit_application_id": number;
-    "signature_id": number;
+    "domain": Monitoreddatadomain;
+    "description": string;
+    "weight": number;
+    "valid_for": string;
 }
+
+export type Conversationsource =
+    | "SUPPLIER"
+    | "CUSTOMER"
+    ;
+
+export type Contacttype =
+    | "DEFAULT"
+    | "ACCOUNT_PAYABLE"
+    | "ACCOUNT_RECEIVABLE"
+    | "CREDIT"
+    | "TRADE_REFERENCE"
+    ;
 
 export type Meteringeventtype =
     | "QuotaGrantCreditSafe"
@@ -33,71 +57,83 @@ export type Meteringeventtype =
     | "PlaidConnectionEstablished"
     ;
 
-export type Logeventkind =
-    | "EMAIL_SENT"
-    | "OPEN"
-    | "LINK_CLICK"
-    | "ERROR"
-    ;
-
-export interface TradeReference {
-    "id": number;
-    "created_at": Date;
-    "name": string;
-    "account_number": string;
-    "phone": string;
-    "email": string;
-    "credit_application_id": number;
+export interface UserTotpValidationAttempt {
+    "user_id": number;
+    "attempted_at": Date;
 }
 
-export interface StringMonitoringPoint {
+export interface UserMfaPhone {
+    "user_id": number;
+    "phone_number": string;
+}
+
+export interface CustomerRelationships {
+    "company_id": number;
+    "customer_id": number;
+}
+
+export type Providerkind =
+    | "GOOGLE"
+    | "OUTLOOK"
+    | "IMAP"
+    | "AZURE"
+    ;
+
+export interface EmailLogEvent {
+    "email_log_id": number;
+    "event_time": Date;
+    "kind": Logeventkind;
+    "link_url": string;
+    "error": string;
+}
+
+export interface DataPollingState {
+    "id": number;
+    "domain": Monitoreddatadomain;
+    "company_id": number;
+    "expires_at": Date;
+}
+
+export type Datapollingeventstatus =
+    | "Unprocessed"
+    | "Failed"
+    | "Succeeded"
+    ;
+
+export type Creditapplicationstatus =
+    | "DRAFT"
+    | "IN_REVIEW"
+    | "APPROVED"
+    | "REJECTED"
+    | "CHANGE_REQUESTED"
+    | "BACKFILLED"
+    ;
+
+export interface BillingPeriod {
+    "id": number;
+    "start_date": Date;
+    "end_date": Date;
+    "supplier_id": number;
+}
+
+export interface NumericMonitoringPoint {
     "created_at": Date;
     "company_id": number;
     "monitoring_item_id": number;
-    "string_value": string;
+    "numeric_value": number;
 }
 
-export interface TradeReferenceV2 {
-    "id": number;
-    "created_at": Date;
-    "active": boolean;
-    "credit_application_id": number;
-    "personnel_id": number;
-    "payment_term": string;
-    "credit_limit": number;
-    "first_offered_date": Date;
-    "open_balance": number;
-    "past_due_balance": number;
-    "timeliness_of_payment": Timelinessofpayment;
-    "additional_remarks": string;
-    "company_id": number;
-}
-
-export interface NumericMonitoringChange {
+export interface StringMonitoringChange {
     "id": number;
     "monitoring_update_id": number;
     "monitoring_item_id": number;
-    "current_numeric_value": number;
-    "previous_numeric_value": number;
+    "current_string_value": string;
+    "previous_string_value": string;
     "normalized_difference_score": number;
 }
 
-export interface CreditApplicationPersonnel {
-    "credit_application_id": number;
-    "personnel_id": number;
-}
-
-export interface UserDismissedMonitoringUpdate {
-    "user_id": number;
-    "monitoring_update_id": number;
-}
-
-export interface TradeReferenceConfiguration {
-    "id": number;
-    "created_at": Date;
-    "enabled": boolean;
-    "allowlist": string[];
-    "denylist": string[];
+export interface AlembicVersion {
+    "version_num": string;
 }
 
 export interface Company {
@@ -138,42 +174,153 @@ export interface Company {
     "hide_customer_sales_rep_selection": boolean;
     "sales_rep_email_setting_skip_credit_app_submit": boolean;
     "trade_reference_configuration_id": number;
+    "disable_manual_bank_reference": boolean;
 }
 
-export interface NylasCredentialUserAssociation {
-    "user_id": number;
-    "linked_credential_email": string;
-    "id": number;
-}
-
-export type Contacttype =
-    | "DEFAULT"
-    | "ACCOUNT_PAYABLE"
-    | "ACCOUNT_RECEIVABLE"
-    | "CREDIT"
-    | "TRADE_REFERENCE"
+export type Monitoreddatadomain =
+    | "CREDITSAFE"
+    | "PLAID"
+    | "DNB"
+    | "EQUIFAX_BCIR"
+    | "EQUIFAX_BPR"
     ;
 
-export interface UserTotpRecoveryToken {
-    "id": number;
+export type Joboutcome =
+    | "success"
+    | "error"
+    | "missed_start_deadline"
+    | "cancelled"
+    ;
+
+export type Coalescepolicy =
+    | "earliest"
+    | "latest"
+    | "all"
+    ;
+
+export interface UserPendingSms {
     "user_id": number;
-    "token": string;
+    "phone_number": string;
+    "value": string;
+    "for_verification": boolean;
 }
 
-export interface UserTotpSecret {
-    "user_id": number;
-    "secret": string;
-    "verified": boolean;
-}
+export type Oldcreditapplicationstatus =
+    | "DRAFT_STEP_0"
+    | "DRAFT_STEP_1"
+    | "DRAFT_STEP_2"
+    | "DRAFT_STEP_3"
+    | "DRAFT_STEP_4"
+    | "DRAFT_STEP_5"
+    | "DRAFT_STEP_6"
+    | "DRAFT_STEP_7"
+    | "DRAFT_STEP_8"
+    | "COMPLETED"
+    | "APPROVED"
+    | "REJECTED"
+    | "CHANGE_REQUESTED"
+    | "AMMENDED"
+    ;
 
-export interface BankReference {
+export interface Signature {
     "id": number;
     "created_at": Date;
+    "signature_created_at": Date;
+    "name": string;
+    "email": string;
+    "ip": string;
+    "credit_application_id": number;
+    "kind": Signaturekind;
+}
+
+export interface EmailConfiguration {
+    "id": number;
+    "company_id": number;
+    "name": string;
+    "smtp_host": string;
+    "smtp_port": number;
+    "smtp_use_tls": boolean;
+    "imap_host": string;
+    "imap_port": number;
+    "username_is_email": boolean;
+    "imap_credentials_same_as_smtp": boolean;
+}
+
+export interface MeteringEvent {
+    "timestamp": Date;
+    "value": number;
+    "customer_id": number;
+    "billing_period_id": number;
+    "event_type": Meteringeventtype;
+    "message": string;
+}
+
+export type Creditapplicationstep =
+    | "COMPANY_INFORMATION"
+    | "PERSONNEL_INFORMATION"
+    | "TRADE_REFERENCES"
+    | "BANK_REFERENCES"
+    | "ADDITIONAL_RESPONSES"
+    | "PERSONAL_GUARANTY"
+    | "BACKFILLED"
+    | "APPLICANT_INFORMATION"
+    ;
+
+export interface MonitoringEnablement {
+    "supplier_id": number;
+    "customer_id": number;
+    "domain": Monitoreddatadomain;
+}
+
+export interface TradeReference {
+    "id": number;
+    "created_at": Date;
+    "name": string;
     "account_number": string;
-    "bank_name": string;
-    "contact_name": string;
-    "contact_phone": string;
-    "contact_email": string;
+    "phone": string;
+    "email": string;
+    "credit_application_id": number;
+}
+
+export interface StringMonitoringPoint {
+    "created_at": Date;
+    "company_id": number;
+    "monitoring_item_id": number;
+    "string_value": string;
+}
+
+export interface CreditApplicationPersonnel {
+    "credit_application_id": number;
+    "personnel_id": number;
+}
+
+export interface NoteFile {
+    "id": number;
+    "note_id": number;
+    "file_uri": string;
+    "name": string;
+    "mime_type": string;
+}
+
+export interface UserDismissedMonitoringUpdate {
+    "user_id": number;
+    "monitoring_update_id": number;
+}
+
+export interface Personnel {
+    "id": number;
+    "created_at": Date;
+    "name": string;
+    "ssn": string;
+    "passport": string;
+    "nationality": string;
+    "date_of_birth": Date;
+    "title": string;
+    "address_id": number;
+    "phone": string;
+    "email": string;
+    "type": string;
+    "percentage": number;
     "company_id": number;
 }
 
@@ -207,67 +354,6 @@ export interface CreditApplication {
     "default_credit_limit_details": string;
 }
 
-export interface EmailLog {
-    "id": number;
-    "email_from": string;
-    "emails_to": string[];
-    "credit_app_id": number;
-}
-
-export interface Address {
-    "id": number;
-    "created_at": Date;
-    "street": string;
-    "street2": string;
-    "city": string;
-    "state": string;
-    "zip_code": string;
-}
-
-export type Conversationkind =
-    | "PUBLISHED_FOR_REVIEW"
-    | "REQUESTED_CHANGES"
-    | "REJECTED"
-    | "APPROVED"
-    | "INVITED_USER"
-    | "UPDATED_SECTION"
-    | "CREATED_APP"
-    ;
-
-export interface EmailLogEvent {
-    "email_log_id": number;
-    "event_time": Date;
-    "kind": Logeventkind;
-    "link_url": string;
-    "error": string;
-}
-
-export interface CustomerInternalId {
-    "supplier_id": number;
-    "kind": Customeridkind;
-    "internal_id": string;
-    "customer_id": number;
-}
-
-export interface DataPollingEvent {
-    "id": number;
-    "data_polling_state_id": number;
-    "status": Datapollingeventstatus;
-}
-
-export type Timelinessofpayment =
-    | "ALWAYS"
-    | "OFTEN"
-    | "SOMETIMES"
-    | "NEVER"
-    ;
-
-export type Datapollingeventstatus =
-    | "Unprocessed"
-    | "Failed"
-    | "Succeeded"
-    ;
-
 export interface TradeReferenceEvent {
     "id": number;
     "created_at": Date;
@@ -280,217 +366,27 @@ export interface TradeReferenceEvent {
     "phone": string;
 }
 
-export interface MonitoringItem {
-    "id": number;
-    "name": string;
-    "domain": Monitoreddatadomain;
-    "description": string;
-    "weight": number;
-    "valid_for": string;
-}
-
-export interface UserPendingSms {
-    "user_id": number;
-    "phone_number": string;
-    "value": string;
-    "for_verification": boolean;
-}
-
-export interface Personnel {
-    "id": number;
-    "created_at": Date;
-    "name": string;
-    "ssn": string;
-    "passport": string;
-    "nationality": string;
-    "date_of_birth": Date;
-    "title": string;
-    "address_id": number;
-    "phone": string;
-    "email": string;
-    "type": string;
-    "percentage": number;
-    "company_id": number;
-}
-
-export interface UserTotpValidationAttempt {
-    "user_id": number;
-    "attempted_at": Date;
-}
-
-export interface Contact {
-    "id": number;
-    "created_at": Date;
-    "type": Contacttype;
-    "company_id": number;
-    "name": string;
-    "phone": string;
-    "email": string;
-}
-
-export interface UserMfaPhone {
-    "user_id": number;
-    "phone_number": string;
-}
-
-export type Oldcreditapplicationstatus =
-    | "DRAFT_STEP_0"
-    | "DRAFT_STEP_1"
-    | "DRAFT_STEP_2"
-    | "DRAFT_STEP_3"
-    | "DRAFT_STEP_4"
-    | "DRAFT_STEP_5"
-    | "DRAFT_STEP_6"
-    | "DRAFT_STEP_7"
-    | "DRAFT_STEP_8"
-    | "COMPLETED"
-    | "APPROVED"
-    | "REJECTED"
-    | "CHANGE_REQUESTED"
-    | "AMMENDED"
-    ;
-
-export type Usernotificationsetting =
-    | "ENABLED"
-    | "DISABLED"
-    ;
-
-export interface StringMonitoringChange {
-    "id": number;
-    "monitoring_update_id": number;
-    "monitoring_item_id": number;
-    "current_string_value": string;
-    "previous_string_value": string;
-    "normalized_difference_score": number;
-}
-
-export interface User {
-    "id": number;
-    "created_at": Date;
-    "email": string;
-    "password_hash": string;
-    "name": string;
-    "title": string;
-    "is_admin": boolean;
-    "company_id": number;
-    "should_reset_password": boolean;
-    "notification_setting": Usernotificationsetting;
-}
-
 export interface CreditApplicationCompletedStep {
     "credit_application_id": number;
     "step": Creditapplicationstep;
     "created_at": Date;
 }
 
-export interface NumericMonitoringPoint {
-    "created_at": Date;
-    "company_id": number;
-    "monitoring_item_id": number;
-    "numeric_value": number;
-}
-
-export type Creditapplicationstep =
-    | "COMPANY_INFORMATION"
-    | "PERSONNEL_INFORMATION"
-    | "TRADE_REFERENCES"
-    | "BANK_REFERENCES"
-    | "ADDITIONAL_RESPONSES"
-    | "PERSONAL_GUARANTY"
-    | "BACKFILLED"
-    | "APPLICANT_INFORMATION"
-    ;
-
-export type Joboutcome =
-    | "success"
-    | "error"
-    | "missed_start_deadline"
-    | "cancelled"
-    ;
-
-export type Creditapplicationstatus =
-    | "DRAFT"
-    | "IN_REVIEW"
-    | "APPROVED"
-    | "REJECTED"
-    | "CHANGE_REQUESTED"
-    | "BACKFILLED"
-    ;
-
-export type Providerkind =
-    | "GOOGLE"
-    | "OUTLOOK"
-    | "IMAP"
-    | "AZURE"
-    ;
-
-export interface Signature {
+export interface DemoSeller {
     "id": number;
-    "created_at": Date;
-    "signature_created_at": Date;
-    "name": string;
-    "email": string;
-    "ip": string;
-    "credit_application_id": number;
-    "kind": Signaturekind;
 }
 
-export type Signaturekind =
-    | "PERSONAL_GUARANTY"
-    | "CREDIT_APP_FINAL_STEP"
-    ;
-
-export interface AlembicVersion {
-    "version_num": string;
-}
-
-export interface BillingPeriod {
+export interface EmailLog {
     "id": number;
-    "start_date": Date;
-    "end_date": Date;
-    "supplier_id": number;
+    "email_from": string;
+    "emails_to": string[];
+    "credit_app_id": number;
 }
 
-export type Coalescepolicy =
-    | "earliest"
-    | "latest"
-    | "all"
-    ;
-
-export interface NoteFile {
-    "id": number;
-    "note_id": number;
-    "file_uri": string;
-    "name": string;
-    "mime_type": string;
-}
-
-export interface NylasLinkedCredential {
-    "email": string;
-    "access_token": string;
-    "provider": Providerkind;
-    "reply_to_email": string;
-    "reply_to_name": string;
-}
-
-export interface MeteringEvent {
-    "timestamp": Date;
-    "value": number;
-    "customer_id": number;
-    "billing_period_id": number;
-    "event_type": Meteringeventtype;
-    "message": string;
-}
-
-export interface SalesRepNickname {
-    "nickname": string;
-    "company_id": number;
-    "sales_rep_id": number;
-}
-
-export type Conversationsource =
-    | "SUPPLIER"
-    | "CUSTOMER"
+export type Country =
+    | "US"
+    | "CA"
+    | "MX"
     ;
 
 export interface ConversationEvent {
@@ -511,26 +407,99 @@ export interface ConversationEvent {
     "invited_user_name": string;
 }
 
-export type Salesreplinksettingincludeself =
-    | "PERSONALIZED_ONLY"
-    | "NON_PERSONALIZED_ONLY"
-    | "BOTH"
-    ;
-
-export interface CustomerRelationships {
-    "company_id": number;
-    "customer_id": number;
-}
-
-export interface VendorRelationships {
-    "company_id": number;
-    "vendor_id": number;
-}
-
 export type Customeridkind =
     | "OTHER"
     | "__test"
     ;
+
+export type Usernotificationsetting =
+    | "ENABLED"
+    | "DISABLED"
+    ;
+
+export interface MonitoringUpdate {
+    "id": number;
+    "created_at": Date;
+    "company_id": number;
+}
+
+export interface UserTotpRecoveryToken {
+    "id": number;
+    "user_id": number;
+    "token": string;
+}
+
+export interface BankReference {
+    "id": number;
+    "created_at": Date;
+    "account_number": string;
+    "bank_name": string;
+    "contact_name": string;
+    "contact_phone": string;
+    "contact_email": string;
+    "company_id": number;
+}
+
+export type Logeventkind =
+    | "EMAIL_SENT"
+    | "OPEN"
+    | "LINK_CLICK"
+    | "ERROR"
+    ;
+
+export interface EmailTemplate {
+    "template_name": string;
+    "subject_template": string;
+    "body_template": string;
+}
+
+export interface UserCompanyMembership {
+    "user_id": number;
+    "company_id": number;
+    "is_admin": boolean;
+}
+
+export interface NylasCredentialUserAssociation {
+    "user_id": number;
+    "linked_credential_email": string;
+    "id": number;
+}
+
+export interface PersonalGuaranty {
+    "created_at": Date;
+    "id": number;
+    "name": string;
+    "email": string;
+    "phone": string;
+    "title": string;
+    "ssn": string;
+    "agreed_to_terms": boolean;
+    "accepted_on": Date;
+    "credit_application_id": number;
+    "signature_id": number;
+}
+
+export interface UserRegistrationEmailException {
+    "id": number;
+    "email_address": string;
+}
+
+export interface NumericMonitoringChange {
+    "id": number;
+    "monitoring_update_id": number;
+    "monitoring_item_id": number;
+    "current_numeric_value": number;
+    "previous_numeric_value": number;
+    "normalized_difference_score": number;
+}
+
+export interface NylasLinkedCredential {
+    "email": string;
+    "access_token": string;
+    "provider": Providerkind;
+    "reply_to_email": string;
+    "reply_to_name": string;
+}
 
 export interface Note {
     "id": number;
@@ -542,26 +511,82 @@ export interface Note {
     "is_system_note": boolean;
 }
 
-export interface MonitoringUpdate {
+export type Salesreplinksettingincludeself =
+    | "PERSONALIZED_ONLY"
+    | "NON_PERSONALIZED_ONLY"
+    | "BOTH"
+    ;
+
+export type Timelinessofpayment =
+    | "ALWAYS"
+    | "OFTEN"
+    | "SOMETIMES"
+    | "NEVER"
+    ;
+
+export interface TradeReferenceConfiguration {
     "id": number;
     "created_at": Date;
-    "company_id": number;
+    "enabled": boolean;
+    "allowlist": string[];
+    "denylist": string[];
 }
 
-export interface DataPollingState {
+export interface UserTotpSecret {
+    "user_id": number;
+    "secret": string;
+    "verified": boolean;
+}
+
+export interface Address {
     "id": number;
-    "domain": Monitoreddatadomain;
-    "company_id": number;
-    "expires_at": Date;
+    "created_at": Date;
+    "street": string;
+    "street2": string;
+    "city": string;
+    "state": string;
+    "zip_code": string;
+    "country": Country;
 }
 
-export type Monitoreddatadomain =
-    | "CREDITSAFE"
-    | "PLAID"
-    | "DNB"
-    | "EQUIFAX_BCIR"
-    | "EQUIFAX_BPR"
+export type Tradereferenceparty =
+    | "CUSTOMER"
+    | "SUPPLIER"
+    | "REFERENCE"
     ;
+
+export interface CustomerInternalId {
+    "supplier_id": number;
+    "kind": Customeridkind;
+    "internal_id": string;
+    "customer_id": number;
+}
+
+export interface UserRegistrationDeniedEmailDomain {
+    "id": number;
+    "email_domain": string;
+}
+
+export interface DataPollingEvent {
+    "id": number;
+    "data_polling_state_id": number;
+    "status": Datapollingeventstatus;
+}
+
+export interface VendorRelationships {
+    "company_id": number;
+    "vendor_id": number;
+}
+
+export interface Contact {
+    "id": number;
+    "created_at": Date;
+    "type": Contacttype;
+    "company_id": number;
+    "name": string;
+    "phone": string;
+    "email": string;
+}
 
 export type Tradereferenceeventtype =
     | "INITIAL_REQUEST"
@@ -574,38 +599,35 @@ export type Tradereferenceeventtype =
     | "VERIFIED"
     ;
 
-export type Tradereferenceparty =
-    | "CUSTOMER"
-    | "SUPPLIER"
-    | "REFERENCE"
+export type Conversationkind =
+    | "PUBLISHED_FOR_REVIEW"
+    | "REQUESTED_CHANGES"
+    | "REJECTED"
+    | "APPROVED"
+    | "INVITED_USER"
+    | "UPDATED_SECTION"
+    | "CREATED_APP"
     ;
 
-export interface EmailTemplate {
-    "template_name": string;
-    "subject_template": string;
-    "body_template": string;
-}
-
-export interface EmailConfiguration {
+export interface TradeReferenceV2 {
     "id": number;
+    "created_at": Date;
+    "active": boolean;
+    "credit_application_id": number;
+    "personnel_id": number;
+    "payment_term": string;
+    "credit_limit": number;
+    "first_offered_date": Date;
+    "open_balance": number;
+    "past_due_balance": number;
+    "timeliness_of_payment": Timelinessofpayment;
+    "additional_remarks": string;
     "company_id": number;
-    "name": string;
-    "smtp_host": string;
-    "smtp_port": number;
-    "smtp_use_tls": boolean;
-    "imap_host": string;
-    "imap_port": number;
-    "username_is_email": boolean;
-    "imap_credentials_same_as_smtp": boolean;
 }
 
-export interface DemoSeller {
-    "id": number;
-}
-
-export interface MonitoringEnablement {
-    "supplier_id": number;
-    "customer_id": number;
-    "domain": Monitoreddatadomain;
+export interface SalesRepNickname {
+    "nickname": string;
+    "company_id": number;
+    "sales_rep_id": number;
 }
 

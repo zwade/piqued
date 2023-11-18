@@ -9,10 +9,7 @@ use tower_lsp::lsp_types::{
 };
 use tower_lsp::{Client, LanguageServer};
 
-use crate::lsp::utils;
 use crate::query::query::Query;
-
-use super::utils::get_diagnostics;
 
 #[derive(Debug)]
 pub struct Backend {
@@ -33,7 +30,7 @@ impl Backend {
     pub async fn run_diagnostics(&self, uri: Url) {
         let file_cache = self.file_cache.lock().await;
         let file = file_cache.get(&uri.to_string());
-        let diagnostics = get_diagnostics(self, file).await;
+        let diagnostics = self.get_diagnostics(file).await;
 
         match diagnostics {
             Ok(diagnostics) => {
@@ -110,7 +107,7 @@ impl LanguageServer for Backend {
         let cache = self.file_cache.try_lock().unwrap();
         let file_data = cache.get(&file_name);
 
-        match utils::get_hover_data(self, file_data, &position).await {
+        match self.get_hover_data(file_data, &position).await {
             Err(e) => {
                 self.client
                     .log_message(MessageType::ERROR, format!("{:#?}", e))

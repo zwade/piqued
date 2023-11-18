@@ -7,17 +7,46 @@ use std::{
 use sqlparser::tokenizer::Token;
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
-pub struct Column {
-    pub name: String,
-    pub table: Option<String>,
+pub struct Unop {
+    pub token: Token,
+    pub precedence: u8,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub struct Binop {
+    pub token: Token,
+    pub precedence: u8,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub enum Operator {
+    Unop(Unop),
+    Binop(Binop),
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub struct BinopExpression {
+    pub left: Arc<Expression>,
+    pub right: Arc<Expression>,
+    pub operator: Binop,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub struct UnopExpression {
+    pub expression: Arc<Expression>,
+    pub operator: Unop,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub enum Expression {
-    Column(Column),
+    Identifier(String),
     StringLiteral(String),
     NumberLiteral(String),
     NullLiteral,
+    WildcardLiteral,
+    ScopedWildcardLiteral(String),
+    BinopExpression(BinopExpression),
+    UnopExpression(UnopExpression),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
@@ -46,8 +75,8 @@ pub struct SelectQuery {
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub enum LR1Kind {
     Token(Token),
-    Column(Column),
     ColumnExpression(Arc<ColumnExpression>),
+    Operator(Operator),
     ExpressionList(Vec<Arc<ColumnExpression>>),
     Expression(Arc<Expression>),
     TableLike(Arc<TableLike>),
