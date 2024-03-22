@@ -13,7 +13,8 @@ use tokio_postgres::{
 
 use crate::{
     config::config::Config,
-    parser::parser::{node_to_string, ParsedPreparedQuery, Result},
+    parser::parser::{node_to_string, ParsedPreparedQuery},
+    utils::result::Result,
 };
 
 #[derive(Debug)]

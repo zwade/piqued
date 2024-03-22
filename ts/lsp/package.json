@@ -77,9 +77,5 @@
     "build": "esbuild --bundle --outfile=dist/extension.js --external:vscode --platform=node --format=cjs ./src/extension.ts",
     "vscode-package": "pwd && yarn build && vsce package",
     "watch": "tsc -w"
-  },
-  "r": {
-    "build": "tsc",
-    "watch": "tsc -w"
   }
 }

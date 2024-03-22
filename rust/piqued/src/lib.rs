@@ -29,3 +29,7 @@ pub mod loose_parser {
 pub mod code_builder {
     pub mod code_builder;
 }
+
+mod utils {
+    pub mod result;
+}

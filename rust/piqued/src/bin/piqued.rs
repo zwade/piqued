@@ -21,9 +21,9 @@ async fn main() {
     };
 
     let working_dir = current_dir().unwrap().join(relative_path);
-    let config_path = working_dir.join(".piqued.toml");
+    let config_path = Config::find_dir(&working_dir).await;
+    let config = Config::load(&config_path, &working_dir).await.unwrap();
 
-    let config = Config::load(config_path.as_path().to_str()).await.unwrap();
     let codegen = CodeGenerationContext::new(working_dir.as_path(), &config).await;
 
     let ts_generator = TSGenerator::new();

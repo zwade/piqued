@@ -4,9 +4,10 @@ use crate::{
     code_builder::code_builder::CodeBuilder,
     loose_parser::{
         parse::ParserContext,
-        parse_cf::{Expression, LR1Kind, TableLike},
+        parse_cf::{Expression, LR1Kind},
     },
-    parser::parser::{self, ParsedFile, PiquedError, RelocatedStmt, Result},
+    parser::parser::{self, ParsedFile, RelocatedStmt},
+    utils::result::{PiquedError, Result},
 };
 
 use tower_lsp::lsp_types::{
@@ -52,6 +53,7 @@ impl Backend {
                         PiquedError::ParseErrorAt(e) => format!("Error parsing query at \"{e}\""),
                         PiquedError::PostgresError(e) => e,
                         PiquedError::OtherError(e) => format!("Error: {e}"),
+                        PiquedError::SerdeParseError(e) => format!("Error: {e}"),
                     };
 
                     diagnostics.push(Diagnostic::new(
