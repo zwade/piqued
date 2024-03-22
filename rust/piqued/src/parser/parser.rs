@@ -232,7 +232,7 @@ fn deparse_statement(stmt: &RawStmt) -> String {
 
 pub fn node_to_string(node: Node) -> Option<String> {
     match node.node {
-        Some(NodeEnum::String(str)) => Some(str.str),
+        Some(NodeEnum::String(str)) => Some(str.sval),
         _ => None,
     }
 }
