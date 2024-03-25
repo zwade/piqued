@@ -1,7 +1,10 @@
 {
   "name": "@piqued/client",
+  "version": "0.1.0",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "packageManager": "yarn@3.3.0",
+  "license": "MIT",
   "peerDependencies": {
     "pg": "*"
   },

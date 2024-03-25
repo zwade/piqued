@@ -92,7 +92,7 @@ impl<'a> Query<'a> {
                 stmt_len: 0,
                 stmt_location: 0,
             }],
-            version: 130003,
+            version: 160001,
         };
 
         let prepared_statement = as_prepared_statement.deparse().unwrap();

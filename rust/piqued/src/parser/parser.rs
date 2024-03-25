@@ -224,7 +224,7 @@ fn deparse_statement(stmt: &RawStmt) -> String {
             stmt_len: 0,
             stmt_location: 0,
         }],
-        version: 130003,
+        version: 160001,
     };
 
     as_prepared_statement.deparse().unwrap()

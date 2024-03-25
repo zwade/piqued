@@ -37,7 +37,7 @@ export const QueryExecutor = <IA extends any[], IO, OA, OO>(
     query: Query<IA, IO, OA, OO>,
     pool: Pool
 ): QueryExecutor<IA, IO, OA, OO> => (args) => {
-    const argsAsArray =
+    const argsAsArray: unknown[] =
         Array.isArray(args) ? args :
         query.params.map((param) => args[param]);
 
