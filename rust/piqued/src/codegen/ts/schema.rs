@@ -91,7 +91,7 @@ impl TSGenerator {
 impl CodeGenerator for TSGenerator {
     fn serialize_import(
         &self,
-        _ctx: &CodeGenerationContext,
+        ctx: &CodeGenerationContext,
         path: &PathBuf,
         identifiers: &Vec<String>,
     ) -> ImportResult {
@@ -100,6 +100,11 @@ impl CodeGenerator for TSGenerator {
         b.append(identifiers.join(", "));
         b.append(" } from \"");
         b.append(path.as_path().to_str().unwrap());
+
+        if ctx.config.emit.module_type.to_lowercase() == "esm" {
+            b.append(".js");
+        }
+
         b.append("\";");
 
         ImportResult {

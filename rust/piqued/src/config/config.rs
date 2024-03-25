@@ -1,7 +1,4 @@
-use std::{
-    ffi::OsStr,
-    path::{Path, PathBuf},
-};
+use std::path::PathBuf;
 
 use crate::utils::result::Result;
 use serde_derive::Deserialize;
@@ -30,6 +27,8 @@ pub struct PostgresConfig {
 pub struct EmitConfig {
     #[serde(default = "default_type_file")]
     pub type_file: String,
+    #[serde(default = "default_module_type")]
+    pub module_type: String,
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Deserialize, Default)]
@@ -78,7 +77,12 @@ fn default_postgres_obj() -> PostgresConfig {
 fn default_emit_obj() -> EmitConfig {
     EmitConfig {
         type_file: default_type_file(),
+        module_type: default_module_type().to_string(),
     }
+}
+
+fn default_module_type() -> String {
+    "CommonJS".to_string()
 }
 
 impl Config {
