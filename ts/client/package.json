@@ -1,6 +1,6 @@
 {
   "name": "@piqued/client",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "packageManager": "yarn@3.3.0",
@@ -11,5 +11,10 @@
   "devDependencies": {
     "@types/pg": "^8.6.5",
     "typescript": "^4.9.3"
-  }
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ]
 }
