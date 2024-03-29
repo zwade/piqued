@@ -28,7 +28,10 @@ import pg from "pg";
 const pool = new pg.Pool()
 const queries = userQueries(pool);
 
-queries.getUser({ userId: 2 }).one().then(console.log);
+queries
+    .getUser({ userId: 2 })
+    .one()
+    .then(({ name, email }) => console.log(name, email));
 ```
 
 ## Author(s)
