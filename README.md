@@ -13,6 +13,24 @@ Piqued is not even remotely stable. I'm building the boat as I set sail so that 
 - 🧩 Custom Type Parsing
 - 🖥️ Language Server
 
+## Examples
+
+```sql
+-- @params user_id
+PREPARE get_user (int) AS
+    SELECT "user" FROM "user" WHERE id=$1;
+```
+
+```ts
+import userQueries from "./userQueries";
+import pg from "pg";
+
+const pool = new pg.Pool()
+const queries = userQueries(pool);
+
+queries.getUser({ userId: 2 }).one().then(console.log);
+```
+
 ## Author(s)
 
 Just me for now! [@zwade](https://github.com/zwade)/[@zwad3](https://twitter.com/zwad3)
