@@ -13,9 +13,8 @@ let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
     console.log("Activating server")
-    const command = context.asAbsolutePath("./bins/piqued_lsp");
     const options: Executable = {
-        command,
+        command: "piqued_lsp",
         transport: TransportKind.stdio,
         options: {
             env: { ...process.env, RUST_LOG: "debug" },

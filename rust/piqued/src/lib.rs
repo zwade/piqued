@@ -27,7 +27,7 @@ pub mod loose_parser {
     pub mod parse_cf;
 }
 pub mod code_builder {
-    pub mod code_builder;
+    pub mod codegen_helper;
 }
 
 mod utils {

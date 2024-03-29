@@ -1,7 +1,7 @@
 use std::iter::zip;
 
 use crate::{
-    code_builder::code_builder::CodeBuilder,
+    code_builder::codegen_helper::CodegenHelper,
     loose_parser::{
         parse::ParserContext,
         parse_cf::{Expression, LR1Kind},
@@ -168,18 +168,18 @@ impl Backend {
     }
 
     fn get_hover_data_for_kind(&self, kind: &LR1Kind) -> Option<Hover> {
-        let mut builder = CodeBuilder::new();
+        let mut builder = CodegenHelper::new(&"  ", "\n");
 
         match kind {
             LR1Kind::Expression(exp) => {
                 if let Expression::Identifier(table_name) = exp.as_ref() {
                     let table_data = self.query.tables.get(table_name)?;
 
-                    builder.writeln(format!("{} (", table_name));
-                    builder.indent();
-                    format_table_like(&mut builder, table_data);
-                    builder.unindent();
-                    builder.writeln(")".to_string());
+                    builder.write_line(Some(&format!("{} (", table_name)));
+                    builder.with_indent(|mut builder| {
+                        format_table_like(&mut builder, table_data);
+                    });
+                    builder.write_line(Some(&")"));
 
                     Some(Hover {
                         contents: HoverContents::Array(vec![
@@ -189,7 +189,7 @@ impl Backend {
                             }),
                             MarkedString::LanguageString(LanguageString {
                                 language: "pgsql".to_string(),
-                                value: builder.string(),
+                                value: builder.serialize(),
                             }),
                         ]),
                         range: None,

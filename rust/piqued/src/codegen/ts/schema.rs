@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use crate::{
+    code_builder::codegen_helper::CodegenHelper,
     codegen::{
         codegen::{
             CodeGenerationContext, CodeGenerator, ImportResult, QueryContext, SerializationResult,
@@ -23,6 +24,34 @@ impl ResolvedType {
             ResolvedType::Native(_) => vec![],
             ResolvedType::Import(path) => vec![path.to_string()],
             ResolvedType::Array(inner) => inner._get_imports(),
+        }
+    }
+
+    pub fn get_type(&self) -> String {
+        match self {
+            ResolvedType::Native(val) => val.to_string(),
+            ResolvedType::Import(val) => format!("{}.t", val.to_string()),
+            ResolvedType::Array(inner) => format!("{}[]", inner.get_type()),
+        }
+    }
+
+    pub fn get_spec(&self) -> String {
+        match self {
+            ResolvedType::Native(val) if val == "number" => "Number".to_string(),
+            ResolvedType::Native(val) if val == "string" => "String".to_string(),
+            ResolvedType::Native(val) if val == "boolean" => "Boolean".to_string(),
+            ResolvedType::Native(val) if val == "Date" => "Date".to_string(),
+            ResolvedType::Native(_) => "String".to_string(),
+            ResolvedType::Import(val) => format!("{}.spec", val.to_string()),
+            ResolvedType::Array(inner) => format!("[{}]", inner.get_spec()),
+        }
+    }
+
+    pub fn is_ultimately_custom_type(&self) -> bool {
+        match self {
+            ResolvedType::Native(_) => false,
+            ResolvedType::Import(_) => true,
+            ResolvedType::Array(inner) => inner.is_ultimately_custom_type(),
         }
     }
 }
@@ -57,7 +86,7 @@ impl TSGenerator {
             "int4" | "int8" | "float4" | "float8" | "numeric" => "number",
             "text" | "bytea" | "varchar" | "char" | "uuid" => "string",
             "bool" => "boolean",
-            "date" | "timestamp" | "time" => "Date",
+            "date" | "timestamp" | "time" | "timestamptz" => "Date",
             "json" | "jsonb" => "any",
             _ => "string",
         };
@@ -147,52 +176,110 @@ impl CodeGenerator for TSGenerator {
     ) -> SerializationResult {
         match type_ {
             CustomType::Composite(CompositeType { name, fields, .. }) => {
+                let mut c = CodegenHelper::new("    ", "\n");
+
                 let identifier = to_camel_case(name, true);
                 let mut imports: Vec<String> = vec![];
 
-                let mut b = Builder::default();
-                b.append("export interface ");
-                b.append((&identifier).as_bytes());
-                b.append(" {\n");
+                c.write_token("export namespace");
+                c.write_token(&identifier);
+                c.write_line(Some(&"{"));
+                c.with_indent(|c| {
+                    c.write_line(Some(&"export type t = {"));
+                    c.with_indent(|c| {
+                        for field in fields {
+                            let native_type = self.resolve_type(ctx, &field.type_name);
 
-                for field in fields {
-                    let native_type = self.resolve_type(ctx, &field.type_name);
+                            c.with_duouble_quote(|c| c.write(&field.name));
+                            c.write_symbol(": ");
+                            c.write(&&native_type.get_type());
+                            c.write_symbol(";");
+                            c.write_line(None);
 
-                    b.append("    \"");
-                    b.append(field.name.as_bytes());
-                    b.append("\": ");
-                    b.append(native_type.to_string());
-                    b.append(";\n");
+                            imports.push(field.type_name.clone());
+                        }
+                    });
+                    c.write_line(Some(&"};"));
 
-                    imports.push(field.type_name.clone());
-                }
+                    c.write_line(None);
 
-                b.append("}");
+                    c.write_line(Some(&"export const spec = {"));
+                    c.with_indent(|c| {
+                        c.write_line(Some(&"kind: \"composite\" as const,"));
+                        c.write_line(Some(&"fields: () => ["));
+                        c.with_indent(|c| {
+                            for field in fields {
+                                let native_type = self.resolve_type(ctx, &field.type_name);
+
+                                c.write_symbol("[");
+                                c.with_duouble_quote(|c| c.write(&field.name));
+                                c.write_symbol(", ");
+                                c.write(&&native_type.get_spec());
+                                c.write_symbol("],");
+                                c.write_line(None);
+
+                                imports.push(field.type_name.clone());
+                            }
+                        });
+                        c.write_line(Some(&"] as const,"));
+                    });
+                    c.write_line(Some(&"};"));
+                });
+
+                c.write_symbol("}");
 
                 SerializationResult {
-                    generated_code: b.string().unwrap(),
+                    generated_code: c.serialize(),
                     identifier,
                     requires_import: imports,
                 }
             }
 
             CustomType::Enum(EnumType { name, values, .. }) => {
+                let mut c = CodegenHelper::new("    ", "\n");
+
                 let identifier = to_camel_case(name, true);
 
-                let mut b = Builder::default();
-                b.append("export type ");
-                b.append((&identifier).as_bytes());
-                b.append(" =\n");
+                c.write_token(&"export namespace");
+                c.write_token(&identifier);
+                c.write_line(Some(&"{"));
 
-                for value in values {
-                    b.append("    | \"");
-                    b.append(value.as_bytes());
-                    b.append("\"\n");
-                }
-                b.append("    ;");
+                c.with_indent(|c| {
+                    c.write_line(Some(&"export type t ="));
+                    c.with_indent(|c| {
+                        for value in values {
+                            c.write(&"| ");
+                            c.with_duouble_quote(|c| c.write(&value));
+                            c.write_line(None);
+                        }
+                        c.write(&";");
+                        c.write_line(None);
+                    });
+
+                    c.write_line(None);
+
+                    c.write_line(Some(&"export const spec = {"));
+                    c.with_indent(|c| {
+                        c.write_line(Some(&"kind: \"enum\" as const,"));
+                        c.write_line(Some(&"values: ["));
+
+                        c.with_indent(|c| {
+                            for value in values {
+                                c.with_duouble_quote(|c| c.write(&value));
+                                c.write_symbol(",");
+                                c.write_line(None);
+                            }
+                        });
+
+                        c.write_line(Some(&"] as const,"));
+                    });
+                    c.write_line(Some(&"};"));
+                });
+
+                c.write_line(Some(&"}"));
 
                 SerializationResult {
-                    generated_code: b.string().unwrap(),
+                    generated_code: c.serialize(),
                     identifier,
                     requires_import: vec![],
                 }
@@ -240,7 +327,7 @@ impl CodeGenerator for TSGenerator {
                         imports.push(import.clone());
                     }
 
-                    type_.to_string()
+                    type_.get_type()
                 })
                 .zip(arg_names)
                 .collect::<Vec<(String, String)>>();
@@ -281,7 +368,7 @@ impl CodeGenerator for TSGenerator {
                         imports.push(import.clone());
                     }
 
-                    return (name, resolved.to_string());
+                    return (name, resolved.get_type());
                 })
                 .collect::<Vec<(&String, String)>>();
 
@@ -300,7 +387,7 @@ impl CodeGenerator for TSGenerator {
 
             let object_types = resolved_types
                 .iter()
-                .map(|(name, type_)| format!("     \"{}\": {},\n", name, type_))
+                .map(|(name, type_)| format!("    \"{}\": {},\n", name, type_))
                 .collect::<Vec<String>>()
                 .join("");
 
@@ -310,6 +397,32 @@ impl CodeGenerator for TSGenerator {
             )
         };
 
+        let parse_spec = {
+            let resolved_types = probe_result
+                .column_names
+                .iter()
+                .zip(&probe_result.column_types)
+                .map(|(name, type_)| {
+                    let resolved = self.resolve_type(ctx, type_);
+                    match resolved {
+                        ResolvedType::Array(inner) if inner.is_ultimately_custom_type() => {
+                            (name, format!("[{}]", inner.get_spec()))
+                        }
+                        ResolvedType::Import(import) => (name, format!("{}.spec", import)),
+                        _ => (name, "undefined".to_string()),
+                    }
+                })
+                .collect::<Vec<(&String, String)>>();
+
+            let additional_spec = resolved_types
+                .iter()
+                .map(|(name, spec)| format!("        [\"{}\", {}],\n", name, spec))
+                .collect::<Vec<String>>()
+                .join("");
+
+            format!("[\n{}    ]", additional_spec)
+        };
+
         let escaped_query = parsed_query.contents.replace('`', "\\`");
 
         let mut b = Builder::default();
@@ -317,6 +430,7 @@ impl CodeGenerator for TSGenerator {
         b.append(format!("    name: \"{}\",\n", name));
         b.append(format!("    query: `{}`,\n", escaped_query));
         b.append(format!("    params: {},\n", param_names));
+        b.append(format!("    spec: {},\n", parse_spec));
         b.append("    _brand: undefined as any,\n");
         b.append("};\n\n");
 

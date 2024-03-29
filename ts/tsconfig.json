@@ -6,6 +6,7 @@
         "esModuleInterop": true,
         "skipLibCheck": true,
         "declaration": true,
-        "declarationMap": true
+        "declarationMap": true,
+        "lib": ["ESNext.Decorators", "ES2022"]
     }
 }

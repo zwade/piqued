@@ -1,4 +1,4 @@
-import { PoolClient, QueryResult, QueryResultRow } from "pg";
+import { PoolClient, QueryArrayResult, QueryResult, QueryResultRow } from "pg";
 
 (Symbol as any).dispose ??= Symbol("Symbol.dispose");
 (Symbol as any).asyncDispose ??= Symbol("Symbol.asyncDispose");
@@ -25,6 +25,20 @@ export class SmartClient {
 
         try {
             return this.client.query<T>(query, values);
+        } catch (e) {
+            console.error(`Query failed`);
+            console.error(query, values);
+            throw e;
+        }
+    }
+
+    public async queryArray<T extends any[]>(query: string, values?: any[]): Promise<QueryArrayResult<T>> {
+        if (this.active === false) {
+            throw new Error("This client is in a transaction. Please do not use it until the transaction completes.");
+        }
+
+        try {
+            return this.client.query<T>({ text: query, values, rowMode: "array" });
         } catch (e) {
             console.error(`Query failed`);
             console.error(query, values);

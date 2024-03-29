@@ -1,9 +1,24 @@
-import type { Pool, PoolClient } from "pg";
+import { Pool } from "pg";
+import { SmartClient } from "./smart-client";
+import { parseArray, parseObject } from "./parser";
+
+export type CustomParseSpec =
+    | { kind: "composite", fields: () => readonly (readonly [name: string, spec: ParseSpec])[] }
+    | { kind: "enum", values: readonly string[] };
+    ;
+
+export type ParseSpec =
+    | NumberConstructor | BooleanConstructor | StringConstructor | DateConstructor
+    | CustomParseSpec
+    ;
+
+export type ResultSpec<OO> = [name: keyof OO, spec: ParseSpec | undefined][]
 
 export type Query<IA extends any[], IO, OA, OO> = {
     name: string;
     query: string;
     params: (keyof IO)[];
+    spec: ResultSpec<OO>;
 
     _brand: {
         inputArray: IA;
@@ -15,22 +30,10 @@ export type Query<IA extends any[], IO, OA, OO> = {
 
 
 export type Cursor<OA, OO> = {
-    oneTuple: () => Promise<OA>;
-    manyTuples: () => Promise<OA[]>;
-    one: () => Promise<OO>;
-    many: () => Promise<OO[]>;
-}
-
-const makeQuery = (pool: Pool) => <T>(cb: (client: PoolClient) => Promise<T>) => async (): Promise<T> => {
-    const db = await pool.connect();
-
-    try {
-        return await cb(db);
-    } catch (e) {
-        throw e;
-    } finally {
-        db.release();
-    };
+    oneTuple: (client?: SmartClient) => Promise<OA>;
+    manyTuples: (client?: SmartClient) => Promise<OA[]>;
+    one: (client?: SmartClient) => Promise<OO>;
+    many: (client?: SmartClient) => Promise<OO[]>;
 }
 
 export const QueryExecutor = <IA extends any[], IO, OA, OO>(
@@ -41,35 +44,44 @@ export const QueryExecutor = <IA extends any[], IO, OA, OO>(
         Array.isArray(args) ? args :
         query.params.map((param) => args[param]);
 
-    const q = makeQuery(pool);
+    const q = <T>(fn: (client: SmartClient) => Promise<T>) => async (client?: SmartClient): Promise<T> => {
+        if (client) {
+            return await fn(client);
+        }
+
+        const freshClient = await pool.connect();
+        using smartClient = new SmartClient(freshClient);
+
+        return await fn(smartClient);
+    }
 
     const result: Cursor<OA, OO> =  {
         oneTuple: q(async (client) => {
-            const result = await client.query({ text: query.query, rowMode: "array", values: argsAsArray });
+            const result = await client.queryArray(query.query, argsAsArray);
             if (result.rows.length === 0) {
                 throw new Error("No results");
             }
 
-            return result.rows[0] as OA;
+            return parseArray<OO, OA>(query.spec, result.rows[0]);
         }),
 
         manyTuples: q(async (client) => {
-            const result = await client.query({ text: query.query, rowMode: "array", values: argsAsArray });
-            return result.rows as OA[];
+            const result = await client.queryArray(query.query,  argsAsArray );
+            return result.rows.map((row) => parseArray<OO, OA>(query.spec, row));
         }),
 
         one: q(async (client) => {
-            const result = await client.query({ text: query.query, values: argsAsArray });
+            const result = await client.query(query.query, argsAsArray );
             if (result.rows.length === 0) {
                 throw new Error("No results");
             }
 
-            return result.rows[0];
+            return parseObject<OO>(query.spec, result.rows[0]);
         }),
 
         many: q(async (client) => {
-            const result = await client.query({ text: query.query, values: argsAsArray });
-            return result.rows;
+            const result = await client.query(query.query, argsAsArray);
+            return result.rows.map((row) => parseObject<OO>(query.spec, row));
         }),
     };
 
