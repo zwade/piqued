@@ -31,7 +31,7 @@ const queries = userQueries(pool);
 queries
     .getUser({ userId: 2 })
     .one()
-    .then(({ name, email }) => console.log(name, email));
+    .then(({ user: { name, email } }) => console.log(name, email));
 ```
 
 ## Author(s)
