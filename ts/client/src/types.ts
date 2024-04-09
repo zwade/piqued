@@ -29,13 +29,21 @@ export type Query<IA extends any[], IO, OA, OO> = {
 };
 
 
+export type Partialify<T extends boolean, Val> = T extends true ? Partial<Val> : Val;
+
 export type Cursor<OA, OO> = {
-    optTuple: (client?: SmartClient) => Promise<OA | undefined>;
-    oneTuple: (client?: SmartClient) => Promise<OA>;
-    manyTuples: (client?: SmartClient) => Promise<OA[]>;
-    opt: (client?: SmartClient) => Promise<OO | undefined>;
-    one: (client?: SmartClient) => Promise<OO>;
-    many: (client?: SmartClient) => Promise<OO[]>;
+    optTuple: <Partial extends boolean = false>(client?: SmartClient) =>
+        Promise<Partialify<Partial, OA> | undefined>;
+    oneTuple: <Partial extends boolean = false>(client?: SmartClient) =>
+        Promise<Partialify<Partial, OA>>;
+    manyTuples: <Partial extends boolean = false>(client?: SmartClient) =>
+        Promise<Partialify<Partial, OA>[]>;
+    opt: <Partial extends boolean = false>(client?: SmartClient) =>
+        Promise<Partialify<Partial, OO> | undefined>;
+    one: <Partial extends boolean = false>(client?: SmartClient) =>
+        Promise<Partialify<Partial, OO>>;
+    many: <Partial extends boolean = false>(client?: SmartClient) =>
+        Promise<Partialify<Partial, OO>[]>;
 }
 
 export const QueryExecutor = <IA extends any[], IO, OA, OO>(
@@ -46,16 +54,19 @@ export const QueryExecutor = <IA extends any[], IO, OA, OO>(
         Array.isArray(args) ? args :
         query.params.map((param) => args[param]);
 
-    const q = <T>(fn: (client: SmartClient) => Promise<T>) => async (client?: SmartClient): Promise<T> => {
-        if (client) {
-            return await fn(client);
-        }
+    const q = <T>(fn: (client: SmartClient) => Promise<T>) =>
+        async <IS_PARTIAL extends boolean = false>(
+            client?: SmartClient
+        ): Promise<IS_PARTIAL extends true ? Partial<T> : T> => {
+            if (client) {
+                return await fn(client);
+            }
 
-        const freshClient = await pool.connect();
-        using smartClient = new SmartClient(freshClient);
+            const freshClient = await pool.connect();
+            using smartClient = new SmartClient(freshClient);
 
-        return await fn(smartClient);
-    }
+            return await fn(smartClient);
+        };
 
     const result: Cursor<OA, OO> =  {
         optTuple: q(async (client) => {
