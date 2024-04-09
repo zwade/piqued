@@ -30,8 +30,10 @@ export type Query<IA extends any[], IO, OA, OO> = {
 
 
 export type Cursor<OA, OO> = {
+    optTuple: (client?: SmartClient) => Promise<OA | undefined>;
     oneTuple: (client?: SmartClient) => Promise<OA>;
     manyTuples: (client?: SmartClient) => Promise<OA[]>;
+    opt: (client?: SmartClient) => Promise<OO | undefined>;
     one: (client?: SmartClient) => Promise<OO>;
     many: (client?: SmartClient) => Promise<OO[]>;
 }
@@ -56,6 +58,15 @@ export const QueryExecutor = <IA extends any[], IO, OA, OO>(
     }
 
     const result: Cursor<OA, OO> =  {
+        optTuple: q(async (client) => {
+            const result = await client.queryArray(query.query, argsAsArray);
+            if (result.rows.length === 0) {
+                return undefined;
+            }
+
+            return parseArray<OO, OA>(query.spec, result.rows[0]);
+        }),
+
         oneTuple: q(async (client) => {
             const result = await client.queryArray(query.query, argsAsArray);
             if (result.rows.length === 0) {
@@ -70,8 +81,17 @@ export const QueryExecutor = <IA extends any[], IO, OA, OO>(
             return result.rows.map((row) => parseArray<OO, OA>(query.spec, row));
         }),
 
+        opt: q(async (client) => {
+            const result = await client.query(query.query, argsAsArray);
+            if (result.rows.length === 0) {
+                return undefined;
+            }
+
+            return parseObject<OO>(query.spec, result.rows[0]);
+        }),
+
         one: q(async (client) => {
-            const result = await client.query(query.query, argsAsArray );
+            const result = await client.query(query.query, argsAsArray);
             if (result.rows.length === 0) {
                 throw new Error("No results");
             }

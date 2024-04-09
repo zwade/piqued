@@ -37,9 +37,9 @@ pub fn parse_single_query<'a>(query: &str) -> Result<RawStmt> {
     Ok(pg_query::parse(query)?.protobuf.stmts[0].clone())
 }
 
-pub fn load_file(contents: &String) -> Result<ParsedFile> {
-    let queries = pg_query::split_with_scanner(&contents.as_str())?;
-    let index_by_line: Vec<u32> = (contents.clone() + "\n")
+pub fn load_file(contents: &str) -> Result<ParsedFile> {
+    let queries = pg_query::split_with_scanner(&contents)?;
+    let index_by_line: Vec<u32> = (contents.to_string() + "\n")
         .split("\n")
         .scan(0, |acc, line| {
             let result = acc.clone();

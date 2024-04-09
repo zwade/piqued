@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use tokio::sync::Mutex;
+use tokio::sync::{MappedMutexGuard, Mutex, MutexGuard};
 use tower_lsp::jsonrpc;
 use tower_lsp::lsp_types::{
     DidChangeTextDocumentParams, DidOpenTextDocumentParams, Hover, HoverParams,
@@ -9,13 +9,15 @@ use tower_lsp::lsp_types::{
 };
 use tower_lsp::{Client, LanguageServer};
 
+use crate::config::config::Config;
 use crate::query::query::Query;
+use crate::workspace::workspace::Workspace;
 
 #[derive(Debug)]
 pub struct Backend {
     pub client: Client,
     pub query: Query<'static>,
-    file_cache: Mutex<HashMap<String, String>>,
+    workspaces: Mutex<Vec<Workspace<'static>>>,
 }
 
 impl Backend {
@@ -23,14 +25,38 @@ impl Backend {
         Backend {
             client,
             query,
-            file_cache: Mutex::new(HashMap::new()),
+            workspaces: Mutex::new(Vec::new()),
         }
     }
 
+    async fn workspace_for_file(
+        &self,
+        file_uri: &Url,
+    ) -> Option<MappedMutexGuard<'_, Workspace<'static>>> {
+        let file_name = file_uri.to_file_path().unwrap();
+
+        let workspace_index = self
+            .workspaces
+            .lock()
+            .await
+            .iter()
+            .position(|workspace| workspace.contains_file(&file_name))?;
+
+        let workspaces = self.workspaces.lock().await;
+        let result = MutexGuard::map(workspaces, |workspaces| &mut workspaces[workspace_index]);
+
+        Some(result)
+    }
+
     pub async fn run_diagnostics(&self, uri: Url) {
-        let file_cache = self.file_cache.lock().await;
-        let file = file_cache.get(&uri.to_string());
-        let diagnostics = self.get_diagnostics(file).await;
+        let maybe_workspace = self.workspace_for_file(&uri).await;
+
+        let workspace = match maybe_workspace {
+            Some(workspace) => workspace,
+            None => return (),
+        };
+
+        let diagnostics = workspace.get_diagnostics(uri.as_str()).await;
 
         match diagnostics {
             Ok(diagnostics) => {
@@ -49,7 +75,30 @@ impl Backend {
 
 #[tower_lsp::async_trait]
 impl LanguageServer for Backend {
-    async fn initialize(&self, _: InitializeParams) -> jsonrpc::Result<InitializeResult> {
+    async fn initialize(&self, params: InitializeParams) -> jsonrpc::Result<InitializeResult> {
+        let mut workspaces = vec![];
+
+        if let Some(folders) = params.workspace_folders {
+            for folder in folders {
+                let root_dir = folder.uri.to_file_path().unwrap();
+                let config_path = Config::find_dir(&root_dir).await;
+                let config = Config::load(&config_path, &root_dir).await;
+
+                if let Err(err) = config {
+                    self.client
+                        .log_message(MessageType::ERROR, format!("{:#?}", err))
+                        .await;
+                    continue;
+                }
+
+                let mut workspace = Workspace::new(&config.unwrap(), root_dir).await;
+                // workspace.reload().await;
+                workspaces.push(workspace)
+            }
+        }
+
+        self.workspaces.lock().await.extend(workspaces);
+
         Ok(InitializeResult {
             capabilities: ServerCapabilities {
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
@@ -73,10 +122,18 @@ impl LanguageServer for Backend {
             .log_message(MessageType::INFO, format!("Document Opened: {:#?}", params))
             .await;
 
-        self.file_cache.try_lock().unwrap().insert(
-            params.text_document.uri.to_string(),
-            params.text_document.text,
+        let maybe_workspace = self.workspace_for_file(&params.text_document.uri).await;
+
+        let workspace = match maybe_workspace {
+            Some(workspace) => workspace,
+            None => return (),
+        };
+
+        workspace.patch_file(
+            &params.text_document.uri.as_str(),
+            &params.text_document.text,
         );
+
         self.run_diagnostics(params.text_document.uri).await;
     }
 
@@ -85,10 +142,18 @@ impl LanguageServer for Backend {
             .log_message(MessageType::INFO, format!("Did change: {:#?}", params))
             .await;
 
-        self.file_cache.try_lock().unwrap().insert(
-            params.text_document.uri.to_string(),
-            params.content_changes[0].text.clone(),
+        let maybe_workspace = self.workspace_for_file(&params.text_document.uri).await;
+
+        let workspace = match maybe_workspace {
+            Some(workspace) => workspace,
+            None => return (),
+        };
+
+        workspace.patch_file(
+            &params.text_document.uri.as_str(),
+            &params.content_changes[0].text,
         );
+
         self.run_diagnostics(params.text_document.uri).await;
     }
 

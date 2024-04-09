@@ -6,72 +6,17 @@ use crate::{
         parse::ParserContext,
         parse_cf::{Expression, LR1Kind},
     },
-    parser::parser::{self, ParsedFile, RelocatedStmt},
+    parser::parser::{self},
     utils::result::{PiquedError, Result},
 };
 
 use tower_lsp::lsp_types::{
-    Diagnostic, DiagnosticSeverity, Hover, HoverContents, LanguageString, MarkedString,
-    MessageType, Position,
+    Hover, HoverContents, LanguageString, MarkedString, MessageType, Position,
 };
 
 use super::{lsp::Backend, lsp_fmt::format_table_like};
 
 impl Backend {
-    pub async fn diagnostics_for_statment(
-        &self,
-        file_contents: &String,
-        parsed: &ParsedFile,
-        stmt: &RelocatedStmt,
-    ) -> Result<()> {
-        let prepared_statement =
-            parser::get_prepared_statement(&stmt, &parsed.tokens, &file_contents, || {
-                "query".to_string()
-            })?;
-        let _ = self.query.probe_type(&prepared_statement).await?;
-
-        Ok(())
-    }
-
-    pub async fn get_diagnostics(&self, file_data: Option<&String>) -> Result<Vec<Diagnostic>> {
-        if file_data.is_none() {
-            return Err(PiquedError::OtherError("Something went wrong".to_string()));
-        }
-
-        let file_contents = file_data.unwrap();
-        let parsed = parser::load_file(&file_contents)?;
-
-        let mut diagnostics: Vec<Diagnostic> = Vec::new();
-        for stmt in &parsed.statements {
-            match self
-                .diagnostics_for_statment(file_contents, &parsed, stmt)
-                .await
-            {
-                Ok(_) => {}
-                Err(err) => {
-                    let msg = match err {
-                        PiquedError::ParseErrorAt(e) => format!("Error parsing query at \"{e}\""),
-                        PiquedError::PostgresError(e) => e,
-                        PiquedError::OtherError(e) => format!("Error: {e}"),
-                        PiquedError::SerdeParseError(e) => format!("Error: {e}"),
-                    };
-
-                    diagnostics.push(Diagnostic::new(
-                        stmt.range.clone(),
-                        Some(DiagnosticSeverity::ERROR),
-                        None,
-                        None,
-                        msg,
-                        None,
-                        None,
-                    ))
-                }
-            }
-        }
-
-        Ok(diagnostics)
-    }
-
     pub async fn get_hover_data(
         &self,
         file_data: Option<&String>,
