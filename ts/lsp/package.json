@@ -45,7 +45,7 @@
       "type": "object",
       "title": "Piqued Configuration",
       "properties": {
-        "languageServerExample.trace.server": {
+        "piqued_lsp.trace.server": {
           "scope": "window",
           "type": "string",
           "enum": [

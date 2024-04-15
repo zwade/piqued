@@ -1,5 +1,5 @@
 import { Pool } from "pg";
-import { SmartClient } from "./smart-client";
+import { SmartClient, getCurrentClient } from "./smart-client";
 import { parseArray, parseObject } from "./parser";
 
 export type CustomParseSpec =
@@ -58,8 +58,9 @@ export const QueryExecutor = <IA extends any[], IO, OA, OO>(
         async <IS_PARTIAL extends boolean = false>(
             client?: SmartClient
         ): Promise<IS_PARTIAL extends true ? Partial<T> : T> => {
-            if (client) {
-                return await fn(client);
+            const foundClient = client ?? getCurrentClient();
+            if (foundClient) {
+                return await fn(foundClient);
             }
 
             const freshClient = await pool.connect();

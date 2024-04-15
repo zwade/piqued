@@ -18,12 +18,12 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub struct Query<'a> {
+pub struct Query {
     pub client: Client,
     pub tables: HashMap<String, Vec<Column>>,
     pub custom_types_by_oid: HashMap<u32, Arc<CustomType>>,
     pub custom_types_by_name: HashMap<String, Arc<CustomType>>,
-    pub config: &'a Config,
+    pub config: Arc<Config>,
 }
 
 #[derive(Debug)]
@@ -61,8 +61,8 @@ pub struct ProbeResponse {
     pub column_names: Vec<String>,
 }
 
-impl<'a> Query<'a> {
-    pub async fn new(config: &'a Config) -> Result<Query> {
+impl Query {
+    pub async fn new(config: Arc<Config>) -> Result<Query> {
         let (client, connection) = connect(&config.postgres.uri, NoTls).await?;
 
         spawn(async move {
@@ -76,10 +76,11 @@ impl<'a> Query<'a> {
             tables: HashMap::new(),
             custom_types_by_oid: HashMap::new(),
             custom_types_by_name: HashMap::new(),
-            config,
+            config: config.clone(),
         };
-        query.load_table_schema(config).await?;
-        query.load_custom_types(config).await?;
+
+        query.load_table_schema(&config).await?;
+        query.load_custom_types(&config).await?;
 
         Ok(query)
     }

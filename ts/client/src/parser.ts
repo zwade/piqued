@@ -1,6 +1,10 @@
 import { CustomParseSpec, ParseSpec, ResultSpec } from "./types";
 
-const parsePgObject = (spec: CustomParseSpec & { kind: "composite" }, value: string) => {
+const parsePgObject = (spec: CustomParseSpec & { kind: "composite" }, value: string | null) => {
+    if (value === null) {
+        return null;
+    }
+
     let idx = 0;
 
     const consume = (expect?: string) => {

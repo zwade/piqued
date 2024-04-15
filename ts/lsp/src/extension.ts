@@ -29,7 +29,7 @@ export function activate(context: ExtensionContext) {
     const clientOptions: LanguageClientOptions = {
         documentSelector: [{ language: "pgsql" }, { language: "plaintext" }],
         synchronize: {
-            fileEvents: workspace.createFileSystemWatcher("**/*.sql"),
+            fileEvents: workspace.createFileSystemWatcher("**/*.{sql,pgsql,psql}"),
         }
     };
 

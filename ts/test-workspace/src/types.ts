@@ -4,630 +4,3282 @@
 // Or file a bug report on our definitely-extant github
 
 
-export type Signaturekind =
-    | "PERSONAL_GUARANTY"
-    | "CREDIT_APP_FINAL_STEP"
-    ;
-
-export interface User {
-    "id": number;
-    "created_at": Date;
-    "email": string;
-    "password_hash": string;
-    "name": string;
-    "title": string;
-    "should_reset_password": boolean;
-    "notification_setting": Usernotificationsetting;
+export namespace BankAccessToken {
+    export type t = {
+        "company_id": number;
+        "kind": Connectortype.t;
+        "plaid_access_token": string;
+        "plaid_user_id": string;
+        "plaid_selected_bank_ids": string[];
+        "finicity_customer_id": string;
+        "finicity_username": string;
+        "institution_id": string;
+        "id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["company_id", Number],
+            ["kind", Connectortype.spec],
+            ["plaid_access_token", String],
+            ["plaid_user_id", String],
+            ["plaid_selected_bank_ids", [String]],
+            ["finicity_customer_id", String],
+            ["finicity_username", String],
+            ["institution_id", String],
+            ["id", Number],
+        ] as const,
+    };
 }
 
-export interface MonitoringItem {
-    "id": number;
-    "name": string;
-    "domain": Monitoreddatadomain;
-    "description": string;
-    "weight": number;
-    "valid_for": string;
+export namespace NumericMonitoringPoint {
+    export type t = {
+        "created_at": Date;
+        "company_id": number;
+        "monitoring_item_id": number;
+        "numeric_value": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["created_at", Date],
+            ["company_id", Number],
+            ["monitoring_item_id", Number],
+            ["numeric_value", Number],
+        ] as const,
+    };
 }
 
-export type Conversationsource =
-    | "SUPPLIER"
-    | "CUSTOMER"
-    ;
-
-export type Contacttype =
-    | "DEFAULT"
-    | "ACCOUNT_PAYABLE"
-    | "ACCOUNT_RECEIVABLE"
-    | "CREDIT"
-    | "TRADE_REFERENCE"
-    ;
-
-export type Meteringeventtype =
-    | "QuotaGrantCreditSafe"
-    | "QuotaGrantEquifaxBCIR"
-    | "QuotaGrantEquifaxBPR"
-    | "QuotaGrantDnB"
-    | "QuotaConsumptionCreditSafe"
-    | "QuotaConsumptionEquifaxBCIR"
-    | "QuotaConsumptionEquifaxBPR"
-    | "QuotaConsumptionDnB"
-    | "ApplicationCreated"
-    | "ApplicationCompleted"
-    | "ApplicationBackfilled"
-    | "PlaidConnectionEstablished"
-    ;
-
-export interface UserTotpValidationAttempt {
-    "user_id": number;
-    "attempted_at": Date;
+export namespace BankInstitutionAlias {
+    export type t = {
+        "id": number;
+        "bank_institution_id": number;
+        "alias": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["bank_institution_id", Number],
+            ["alias", String],
+        ] as const,
+    };
 }
 
-export interface UserMfaPhone {
-    "user_id": number;
-    "phone_number": string;
+export namespace BackfillContact {
+    export type t = {
+        "id": number;
+        "created_at": Date;
+        "backfill_job_id": number;
+        "company_id": number;
+        "name": string;
+        "phone": string;
+        "email": string;
+        "status": Backfillcontactstatus.t;
+        "sequence_template_id": number;
+        "steps_completed": number;
+        "sender_id": number;
+        "credit_app_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["created_at", Date],
+            ["backfill_job_id", Number],
+            ["company_id", Number],
+            ["name", String],
+            ["phone", String],
+            ["email", String],
+            ["status", Backfillcontactstatus.spec],
+            ["sequence_template_id", Number],
+            ["steps_completed", Number],
+            ["sender_id", Number],
+            ["credit_app_id", Number],
+        ] as const,
+    };
 }
 
-export interface CustomerRelationships {
-    "company_id": number;
-    "customer_id": number;
+export namespace CreditApplicationCustomInsightAsset {
+    export type t = {
+        "credit_application_id": number;
+        "asset_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["credit_application_id", Number],
+            ["asset_id", Number],
+        ] as const,
+    };
 }
 
-export type Providerkind =
-    | "GOOGLE"
-    | "OUTLOOK"
-    | "IMAP"
-    | "AZURE"
-    ;
-
-export interface EmailLogEvent {
-    "email_log_id": number;
-    "event_time": Date;
-    "kind": Logeventkind;
-    "link_url": string;
-    "error": string;
+export namespace Userauthorizationstatus {
+    export type t =
+        | "UNAUTHORIZED"
+        | "RESTRICTED"
+        | "AUTHORIZED"
+        | "ADMIN"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "UNAUTHORIZED",
+            "RESTRICTED",
+            "AUTHORIZED",
+            "ADMIN",
+        ] as const,
+    };
 }
 
-export interface DataPollingState {
-    "id": number;
-    "domain": Monitoreddatadomain;
-    "company_id": number;
-    "expires_at": Date;
+
+export namespace Relationship {
+    export type t = {
+        "id": number;
+        "created_at": Date;
+        "seller_id": number;
+        "connected_at": Date;
+        "approved_date": Date;
+        "rejected_date": Date;
+        "applicant_name": string;
+        "applicant_email": string;
+        "applicant_title": string;
+        "buyer_id": number;
+        "is_active": boolean;
+        "default_credit_limit": number;
+        "default_credit_terms": string;
+        "needs_attention": boolean;
+        "additional_field_responses": any;
+        "status": Relationshipstatus.t;
+        "rejected_reason": string;
+        "change_requested_steps": Relationshipstep.t[];
+        "change_requested_notes": string;
+        "in_review_has_been_updated": boolean;
+        "in_review_requested_credit_limit": number;
+        "in_review_requested_credit_terms": string;
+        "in_review_requested_credit_notes": string;
+        "rejected_by_customer": boolean;
+        "default_credit_limit_details": string;
+        "change_updated_steps": Relationshipstep.t[];
+        "configuration_slug": string;
+        "fraud_level": Creditapplicationfraudlevel.t;
+        "assigned_user_id": number;
+        "tax_transcript_authorized": boolean;
+        "is_tax_exempt": boolean;
+        "invite_source": Relationshipinvitesource.t;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["created_at", Date],
+            ["seller_id", Number],
+            ["connected_at", Date],
+            ["approved_date", Date],
+            ["rejected_date", Date],
+            ["applicant_name", String],
+            ["applicant_email", String],
+            ["applicant_title", String],
+            ["buyer_id", Number],
+            ["is_active", Boolean],
+            ["default_credit_limit", Number],
+            ["default_credit_terms", String],
+            ["needs_attention", Boolean],
+            ["additional_field_responses", String],
+            ["status", Relationshipstatus.spec],
+            ["rejected_reason", String],
+            ["change_requested_steps", [Relationshipstep.spec]],
+            ["change_requested_notes", String],
+            ["in_review_has_been_updated", Boolean],
+            ["in_review_requested_credit_limit", Number],
+            ["in_review_requested_credit_terms", String],
+            ["in_review_requested_credit_notes", String],
+            ["rejected_by_customer", Boolean],
+            ["default_credit_limit_details", String],
+            ["change_updated_steps", [Relationshipstep.spec]],
+            ["configuration_slug", String],
+            ["fraud_level", Creditapplicationfraudlevel.spec],
+            ["assigned_user_id", Number],
+            ["tax_transcript_authorized", Boolean],
+            ["is_tax_exempt", Boolean],
+            ["invite_source", Relationshipinvitesource.spec],
+        ] as const,
+    };
 }
 
-export type Datapollingeventstatus =
-    | "Unprocessed"
-    | "Failed"
-    | "Succeeded"
-    ;
-
-export type Creditapplicationstatus =
-    | "DRAFT"
-    | "IN_REVIEW"
-    | "APPROVED"
-    | "REJECTED"
-    | "CHANGE_REQUESTED"
-    | "BACKFILLED"
-    ;
-
-export interface BillingPeriod {
-    "id": number;
-    "start_date": Date;
-    "end_date": Date;
-    "supplier_id": number;
+export namespace Tradereferenceparty {
+    export type t =
+        | "CUSTOMER"
+        | "SUPPLIER"
+        | "REFERENCE"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "CUSTOMER",
+            "SUPPLIER",
+            "REFERENCE",
+        ] as const,
+    };
 }
 
-export interface NumericMonitoringPoint {
-    "created_at": Date;
-    "company_id": number;
-    "monitoring_item_id": number;
-    "numeric_value": number;
+
+export namespace Sessionkind {
+    export type t =
+        | "USER"
+        | "SYSTEM"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "USER",
+            "SYSTEM",
+        ] as const,
+    };
 }
 
-export interface StringMonitoringChange {
-    "id": number;
-    "monitoring_update_id": number;
-    "monitoring_item_id": number;
-    "current_string_value": string;
-    "previous_string_value": string;
-    "normalized_difference_score": number;
+
+export namespace CompanyAsset {
+    export type t = {
+        "asset_id": number;
+        "company_asset_type": Companyassettype.t;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["asset_id", Number],
+            ["company_asset_type", Companyassettype.spec],
+        ] as const,
+    };
 }
 
-export interface AlembicVersion {
-    "version_num": string;
+export namespace Creditapplicationcontactkind {
+    export type t =
+        | "SALES_REP"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "SALES_REP",
+        ] as const,
+    };
 }
 
-export interface Company {
-    "id": number;
-    "created_at": Date;
-    "email": string;
-    "password_hash": string;
-    "ein": string;
-    "legal_name": string;
-    "dba": string;
-    "attempted_duns_fetch": boolean;
-    "biz_tag": string;
-    "address_id": number;
-    "shipping_address_id": number;
-    "state_of_incorporation": string;
-    "business_type": string;
-    "is_tax_exempt": boolean;
-    "exemption_documents": string[];
-    "po_required": boolean;
-    "duns": string;
-    "creditsafe_id": string;
-    "finicity_username": string;
-    "finicity_id": string;
-    "plaid_user_id": string;
-    "plaid_access_token": string;
-    "plaid_selected_bank_ids": string[];
-    "prefer_personal_guaranty": boolean;
-    "credit_application_branding": any;
-    "credit_app_additional_fields": any;
-    "credit_app_terms": string;
-    "efx_id": string;
-    "default_from_linked_credentials_association_id": number;
-    "require_trade_references": boolean;
-    "number_of_personal_guaranties": number;
-    "allow_skip_bank_reference": boolean;
-    "hide_credit_limit_from_customers": boolean;
-    "sales_rep_link_setting_include_self_status": Salesreplinksettingincludeself;
-    "hide_customer_sales_rep_selection": boolean;
-    "sales_rep_email_setting_skip_credit_app_submit": boolean;
-    "trade_reference_configuration_id": number;
-    "disable_manual_bank_reference": boolean;
+
+export namespace BackfillCompany {
+    export type t = {
+        "supplier_id": number;
+        "company_name": string;
+        "company_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["supplier_id", Number],
+            ["company_name", String],
+            ["company_id", Number],
+        ] as const,
+    };
 }
 
-export type Monitoreddatadomain =
-    | "CREDITSAFE"
-    | "PLAID"
-    | "DNB"
-    | "EQUIFAX_BCIR"
-    | "EQUIFAX_BPR"
-    ;
-
-export type Joboutcome =
-    | "success"
-    | "error"
-    | "missed_start_deadline"
-    | "cancelled"
-    ;
-
-export type Coalescepolicy =
-    | "earliest"
-    | "latest"
-    | "all"
-    ;
-
-export interface UserPendingSms {
-    "user_id": number;
-    "phone_number": string;
-    "value": string;
-    "for_verification": boolean;
+export namespace BankReference {
+    export type t = {
+        "id": number;
+        "created_at": Date;
+        "account_number": string;
+        "bank_name": string;
+        "contact_name": string;
+        "contact_phone": string;
+        "contact_email": string;
+        "company_id": number;
+        "routing_number": string;
+        "manual_auth_explanation": string;
+        "institution_id": string;
+        "institution_type": Connectortype.t;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["created_at", Date],
+            ["account_number", String],
+            ["bank_name", String],
+            ["contact_name", String],
+            ["contact_phone", String],
+            ["contact_email", String],
+            ["company_id", Number],
+            ["routing_number", String],
+            ["manual_auth_explanation", String],
+            ["institution_id", String],
+            ["institution_type", Connectortype.spec],
+        ] as const,
+    };
 }
 
-export type Oldcreditapplicationstatus =
-    | "DRAFT_STEP_0"
-    | "DRAFT_STEP_1"
-    | "DRAFT_STEP_2"
-    | "DRAFT_STEP_3"
-    | "DRAFT_STEP_4"
-    | "DRAFT_STEP_5"
-    | "DRAFT_STEP_6"
-    | "DRAFT_STEP_7"
-    | "DRAFT_STEP_8"
-    | "COMPLETED"
-    | "APPROVED"
-    | "REJECTED"
-    | "CHANGE_REQUESTED"
-    | "AMMENDED"
-    ;
-
-export interface Signature {
-    "id": number;
-    "created_at": Date;
-    "signature_created_at": Date;
-    "name": string;
-    "email": string;
-    "ip": string;
-    "credit_application_id": number;
-    "kind": Signaturekind;
+export namespace UserVerificationSkipped {
+    export type t = {
+        "user_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["user_id", Number],
+        ] as const,
+    };
 }
 
-export interface EmailConfiguration {
-    "id": number;
-    "company_id": number;
-    "name": string;
-    "smtp_host": string;
-    "smtp_port": number;
-    "smtp_use_tls": boolean;
-    "imap_host": string;
-    "imap_port": number;
-    "username_is_email": boolean;
-    "imap_credentials_same_as_smtp": boolean;
+export namespace Company {
+    export type t = {
+        "id": number;
+        "created_at": Date;
+        "email": string;
+        "password_hash": string;
+        "tid": string;
+        "legal_name": string;
+        "dba": string;
+        "attempted_duns_fetch": boolean;
+        "biz_tag": string;
+        "address_id": number;
+        "shipping_address_id": number;
+        "state_of_incorporation": string;
+        "business_type": string;
+        "is_tax_exempt": boolean;
+        "exemption_documents": string[];
+        "po_required": boolean;
+        "duns": string;
+        "creditsafe_id": string;
+        "efx_id": string;
+        "default_from_linked_credentials_association_id": number;
+        "hide_credit_limit_from_customers": boolean;
+        "sales_rep_link_setting_include_self_status": Salesreplinksettingincludeselfstatus.t;
+        "sales_rep_email_setting_skip_credit_app_submit": boolean;
+        "trade_reference_configuration_id": number;
+        "tid_kind": Tidkind.t;
+        "claimed": boolean;
+        "verified": boolean;
+        "submitted_ar_lead_contact_form": boolean;
+        "is_fraudulent": boolean;
+        "invoice_email": string;
+        "default_credit_terms": string;
+        "sales_rep_dashboard_enabled": boolean;
+        "is_demo": boolean;
+        "provisional": boolean;
+        "biz_tag_created_at": Date;
+        "dashboard_tier": Dashboardtier.t;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["created_at", Date],
+            ["email", String],
+            ["password_hash", String],
+            ["tid", String],
+            ["legal_name", String],
+            ["dba", String],
+            ["attempted_duns_fetch", Boolean],
+            ["biz_tag", String],
+            ["address_id", Number],
+            ["shipping_address_id", Number],
+            ["state_of_incorporation", String],
+            ["business_type", String],
+            ["is_tax_exempt", Boolean],
+            ["exemption_documents", [String]],
+            ["po_required", Boolean],
+            ["duns", String],
+            ["creditsafe_id", String],
+            ["efx_id", String],
+            ["default_from_linked_credentials_association_id", Number],
+            ["hide_credit_limit_from_customers", Boolean],
+            ["sales_rep_link_setting_include_self_status", Salesreplinksettingincludeselfstatus.spec],
+            ["sales_rep_email_setting_skip_credit_app_submit", Boolean],
+            ["trade_reference_configuration_id", Number],
+            ["tid_kind", Tidkind.spec],
+            ["claimed", Boolean],
+            ["verified", Boolean],
+            ["submitted_ar_lead_contact_form", Boolean],
+            ["is_fraudulent", Boolean],
+            ["invoice_email", String],
+            ["default_credit_terms", String],
+            ["sales_rep_dashboard_enabled", Boolean],
+            ["is_demo", Boolean],
+            ["provisional", Boolean],
+            ["biz_tag_created_at", Date],
+            ["dashboard_tier", Dashboardtier.spec],
+        ] as const,
+    };
 }
 
-export interface MeteringEvent {
-    "timestamp": Date;
-    "value": number;
-    "customer_id": number;
-    "billing_period_id": number;
-    "event_type": Meteringeventtype;
-    "message": string;
+export namespace BackfillEmailJobQueuedEmail {
+    export type t = {
+        "queued_email_id": number;
+        "job_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["queued_email_id", Number],
+            ["job_id", Number],
+        ] as const,
+    };
 }
 
-export type Creditapplicationstep =
-    | "COMPANY_INFORMATION"
-    | "PERSONNEL_INFORMATION"
-    | "TRADE_REFERENCES"
-    | "BANK_REFERENCES"
-    | "ADDITIONAL_RESPONSES"
-    | "PERSONAL_GUARANTY"
-    | "BACKFILLED"
-    | "APPLICANT_INFORMATION"
-    ;
-
-export interface MonitoringEnablement {
-    "supplier_id": number;
-    "customer_id": number;
-    "domain": Monitoreddatadomain;
+export namespace UserRegistrationDeniedEmailDomain {
+    export type t = {
+        "id": number;
+        "email_domain": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["email_domain", String],
+        ] as const,
+    };
 }
 
-export interface TradeReference {
-    "id": number;
-    "created_at": Date;
-    "name": string;
-    "account_number": string;
-    "phone": string;
-    "email": string;
-    "credit_application_id": number;
+export namespace TradeReferenceConfiguration {
+    export type t = {
+        "id": number;
+        "created_at": Date;
+        "enabled": boolean;
+        "allowlist": string[];
+        "denylist": string[];
+        "additional_remarks_context": string;
+        "default_peer_reference_data_sharing_optin": boolean;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["created_at", Date],
+            ["enabled", Boolean],
+            ["allowlist", [String]],
+            ["denylist", [String]],
+            ["additional_remarks_context", String],
+            ["default_peer_reference_data_sharing_optin", Boolean],
+        ] as const,
+    };
 }
 
-export interface StringMonitoringPoint {
-    "created_at": Date;
-    "company_id": number;
-    "monitoring_item_id": number;
-    "string_value": string;
+export namespace BankInstitution {
+    export type t = {
+        "id": number;
+        "plaid_id": string;
+        "finicity_id": string;
+        "name": string;
+        "url": string;
+        "finicity_logo": string;
+        "plaid_logo": string;
+        "plaid_updated": boolean;
+        "finicity_updated": boolean;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["plaid_id", String],
+            ["finicity_id", String],
+            ["name", String],
+            ["url", String],
+            ["finicity_logo", String],
+            ["plaid_logo", String],
+            ["plaid_updated", Boolean],
+            ["finicity_updated", Boolean],
+        ] as const,
+    };
 }
 
-export interface CreditApplicationPersonnel {
-    "credit_application_id": number;
-    "personnel_id": number;
+export namespace Relationshipinvitesource {
+    export type t =
+        | "CREDIT_APP"
+        | "BACKFILLED"
+        | "SHARE_SHEET"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "CREDIT_APP",
+            "BACKFILLED",
+            "SHARE_SHEET",
+        ] as const,
+    };
 }
 
-export interface NoteFile {
-    "id": number;
-    "note_id": number;
-    "file_uri": string;
-    "name": string;
-    "mime_type": string;
+
+export namespace BackfillSequenceTemplateStep {
+    export type t = {
+        "id": number;
+        "created_at": Date;
+        "sequence_template_id": number;
+        "sequence_step": number;
+        "business_days_since_sequence_started": number;
+        "email_template": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["created_at", Date],
+            ["sequence_template_id", Number],
+            ["sequence_step", Number],
+            ["business_days_since_sequence_started", Number],
+            ["email_template", String],
+        ] as const,
+    };
 }
 
-export interface UserDismissedMonitoringUpdate {
-    "user_id": number;
-    "monitoring_update_id": number;
+export namespace CreditApplicationContact {
+    export type t = {
+        "credit_application_id": number;
+        "contact_id": number;
+        "kind": Creditapplicationcontactkind.t;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["credit_application_id", Number],
+            ["contact_id", Number],
+            ["kind", Creditapplicationcontactkind.spec],
+        ] as const,
+    };
 }
 
-export interface Personnel {
-    "id": number;
-    "created_at": Date;
-    "name": string;
-    "ssn": string;
-    "passport": string;
-    "nationality": string;
-    "date_of_birth": Date;
-    "title": string;
-    "address_id": number;
-    "phone": string;
-    "email": string;
-    "type": string;
-    "percentage": number;
-    "company_id": number;
+export namespace Irscurrentstate {
+    export type t =
+        | "UP"
+        | "DOWN"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "UP",
+            "DOWN",
+        ] as const,
+    };
 }
 
-export interface CreditApplication {
-    "id": number;
-    "created_at": Date;
-    "seller_id": number;
-    "enable_personal_guaranty": boolean;
-    "completed_date": Date;
-    "approved_date": Date;
-    "rejected_date": Date;
-    "applicant_name": string;
-    "applicant_email": string;
-    "applicant_title": string;
-    "buyer_id": number;
-    "is_active": boolean;
-    "default_credit_limit": number;
-    "default_credit_terms": string;
-    "needs_attention": boolean;
-    "additional_field_responses": any;
-    "status": Creditapplicationstatus;
-    "rejected_reason": string;
-    "change_requested_steps": Creditapplicationstep[];
-    "change_requested_notes": string;
-    "in_review_has_been_updated": boolean;
-    "in_review_requested_credit_limit": number;
-    "in_review_requested_credit_terms": string;
-    "in_review_requested_credit_notes": string;
-    "rejected_by_customer": boolean;
-    "signer": string;
-    "default_credit_limit_details": string;
+
+export namespace ProvisionalUser {
+    export type t = {
+        "id": number;
+        "name": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["name", String],
+        ] as const,
+    };
 }
 
-export interface TradeReferenceEvent {
-    "id": number;
-    "created_at": Date;
-    "trade_reference_id": number;
-    "event_type": Tradereferenceeventtype;
-    "trade_reference_party": Tradereferenceparty;
-    "email": string;
-    "name": string;
-    "title": string;
-    "phone": string;
+export namespace BankConnectionLogs {
+    export type t = {
+        "id": number;
+        "company_id": number;
+        "kind": Connectortype.t;
+        "token": string;
+        "used": boolean;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["company_id", Number],
+            ["kind", Connectortype.spec],
+            ["token", String],
+            ["used", Boolean],
+        ] as const,
+    };
 }
 
-export interface CreditApplicationCompletedStep {
-    "credit_application_id": number;
-    "step": Creditapplicationstep;
-    "created_at": Date;
+export namespace Relationshipstep {
+    export type t =
+        | "COMPANY_INFORMATION"
+        | "ORDERING"
+        | "PERSONNEL_INFORMATION"
+        | "TRADE_REFERENCES"
+        | "BANK_REFERENCES"
+        | "ADDITIONAL_RESPONSES"
+        | "PERSONAL_GUARANTY"
+        | "BACKFILLED"
+        | "TRADE_REFERENCES_CONVERTED"
+        | "SHIPPING_LOCATIONS_CONVERTED"
+        | "TAX_EXEMPTION_CONVERTED"
+        | "APPLICANT_INFORMATION"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "COMPANY_INFORMATION",
+            "ORDERING",
+            "PERSONNEL_INFORMATION",
+            "TRADE_REFERENCES",
+            "BANK_REFERENCES",
+            "ADDITIONAL_RESPONSES",
+            "PERSONAL_GUARANTY",
+            "BACKFILLED",
+            "TRADE_REFERENCES_CONVERTED",
+            "SHIPPING_LOCATIONS_CONVERTED",
+            "TAX_EXEMPTION_CONVERTED",
+            "APPLICANT_INFORMATION",
+        ] as const,
+    };
 }
 
-export interface DemoSeller {
-    "id": number;
+
+export namespace TradeReferenceEvent {
+    export type t = {
+        "id": number;
+        "created_at": Date;
+        "trade_reference_id": number;
+        "event_type": Tradereferenceeventtype.t;
+        "trade_reference_party": Tradereferenceparty.t;
+        "email": string;
+        "name": string;
+        "title": string;
+        "phone": string;
+        "trade_reference_input_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["created_at", Date],
+            ["trade_reference_id", Number],
+            ["event_type", Tradereferenceeventtype.spec],
+            ["trade_reference_party", Tradereferenceparty.spec],
+            ["email", String],
+            ["name", String],
+            ["title", String],
+            ["phone", String],
+            ["trade_reference_input_id", Number],
+        ] as const,
+    };
 }
 
-export interface EmailLog {
-    "id": number;
-    "email_from": string;
-    "emails_to": string[];
-    "credit_app_id": number;
+export namespace Datapollingeventstatus {
+    export type t =
+        | "Unprocessed"
+        | "Failed"
+        | "Succeeded"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "Unprocessed",
+            "Failed",
+            "Succeeded",
+        ] as const,
+    };
 }
 
-export type Country =
-    | "US"
-    | "CA"
-    | "MX"
-    ;
 
-export interface ConversationEvent {
-    "id": number;
-    "created_at": Date;
-    "credit_app_id": number;
-    "user_id": number;
-    "source": Conversationsource;
-    "pending": boolean;
-    "kind": Conversationkind;
-    "requested_changes_steps": Creditapplicationstep[];
-    "requested_changes_notes": string;
-    "approved_credit_terms": string;
-    "approved_credit_limit": number;
-    "rejected_reason": string;
-    "updated_section": Creditapplicationstep;
-    "invited_user_email": string;
-    "invited_user_name": string;
+export namespace Country {
+    export type t =
+        | "US"
+        | "CA"
+        | "MX"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "US",
+            "CA",
+            "MX",
+        ] as const,
+    };
 }
 
-export type Customeridkind =
-    | "OTHER"
-    | "__test"
-    ;
 
-export type Usernotificationsetting =
-    | "ENABLED"
-    | "DISABLED"
-    ;
-
-export interface MonitoringUpdate {
-    "id": number;
-    "created_at": Date;
-    "company_id": number;
+export namespace TradeReferenceInputAssociation {
+    export type t = {
+        "id": number;
+        "trade_reference_input_id": number;
+        "trade_reference_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["trade_reference_input_id", Number],
+            ["trade_reference_id", Number],
+        ] as const,
+    };
 }
 
-export interface UserTotpRecoveryToken {
-    "id": number;
-    "user_id": number;
-    "token": string;
+export namespace Note {
+    export type t = {
+        "id": number;
+        "message": string;
+        "created_at": Date;
+        "user_id": number;
+        "credit_app_id": number;
+        "is_active": boolean;
+        "is_system_note": boolean;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["message", String],
+            ["created_at", Date],
+            ["user_id", Number],
+            ["credit_app_id", Number],
+            ["is_active", Boolean],
+            ["is_system_note", Boolean],
+        ] as const,
+    };
 }
 
-export interface BankReference {
-    "id": number;
-    "created_at": Date;
-    "account_number": string;
-    "bank_name": string;
-    "contact_name": string;
-    "contact_phone": string;
-    "contact_email": string;
-    "company_id": number;
+export namespace Connectortype {
+    export type t =
+        | "PLAID"
+        | "FINICITY"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "PLAID",
+            "FINICITY",
+        ] as const,
+    };
 }
 
-export type Logeventkind =
-    | "EMAIL_SENT"
-    | "OPEN"
-    | "LINK_CLICK"
-    | "ERROR"
-    ;
 
-export interface EmailTemplate {
-    "template_name": string;
-    "subject_template": string;
-    "body_template": string;
+export namespace NylasLinkedCredential {
+    export type t = {
+        "email": string;
+        "access_token": string;
+        "provider": Providerkind.t;
+        "reply_to_email": string;
+        "reply_to_name": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["email", String],
+            ["access_token", String],
+            ["provider", Providerkind.spec],
+            ["reply_to_email", String],
+            ["reply_to_name", String],
+        ] as const,
+    };
 }
 
-export interface UserCompanyMembership {
-    "user_id": number;
-    "company_id": number;
-    "is_admin": boolean;
+export namespace Relationshipstatus {
+    export type t =
+        | "DRAFT"
+        | "IN_REVIEW"
+        | "APPROVED"
+        | "REJECTED"
+        | "CHANGE_REQUESTED"
+        | "BACKFILLED"
+        | "PREFILLED"
+        | "INVITE_PENDING"
+        | "INVITE_ACCEPTED"
+        | "INVITE_REJECTED"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "DRAFT",
+            "IN_REVIEW",
+            "APPROVED",
+            "REJECTED",
+            "CHANGE_REQUESTED",
+            "BACKFILLED",
+            "PREFILLED",
+            "INVITE_PENDING",
+            "INVITE_ACCEPTED",
+            "INVITE_REJECTED",
+        ] as const,
+    };
 }
 
-export interface NylasCredentialUserAssociation {
-    "user_id": number;
-    "linked_credential_email": string;
-    "id": number;
+
+export namespace MonitoringUpdate {
+    export type t = {
+        "id": number;
+        "created_at": Date;
+        "company_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["created_at", Date],
+            ["company_id", Number],
+        ] as const,
+    };
 }
 
-export interface PersonalGuaranty {
-    "created_at": Date;
-    "id": number;
-    "name": string;
-    "email": string;
-    "phone": string;
-    "title": string;
-    "ssn": string;
-    "agreed_to_terms": boolean;
-    "accepted_on": Date;
-    "credit_application_id": number;
-    "signature_id": number;
+export namespace DataPollingState {
+    export type t = {
+        "id": number;
+        "domain": Monitoreddatadomain.t;
+        "company_id": number;
+        "expires_at": Date;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["domain", Monitoreddatadomain.spec],
+            ["company_id", Number],
+            ["expires_at", Date],
+        ] as const,
+    };
 }
 
-export interface UserRegistrationEmailException {
-    "id": number;
-    "email_address": string;
+export namespace MergeAccountCredential {
+    export type t = {
+        "company_id": number;
+        "merge_account_id": string;
+        "merge_account_token": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["company_id", Number],
+            ["merge_account_id", String],
+            ["merge_account_token", String],
+        ] as const,
+    };
 }
 
-export interface NumericMonitoringChange {
-    "id": number;
-    "monitoring_update_id": number;
-    "monitoring_item_id": number;
-    "current_numeric_value": number;
-    "previous_numeric_value": number;
-    "normalized_difference_score": number;
+export namespace Tradereferenceinputsource {
+    export type t =
+        | "CUSTOMER"
+        | "SUPPLIER"
+        | "FORWARD"
+        | "REFERENCE"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "CUSTOMER",
+            "SUPPLIER",
+            "FORWARD",
+            "REFERENCE",
+        ] as const,
+    };
 }
 
-export interface NylasLinkedCredential {
-    "email": string;
-    "access_token": string;
-    "provider": Providerkind;
-    "reply_to_email": string;
-    "reply_to_name": string;
+
+export namespace BackfillContactQueuedEmail {
+    export type t = {
+        "queued_email_id": number;
+        "backfill_contact_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["queued_email_id", Number],
+            ["backfill_contact_id", Number],
+        ] as const,
+    };
 }
 
-export interface Note {
-    "id": number;
-    "message": string;
-    "created_at": Date;
-    "user_id": number;
-    "credit_app_id": number;
-    "is_active": boolean;
-    "is_system_note": boolean;
+export namespace Signature {
+    export type t = {
+        "id": number;
+        "created_at": Date;
+        "signature_created_at": Date;
+        "name": string;
+        "email": string;
+        "ip": string;
+        "credit_application_id": number;
+        "kind": Signaturekind.t;
+        "user_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["created_at", Date],
+            ["signature_created_at", Date],
+            ["name", String],
+            ["email", String],
+            ["ip", String],
+            ["credit_application_id", Number],
+            ["kind", Signaturekind.spec],
+            ["user_id", Number],
+        ] as const,
+    };
 }
 
-export type Salesreplinksettingincludeself =
-    | "PERSONALIZED_ONLY"
-    | "NON_PERSONALIZED_ONLY"
-    | "BOTH"
-    ;
-
-export type Timelinessofpayment =
-    | "ALWAYS"
-    | "OFTEN"
-    | "SOMETIMES"
-    | "NEVER"
-    ;
-
-export interface TradeReferenceConfiguration {
-    "id": number;
-    "created_at": Date;
-    "enabled": boolean;
-    "allowlist": string[];
-    "denylist": string[];
+export namespace EmailConfiguration {
+    export type t = {
+        "id": number;
+        "company_id": number;
+        "name": string;
+        "smtp_host": string;
+        "smtp_port": number;
+        "smtp_use_tls": boolean;
+        "imap_host": string;
+        "imap_port": number;
+        "username_is_email": boolean;
+        "imap_credentials_same_as_smtp": boolean;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["company_id", Number],
+            ["name", String],
+            ["smtp_host", String],
+            ["smtp_port", Number],
+            ["smtp_use_tls", Boolean],
+            ["imap_host", String],
+            ["imap_port", Number],
+            ["username_is_email", Boolean],
+            ["imap_credentials_same_as_smtp", Boolean],
+        ] as const,
+    };
 }
 
-export interface UserTotpSecret {
-    "user_id": number;
-    "secret": string;
-    "verified": boolean;
+export namespace Joboutcome {
+    export type t =
+        | "success"
+        | "error"
+        | "missed_start_deadline"
+        | "cancelled"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "success",
+            "error",
+            "missed_start_deadline",
+            "cancelled",
+        ] as const,
+    };
 }
 
-export interface Address {
-    "id": number;
-    "created_at": Date;
-    "street": string;
-    "street2": string;
-    "city": string;
-    "state": string;
-    "zip_code": string;
-    "country": Country;
+
+export namespace Timelinessofpayment {
+    export type t =
+        | "ALWAYS"
+        | "OFTEN"
+        | "SOMETIMES"
+        | "NEVER"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "ALWAYS",
+            "OFTEN",
+            "SOMETIMES",
+            "NEVER",
+        ] as const,
+    };
 }
 
-export type Tradereferenceparty =
-    | "CUSTOMER"
-    | "SUPPLIER"
-    | "REFERENCE"
-    ;
 
-export interface CustomerInternalId {
-    "supplier_id": number;
-    "kind": Customeridkind;
-    "internal_id": string;
-    "customer_id": number;
+export namespace Bankconnectortype {
+    export type t =
+        | "PLAID"
+        | "FINICITY"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "PLAID",
+            "FINICITY",
+        ] as const,
+    };
 }
 
-export interface UserRegistrationDeniedEmailDomain {
-    "id": number;
-    "email_domain": string;
+
+export namespace AlembicVersion {
+    export type t = {
+        "version_num": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["version_num", String],
+        ] as const,
+    };
 }
 
-export interface DataPollingEvent {
-    "id": number;
-    "data_polling_state_id": number;
-    "status": Datapollingeventstatus;
+export namespace BankAccount {
+    export type t = {
+        "id": number;
+        "bank_access_token_id": number;
+        "kind": Connectortype.t;
+        "account_id": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["bank_access_token_id", Number],
+            ["kind", Connectortype.spec],
+            ["account_id", String],
+        ] as const,
+    };
 }
 
-export interface VendorRelationships {
-    "company_id": number;
-    "vendor_id": number;
+export namespace WebhookEventTrigger {
+    export type t = {
+        "id": number;
+        "created_at": Date;
+        "webhook_address_id": number;
+        "event_type": Webhookeventtype.t;
+        "version": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["created_at", Date],
+            ["webhook_address_id", Number],
+            ["event_type", Webhookeventtype.spec],
+            ["version", String],
+        ] as const,
+    };
 }
 
-export interface Contact {
-    "id": number;
-    "created_at": Date;
-    "type": Contacttype;
-    "company_id": number;
-    "name": string;
-    "phone": string;
-    "email": string;
+export namespace Conversationsource {
+    export type t =
+        | "SUPPLIER"
+        | "CUSTOMER"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "SUPPLIER",
+            "CUSTOMER",
+        ] as const,
+    };
 }
 
-export type Tradereferenceeventtype =
-    | "INITIAL_REQUEST"
-    | "FOLLOWUP_SCHEDULED"
-    | "FOLLOWUP_REMINDER"
-    | "CONTACT_INFO_SUBMITTED"
-    | "CONTACT_INFO_UPDATE"
-    | "STARTED"
-    | "COMPLETED"
-    | "VERIFIED"
-    ;
 
-export type Conversationkind =
-    | "PUBLISHED_FOR_REVIEW"
-    | "REQUESTED_CHANGES"
-    | "REJECTED"
-    | "APPROVED"
-    | "INVITED_USER"
-    | "UPDATED_SECTION"
-    | "CREATED_APP"
-    ;
-
-export interface TradeReferenceV2 {
-    "id": number;
-    "created_at": Date;
-    "active": boolean;
-    "credit_application_id": number;
-    "personnel_id": number;
-    "payment_term": string;
-    "credit_limit": number;
-    "first_offered_date": Date;
-    "open_balance": number;
-    "past_due_balance": number;
-    "timeliness_of_payment": Timelinessofpayment;
-    "additional_remarks": string;
-    "company_id": number;
+export namespace Sections {
+    export type t =
+        | "ORGANIZATION"
+        | "ACCOUNTS_PAYABLE"
+        | "TAX_EXEMPTIONS"
+        | "SHIPPING_LOCATIONS"
+        | "OFFICERS_OWNERS_SIGNATORIES"
+        | "BANK_REFERENCES"
+        | "TRADE_REFERENCES"
+        | "ADDITIONAL_INFORMATION"
+        | "PERSONAL_GUARANTY"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "ORGANIZATION",
+            "ACCOUNTS_PAYABLE",
+            "TAX_EXEMPTIONS",
+            "SHIPPING_LOCATIONS",
+            "OFFICERS_OWNERS_SIGNATORIES",
+            "BANK_REFERENCES",
+            "TRADE_REFERENCES",
+            "ADDITIONAL_INFORMATION",
+            "PERSONAL_GUARANTY",
+        ] as const,
+    };
 }
 
-export interface SalesRepNickname {
-    "nickname": string;
-    "company_id": number;
-    "sales_rep_id": number;
+
+export namespace Functionkind {
+    export type t =
+        | "ACCOUNTS_PAYABLE"
+        | "ACCOUNTS_RECEIVABLE"
+        | "SALES_REP"
+        | "SALES_MANAGER"
+        | "OOS"
+        | "TRADE_REFERENCE"
+        | "CREDIT_TEAM"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "ACCOUNTS_PAYABLE",
+            "ACCOUNTS_RECEIVABLE",
+            "SALES_REP",
+            "SALES_MANAGER",
+            "OOS",
+            "TRADE_REFERENCE",
+            "CREDIT_TEAM",
+        ] as const,
+    };
+}
+
+
+export namespace Backfillbatchstatus {
+    export type t =
+        | "IN_PROGRESS"
+        | "PAUSED"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "IN_PROGRESS",
+            "PAUSED",
+        ] as const,
+    };
+}
+
+
+export namespace MonitoringItem {
+    export type t = {
+        "id": number;
+        "name": string;
+        "domain": Monitoreddatadomain.t;
+        "description": string;
+        "weight": number;
+        "valid_for": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["name", String],
+            ["domain", Monitoreddatadomain.spec],
+            ["description", String],
+            ["weight", Number],
+            ["valid_for", String],
+        ] as const,
+    };
+}
+
+export namespace QueuedEmail {
+    export type t = {
+        "id": number;
+        "recipient_emails": string[];
+        "recipient_name": string;
+        "cc_emails": string[];
+        "sender": string;
+        "reply_to": string[];
+        "subject": string;
+        "body": string;
+        "sent": boolean;
+        "created_at": Date;
+        "actual_send_time": Date;
+        "canceled": boolean;
+        "override_disable_settings": boolean;
+        "mock": boolean;
+        "email_log_id": number;
+        "sendgrid_outbox": string;
+        "needs_bootstrap_email_processing": boolean;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["recipient_emails", [String]],
+            ["recipient_name", String],
+            ["cc_emails", [String]],
+            ["sender", String],
+            ["reply_to", [String]],
+            ["subject", String],
+            ["body", String],
+            ["sent", Boolean],
+            ["created_at", Date],
+            ["actual_send_time", Date],
+            ["canceled", Boolean],
+            ["override_disable_settings", Boolean],
+            ["mock", Boolean],
+            ["email_log_id", Number],
+            ["sendgrid_outbox", String],
+            ["needs_bootstrap_email_processing", Boolean],
+        ] as const,
+    };
+}
+
+export namespace CreditApplicationOverrideConfiguration {
+    export type t = {
+        "id": number;
+        "config": any;
+        "company_id": number;
+        "slug": string;
+        "name": string;
+        "inheritance_stack": string[];
+        "is_active": boolean;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["config", String],
+            ["company_id", Number],
+            ["slug", String],
+            ["name", String],
+            ["inheritance_stack", [String]],
+            ["is_active", Boolean],
+        ] as const,
+    };
+}
+
+export namespace UserTotpValidationAttempt {
+    export type t = {
+        "user_id": number;
+        "attempted_at": Date;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["user_id", Number],
+            ["attempted_at", Date],
+        ] as const,
+    };
+}
+
+export namespace Tradereferenceeventtype {
+    export type t =
+        | "INITIAL_REQUEST"
+        | "FOLLOWUP_SCHEDULED"
+        | "FOLLOWUP_REMINDER"
+        | "CONTACT_INFO_SUBMITTED"
+        | "CONTACT_INFO_UPDATE"
+        | "STARTED"
+        | "COMPLETED"
+        | "VERIFIED"
+        | "RESOLVED"
+        | "REOPENED"
+        | "FORWARDED_REQUEST"
+        | "CONTACT_INFO_DELETED"
+        | "PEER_REFERENCE_DATA_SENT"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "INITIAL_REQUEST",
+            "FOLLOWUP_SCHEDULED",
+            "FOLLOWUP_REMINDER",
+            "CONTACT_INFO_SUBMITTED",
+            "CONTACT_INFO_UPDATE",
+            "STARTED",
+            "COMPLETED",
+            "VERIFIED",
+            "RESOLVED",
+            "REOPENED",
+            "FORWARDED_REQUEST",
+            "CONTACT_INFO_DELETED",
+            "PEER_REFERENCE_DATA_SENT",
+        ] as const,
+    };
+}
+
+
+export namespace Backfillcontactstatus {
+    export type t =
+        | "QUEUED"
+        | "IN_PROGRESS"
+        | "PAUSED"
+        | "CANCELED"
+        | "SUCCEEDED"
+        | "FAILED"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "QUEUED",
+            "IN_PROGRESS",
+            "PAUSED",
+            "CANCELED",
+            "SUCCEEDED",
+            "FAILED",
+        ] as const,
+    };
+}
+
+
+export namespace EmailLogEvent {
+    export type t = {
+        "email_log_id": number;
+        "event_time": Date;
+        "kind": Logeventkind.t;
+        "link_url": string;
+        "error": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["email_log_id", Number],
+            ["event_time", Date],
+            ["kind", Logeventkind.spec],
+            ["link_url", String],
+            ["error", String],
+        ] as const,
+    };
+}
+
+export namespace Verificationstatus {
+    export type t =
+        | "SUCCESS"
+        | "FAILURE"
+        | "PENDING"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "SUCCESS",
+            "FAILURE",
+            "PENDING",
+        ] as const,
+    };
+}
+
+
+export namespace Function {
+    export type t = {
+        "id": number;
+        "contact_id": number;
+        "kind": Functionkind.t;
+        "nickname": string;
+        "is_beneficial_owner": boolean;
+        "is_initialized": boolean;
+        "address_id": number;
+        "ssn": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["contact_id", Number],
+            ["kind", Functionkind.spec],
+            ["nickname", String],
+            ["is_beneficial_owner", Boolean],
+            ["is_initialized", Boolean],
+            ["address_id", Number],
+            ["ssn", String],
+        ] as const,
+    };
+}
+
+export namespace EmailTemplate {
+    export type t = {
+        "template_name": string;
+        "subject_template": string;
+        "body_template": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["template_name", String],
+            ["subject_template", String],
+            ["body_template", String],
+        ] as const,
+    };
+}
+
+export namespace Companyidentityresolutionstatus {
+    export type t =
+        | "BYPASSED"
+        | "UNVERIFIED"
+        | "VERIFIED"
+        | "FAILED"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "BYPASSED",
+            "UNVERIFIED",
+            "VERIFIED",
+            "FAILED",
+        ] as const,
+    };
+}
+
+
+export namespace ErpNetsuiteToken {
+    export type t = {
+        "company_id": number;
+        "created_at": Date;
+        "netsuite_account_id": string;
+        "consumer_key": string;
+        "consumer_secret": string;
+        "token_id": string;
+        "token_secret": string;
+        "subsidiary_id": string;
+        "updated_at": Date;
+        "customer_form_id": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["company_id", Number],
+            ["created_at", Date],
+            ["netsuite_account_id", String],
+            ["consumer_key", String],
+            ["consumer_secret", String],
+            ["token_id", String],
+            ["token_secret", String],
+            ["subsidiary_id", String],
+            ["updated_at", Date],
+            ["customer_form_id", String],
+        ] as const,
+    };
+}
+
+export namespace BankReferenceCreditAppAssociation {
+    export type t = {
+        "id": number;
+        "bank_reference_id": number;
+        "credit_application_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["bank_reference_id", Number],
+            ["credit_application_id", Number],
+        ] as const,
+    };
+}
+
+export namespace Contact {
+    export type t = {
+        "user_id": number;
+        "company_id": number;
+        "authorization_status": Userauthorizationstatus.t;
+        "id": number;
+        "created_at": Date;
+        "email": string;
+        "title": string;
+        "provisional_user_id": number;
+        "phone_number": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["user_id", Number],
+            ["company_id", Number],
+            ["authorization_status", Userauthorizationstatus.spec],
+            ["id", Number],
+            ["created_at", Date],
+            ["email", String],
+            ["title", String],
+            ["provisional_user_id", Number],
+            ["phone_number", String],
+        ] as const,
+    };
+}
+
+export namespace CompanyVerticalSpecificInsights {
+    export type t = {
+        "id": number;
+        "created_at": Date;
+        "company_id": number;
+        "type": Verticalspecificinsightstype.t;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["created_at", Date],
+            ["company_id", Number],
+            ["type", Verticalspecificinsightstype.spec],
+        ] as const,
+    };
+}
+
+export namespace TradeReference {
+    export type t = {
+        "id": number;
+        "created_at": Date;
+        "name": string;
+        "account_number": string;
+        "phone": string;
+        "email": string;
+        "credit_application_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["created_at", Date],
+            ["name", String],
+            ["account_number", String],
+            ["phone", String],
+            ["email", String],
+            ["credit_application_id", Number],
+        ] as const,
+    };
+}
+
+export namespace Personaerror {
+    export type t =
+        | "INVALID_TID"
+        | "WRONG_TID_KIND"
+        | "INCORRECT_BUSINESS_NAME"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "INVALID_TID",
+            "WRONG_TID_KIND",
+            "INCORRECT_BUSINESS_NAME",
+        ] as const,
+    };
+}
+
+
+export namespace Customeridkind {
+    export type t =
+        | "ERP"
+        | "OTHER"
+        | "__test"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "ERP",
+            "OTHER",
+            "__test",
+        ] as const,
+    };
+}
+
+
+export namespace CompanyOrderingAddress {
+    export type t = {
+        "id": number;
+        "created_at": Date;
+        "company_id": number;
+        "address_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["created_at", Date],
+            ["company_id", Number],
+            ["address_id", Number],
+        ] as const,
+    };
+}
+
+export namespace PersonalGuaranty {
+    export type t = {
+        "created_at": Date;
+        "id": number;
+        "name": string;
+        "email": string;
+        "phone": string;
+        "title": string;
+        "ssn": string;
+        "agreed_to_terms": boolean;
+        "accepted_on": Date;
+        "credit_application_id": number;
+        "signature_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["created_at", Date],
+            ["id", Number],
+            ["name", String],
+            ["email", String],
+            ["phone", String],
+            ["title", String],
+            ["ssn", String],
+            ["agreed_to_terms", Boolean],
+            ["accepted_on", Date],
+            ["credit_application_id", Number],
+            ["signature_id", Number],
+        ] as const,
+    };
+}
+
+export namespace TidLookupHit {
+    export type t = {
+        "user_id": number;
+        "attempted_at": Date;
+        "count": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["user_id", Number],
+            ["attempted_at", Date],
+            ["count", Number],
+        ] as const,
+    };
+}
+
+export namespace Upselleventtype {
+    export type t =
+        | "TRADE_REFERENCE_EXIT_FLOW"
+        | "TRADE_REFERENCE_EMAIL"
+        | "TRADE_REFERENCE_SUBMITTED_DETAILS"
+        | "TRADE_REFERENCE_DASHBOARD_ACTION"
+        | "BUYER_DASHBOARD_ACTION"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "TRADE_REFERENCE_EXIT_FLOW",
+            "TRADE_REFERENCE_EMAIL",
+            "TRADE_REFERENCE_SUBMITTED_DETAILS",
+            "TRADE_REFERENCE_DASHBOARD_ACTION",
+            "BUYER_DASHBOARD_ACTION",
+        ] as const,
+    };
+}
+
+
+export namespace NylasCredentialUserAssociation {
+    export type t = {
+        "user_id": number;
+        "linked_credential_email": string;
+        "id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["user_id", Number],
+            ["linked_credential_email", String],
+            ["id", Number],
+        ] as const,
+    };
+}
+
+export namespace UserRegistrationEmailException {
+    export type t = {
+        "id": number;
+        "email_address": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["email_address", String],
+        ] as const,
+    };
+}
+
+export namespace UserVerificationResult {
+    export type t = {
+        "user_id": number;
+        "verification_result_id": number;
+        "initiated_by": Verificationinitiator.t;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["user_id", Number],
+            ["verification_result_id", Number],
+            ["initiated_by", Verificationinitiator.spec],
+        ] as const,
+    };
+}
+
+export namespace Sharesheeteventtype {
+    export type t =
+        | "TRADE_REFERENCE_INVITE_SENT"
+        | "INVITE_OPENED"
+        | "USER_GATE_PASSED"
+        | "COMPANY_GATE_PASSED"
+        | "CONVERTED_TO_CONNECTION"
+        | "EXISTING_RELATIONSHIP_NOOP"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "TRADE_REFERENCE_INVITE_SENT",
+            "INVITE_OPENED",
+            "USER_GATE_PASSED",
+            "COMPANY_GATE_PASSED",
+            "CONVERTED_TO_CONNECTION",
+            "EXISTING_RELATIONSHIP_NOOP",
+        ] as const,
+    };
+}
+
+
+export namespace Conversationkind {
+    export type t =
+        | "PUBLISHED_FOR_REVIEW"
+        | "REQUESTED_CHANGES"
+        | "REJECTED"
+        | "APPROVED"
+        | "INVITED_USER"
+        | "UPDATED_SECTION"
+        | "CREATED_APP"
+        | "REVIEW_REQUESTED"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "PUBLISHED_FOR_REVIEW",
+            "REQUESTED_CHANGES",
+            "REJECTED",
+            "APPROVED",
+            "INVITED_USER",
+            "UPDATED_SECTION",
+            "CREATED_APP",
+            "REVIEW_REQUESTED",
+        ] as const,
+    };
+}
+
+
+export namespace UserTotpRecoveryToken {
+    export type t = {
+        "id": number;
+        "user_id": number;
+        "token": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["user_id", Number],
+            ["token", String],
+        ] as const,
+    };
+}
+
+export namespace UserEmail {
+    export type t = {
+        "email": string;
+        "user_id": number;
+        "created_at": Date;
+        "verified": boolean;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["email", String],
+            ["user_id", Number],
+            ["created_at", Date],
+            ["verified", Boolean],
+        ] as const,
+    };
+}
+
+export namespace CompanyDomainName {
+    export type t = {
+        "domain_name": string;
+        "company_id": number;
+        "workos_organization_id": string;
+        "scim_enabled": boolean;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["domain_name", String],
+            ["company_id", Number],
+            ["workos_organization_id", String],
+            ["scim_enabled", Boolean],
+        ] as const,
+    };
+}
+
+export namespace TradeReferenceV2 {
+    export type t = {
+        "id": number;
+        "created_at": Date;
+        "active": boolean;
+        "credit_application_id": number;
+        "payment_term": string;
+        "credit_limit": number;
+        "first_offered_date": Date;
+        "open_balance": number;
+        "past_due_balance": number;
+        "timeliness_of_payment": Timelinessofpayment.t;
+        "additional_remarks": string;
+        "company_id": number;
+        "account_requested": boolean;
+        "contact_id": number;
+        "peer_reference_data_sharing_optin": boolean;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["created_at", Date],
+            ["active", Boolean],
+            ["credit_application_id", Number],
+            ["payment_term", String],
+            ["credit_limit", Number],
+            ["first_offered_date", Date],
+            ["open_balance", Number],
+            ["past_due_balance", Number],
+            ["timeliness_of_payment", Timelinessofpayment.spec],
+            ["additional_remarks", String],
+            ["company_id", Number],
+            ["account_requested", Boolean],
+            ["contact_id", Number],
+            ["peer_reference_data_sharing_optin", Boolean],
+        ] as const,
+    };
+}
+
+export namespace UserMfaPhone {
+    export type t = {
+        "user_id": number;
+        "phone_number": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["user_id", Number],
+            ["phone_number", String],
+        ] as const,
+    };
+}
+
+export namespace MeteringEvent {
+    export type t = {
+        "timestamp": Date;
+        "value": number;
+        "customer_id": number;
+        "billing_period_id": number;
+        "event_type": Meteringeventtype.t;
+        "message": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["timestamp", Date],
+            ["value", Number],
+            ["customer_id", Number],
+            ["billing_period_id", Number],
+            ["event_type", Meteringeventtype.spec],
+            ["message", String],
+        ] as const,
+    };
+}
+
+export namespace VerificationResult {
+    export type t = {
+        "id": number;
+        "created_at": Date;
+        "kind": Verificationkind.t;
+        "status": Verificationstatus.t;
+        "address_id": number;
+        "tax_id": string;
+        "first_name": string;
+        "last_name": string;
+        "date_of_birth": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["created_at", Date],
+            ["kind", Verificationkind.spec],
+            ["status", Verificationstatus.spec],
+            ["address_id", Number],
+            ["tax_id", String],
+            ["first_name", String],
+            ["last_name", String],
+            ["date_of_birth", String],
+        ] as const,
+    };
+}
+
+export namespace Providerkind {
+    export type t =
+        | "GOOGLE"
+        | "OUTLOOK"
+        | "IMAP"
+        | "AZURE"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "GOOGLE",
+            "OUTLOOK",
+            "IMAP",
+            "AZURE",
+        ] as const,
+    };
+}
+
+
+export namespace Verificationinitiator {
+    export type t =
+        | "USER"
+        | "SYSTEM"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "USER",
+            "SYSTEM",
+        ] as const,
+    };
+}
+
+
+export namespace BackfillBatch {
+    export type t = {
+        "id": number;
+        "sender_id": number;
+        "created_at": Date;
+        "status": Backfillbatchstatus.t;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["sender_id", Number],
+            ["created_at", Date],
+            ["status", Backfillbatchstatus.spec],
+        ] as const,
+    };
+}
+
+export namespace BackfillEmailJob {
+    export type t = {
+        "id": number;
+        "sender": string;
+        "template_name": string;
+        "send_as_seller": boolean;
+        "reply_to_override": string;
+        "created_at": Date;
+        "sender_id": number;
+        "status": Backfillemailjobstatus.t;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["sender", String],
+            ["template_name", String],
+            ["send_as_seller", Boolean],
+            ["reply_to_override", String],
+            ["created_at", Date],
+            ["sender_id", Number],
+            ["status", Backfillemailjobstatus.spec],
+        ] as const,
+    };
+}
+
+export namespace BillingPeriod {
+    export type t = {
+        "id": number;
+        "start_date": Date;
+        "end_date": Date;
+        "supplier_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["start_date", Date],
+            ["end_date", Date],
+            ["supplier_id", Number],
+        ] as const,
+    };
+}
+
+export namespace Coalescepolicy {
+    export type t =
+        | "earliest"
+        | "latest"
+        | "all"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "earliest",
+            "latest",
+            "all",
+        ] as const,
+    };
+}
+
+
+export namespace Creditapplicationoverrideconfigurationdbtype {
+    export type t =
+        | "COMPANY"
+        | "CREDIT_APPLICATION"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "COMPANY",
+            "CREDIT_APPLICATION",
+        ] as const,
+    };
+}
+
+
+export namespace NoteAsset {
+    export type t = {
+        "note_id": number;
+        "asset_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["note_id", Number],
+            ["asset_id", Number],
+        ] as const,
+    };
+}
+
+export namespace ConversationEvent {
+    export type t = {
+        "id": number;
+        "created_at": Date;
+        "credit_app_id": number;
+        "user_id": number;
+        "source": Conversationsource.t;
+        "pending": boolean;
+        "kind": Conversationkind.t;
+        "requested_changes_steps": Relationshipstep.t[];
+        "requested_changes_notes": string;
+        "approved_credit_terms": string;
+        "approved_credit_limit": number;
+        "rejected_reason": string;
+        "updated_section": Relationshipstep.t;
+        "invited_user_email": string;
+        "invited_user_name": string;
+        "requested_credit_terms": string;
+        "requested_credit_limit": number;
+        "requested_credit_notes": string;
+        "resolves_review_request": boolean;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["created_at", Date],
+            ["credit_app_id", Number],
+            ["user_id", Number],
+            ["source", Conversationsource.spec],
+            ["pending", Boolean],
+            ["kind", Conversationkind.spec],
+            ["requested_changes_steps", [Relationshipstep.spec]],
+            ["requested_changes_notes", String],
+            ["approved_credit_terms", String],
+            ["approved_credit_limit", Number],
+            ["rejected_reason", String],
+            ["updated_section", Relationshipstep.spec],
+            ["invited_user_email", String],
+            ["invited_user_name", String],
+            ["requested_credit_terms", String],
+            ["requested_credit_limit", Number],
+            ["requested_credit_notes", String],
+            ["resolves_review_request", Boolean],
+        ] as const,
+    };
+}
+
+export namespace BuyerCreditAppAsset {
+    export type t = {
+        "credit_application_id": number;
+        "asset_id": number;
+        "type": Creditappassettype.t;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["credit_application_id", Number],
+            ["asset_id", Number],
+            ["type", Creditappassettype.spec],
+        ] as const,
+    };
+}
+
+export namespace EmailQueueData {
+    export type t = {
+        "sender": string;
+        "schedule_id": string;
+        "sender_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["sender", String],
+            ["schedule_id", String],
+            ["sender_id", Number],
+        ] as const,
+    };
+}
+
+export namespace Contacttype {
+    export type t =
+        | "DEFAULT"
+        | "ACCOUNT_PAYABLE"
+        | "ACCOUNT_RECEIVABLE"
+        | "CREDIT"
+        | "TRADE_REFERENCE"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "DEFAULT",
+            "ACCOUNT_PAYABLE",
+            "ACCOUNT_RECEIVABLE",
+            "CREDIT",
+            "TRADE_REFERENCE",
+        ] as const,
+    };
+}
+
+
+export namespace Creditappassettype {
+    export type t =
+        | "TAX_EXEMPTION"
+        | "ADDITIONAL_QUESTION_RESPONSE"
+        | "WET_SIGNATURE"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "TAX_EXEMPTION",
+            "ADDITIONAL_QUESTION_RESPONSE",
+            "WET_SIGNATURE",
+        ] as const,
+    };
+}
+
+
+export namespace User {
+    export type t = {
+        "id": number;
+        "created_at": Date;
+        "password_hash": string;
+        "full_name": string;
+        "title": string;
+        "should_reset_password": boolean;
+        "notification_setting": Usernotificationsetting.t;
+        "is_suspended": boolean;
+        "super_user": boolean;
+        "first_name": string;
+        "last_name": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["created_at", Date],
+            ["password_hash", String],
+            ["full_name", String],
+            ["title", String],
+            ["should_reset_password", Boolean],
+            ["notification_setting", Usernotificationsetting.spec],
+            ["is_suspended", Boolean],
+            ["super_user", Boolean],
+            ["first_name", String],
+            ["last_name", String],
+        ] as const,
+    };
+}
+
+export namespace Address {
+    export type t = {
+        "id": number;
+        "created_at": Date;
+        "street": string;
+        "street2": string;
+        "city": string;
+        "state": string;
+        "zip_code": string;
+        "country": Country.t;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["created_at", Date],
+            ["street", String],
+            ["street2", String],
+            ["city", String],
+            ["state", String],
+            ["zip_code", String],
+            ["country", Country.spec],
+        ] as const,
+    };
+}
+
+export namespace Asset {
+    export type t = {
+        "id": number;
+        "created_at": Date;
+        "owner_company_id": number;
+        "is_active": boolean;
+        "uri": string;
+        "asset_type": Assettype.t;
+        "name": string;
+        "description": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["created_at", Date],
+            ["owner_company_id", Number],
+            ["is_active", Boolean],
+            ["uri", String],
+            ["asset_type", Assettype.spec],
+            ["name", String],
+            ["description", String],
+        ] as const,
+    };
+}
+
+export namespace DelayedEmail {
+    export type t = {
+        "email_slug": string;
+        "number_sent_emails": number;
+        "created_at": Date;
+        "last_sent_at": Date;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["email_slug", String],
+            ["number_sent_emails", Number],
+            ["created_at", Date],
+            ["last_sent_at", Date],
+        ] as const,
+    };
+}
+
+export namespace ProvisionalUserInsert {
+    export type t = {
+        "id": number;
+        "company_id": number;
+        "email": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["company_id", Number],
+            ["email", String],
+        ] as const,
+    };
+}
+
+export namespace DataPollingEvent {
+    export type t = {
+        "id": number;
+        "data_polling_state_id": number;
+        "status": Datapollingeventstatus.t;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["data_polling_state_id", Number],
+            ["status", Datapollingeventstatus.spec],
+        ] as const,
+    };
+}
+
+export namespace PersonaNotification {
+    export type t = {
+        "name": string;
+        "tid": string;
+        "user_id": number;
+        "seller_id": number;
+        "kind": Personanotificationkind.t;
+        "trade_reference_id": number;
+        "company_id": number;
+        "id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["name", String],
+            ["tid", String],
+            ["user_id", Number],
+            ["seller_id", Number],
+            ["kind", Personanotificationkind.spec],
+            ["trade_reference_id", Number],
+            ["company_id", Number],
+            ["id", Number],
+        ] as const,
+    };
+}
+
+export namespace AuthenticationToken {
+    export type t = {
+        "session_id_mac": string;
+        "kind": Sessionkind.t;
+        "user_id": number;
+        "company_id": number;
+        "impersonator_user_id": number;
+        "impersonator_company_id": number;
+        "created_at": Date;
+        "updated_at": Date;
+        "expired_at": Date;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["session_id_mac", String],
+            ["kind", Sessionkind.spec],
+            ["user_id", Number],
+            ["company_id", Number],
+            ["impersonator_user_id", Number],
+            ["impersonator_company_id", Number],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["expired_at", Date],
+        ] as const,
+    };
+}
+
+export namespace Meteringeventtype {
+    export type t =
+        | "QuotaGrantCreditSafe"
+        | "QuotaGrantEquifaxBCIR"
+        | "QuotaGrantEquifaxBPR"
+        | "QuotaGrantDnB"
+        | "QuotaConsumptionCreditSafe"
+        | "QuotaConsumptionEquifaxBCIR"
+        | "QuotaConsumptionEquifaxBPR"
+        | "QuotaConsumptionDnB"
+        | "ApplicationCreated"
+        | "ApplicationCompleted"
+        | "ApplicationBackfilled"
+        | "PlaidConnectionEstablished"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "QuotaGrantCreditSafe",
+            "QuotaGrantEquifaxBCIR",
+            "QuotaGrantEquifaxBPR",
+            "QuotaGrantDnB",
+            "QuotaConsumptionCreditSafe",
+            "QuotaConsumptionEquifaxBCIR",
+            "QuotaConsumptionEquifaxBPR",
+            "QuotaConsumptionDnB",
+            "ApplicationCreated",
+            "ApplicationCompleted",
+            "ApplicationBackfilled",
+            "PlaidConnectionEstablished",
+        ] as const,
+    };
+}
+
+
+export namespace Signaturekind {
+    export type t =
+        | "PERSONAL_GUARANTY"
+        | "CREDIT_APP_FINAL_STEP"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "PERSONAL_GUARANTY",
+            "CREDIT_APP_FINAL_STEP",
+        ] as const,
+    };
+}
+
+
+export namespace Verificationkind {
+    export type t =
+        | "PERSONAL_ID"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "PERSONAL_ID",
+        ] as const,
+    };
+}
+
+
+export namespace PersonaCache {
+    export type t = {
+        "name": string;
+        "tid": string;
+        "status": Companyidentityresolutionstatus.t;
+        "tid_kind": Tidkind.t;
+        "persona_task_id": string;
+        "failure_reasons": Personaerror.t[];
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["name", String],
+            ["tid", String],
+            ["status", Companyidentityresolutionstatus.spec],
+            ["tid_kind", Tidkind.spec],
+            ["persona_task_id", String],
+            ["failure_reasons", [Personaerror.spec]],
+        ] as const,
+    };
+}
+
+export namespace UserTotpSecret {
+    export type t = {
+        "user_id": number;
+        "secret": string;
+        "verified": boolean;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["user_id", Number],
+            ["secret", String],
+            ["verified", Boolean],
+        ] as const,
+    };
+}
+
+export namespace BackfillSequenceTemplate {
+    export type t = {
+        "id": number;
+        "created_at": Date;
+        "name": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["created_at", Date],
+            ["name", String],
+        ] as const,
+    };
+}
+
+export namespace Webhookeventtype {
+    export type t =
+        | "CREDIT_APP_NEW"
+        | "CREDIT_LIMIT_CHANGE"
+        | "CREDIT_APP_STATUS_CHANGE"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "CREDIT_APP_NEW",
+            "CREDIT_LIMIT_CHANGE",
+            "CREDIT_APP_STATUS_CHANGE",
+        ] as const,
+    };
+}
+
+
+export namespace Backfillemailjobstatus {
+    export type t =
+        | "QUEUED"
+        | "IN_PROGRESS"
+        | "PAUSED"
+        | "CANCELED"
+        | "SUCCEEDED"
+        | "FAILED"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "QUEUED",
+            "IN_PROGRESS",
+            "PAUSED",
+            "CANCELED",
+            "SUCCEEDED",
+            "FAILED",
+        ] as const,
+    };
+}
+
+
+export namespace Personanotificationkind {
+    export type t =
+        | "CREDIT_APP"
+        | "TRADE_REFERENCE"
+        | "ONBOARDING"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "CREDIT_APP",
+            "TRADE_REFERENCE",
+            "ONBOARDING",
+        ] as const,
+    };
+}
+
+
+export namespace Dashboardtier {
+    export type t =
+        | "SELF_SERVE"
+        | "FULL"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "SELF_SERVE",
+            "FULL",
+        ] as const,
+    };
+}
+
+
+export namespace Oldcreditapplicationstatus {
+    export type t =
+        | "DRAFT_STEP_0"
+        | "DRAFT_STEP_1"
+        | "DRAFT_STEP_2"
+        | "DRAFT_STEP_3"
+        | "DRAFT_STEP_4"
+        | "DRAFT_STEP_5"
+        | "DRAFT_STEP_6"
+        | "DRAFT_STEP_7"
+        | "DRAFT_STEP_8"
+        | "COMPLETED"
+        | "APPROVED"
+        | "REJECTED"
+        | "CHANGE_REQUESTED"
+        | "AMMENDED"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "DRAFT_STEP_0",
+            "DRAFT_STEP_1",
+            "DRAFT_STEP_2",
+            "DRAFT_STEP_3",
+            "DRAFT_STEP_4",
+            "DRAFT_STEP_5",
+            "DRAFT_STEP_6",
+            "DRAFT_STEP_7",
+            "DRAFT_STEP_8",
+            "COMPLETED",
+            "APPROVED",
+            "REJECTED",
+            "CHANGE_REQUESTED",
+            "AMMENDED",
+        ] as const,
+    };
+}
+
+
+export namespace Creditapplicationfraudlevel {
+    export type t =
+        | "NORMAL"
+        | "SUSPICIOUS"
+        | "FRAUDULENT"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "NORMAL",
+            "SUSPICIOUS",
+            "FRAUDULENT",
+        ] as const,
+    };
+}
+
+
+export namespace UserDismissedMonitoringUpdate {
+    export type t = {
+        "user_id": number;
+        "monitoring_update_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["user_id", Number],
+            ["monitoring_update_id", Number],
+        ] as const,
+    };
+}
+
+export namespace Logeventkind {
+    export type t =
+        | "EMAIL_SENT"
+        | "OPEN"
+        | "LINK_CLICK"
+        | "ERROR"
+        | "EMAIL_QUEUED"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "EMAIL_SENT",
+            "OPEN",
+            "LINK_CLICK",
+            "ERROR",
+            "EMAIL_QUEUED",
+        ] as const,
+    };
+}
+
+
+export namespace StringMonitoringPoint {
+    export type t = {
+        "created_at": Date;
+        "company_id": number;
+        "monitoring_item_id": number;
+        "string_value": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["created_at", Date],
+            ["company_id", Number],
+            ["monitoring_item_id", Number],
+            ["string_value", String],
+        ] as const,
+    };
+}
+
+export namespace TradeReferenceInputCreditAppAssociation {
+    export type t = {
+        "id": number;
+        "trade_reference_input_id": number;
+        "credit_application_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["trade_reference_input_id", Number],
+            ["credit_application_id", Number],
+        ] as const,
+    };
+}
+
+export namespace Tidkind {
+    export type t =
+        | "EIN"
+        | "SSN"
+        | "ITIN"
+        | "FOREIGN"
+        | "UNKNOWN"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "EIN",
+            "SSN",
+            "ITIN",
+            "FOREIGN",
+            "UNKNOWN",
+        ] as const,
+    };
+}
+
+
+export namespace WorkosEventCheckpoint {
+    export type t = {
+        "created_at": Date;
+        "updated_at": Date;
+        "event_checkpoint": string;
+        "key_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["event_checkpoint", String],
+            ["key_id", Number],
+        ] as const,
+    };
+}
+
+export namespace TradeReferenceInput {
+    export type t = {
+        "created_at": Date;
+        "updated_at": Date;
+        "id": number;
+        "legacy_id": string;
+        "active": boolean;
+        "source": Tradereferenceinputsource.t;
+        "source_company_id": number;
+        "company_name": string;
+        "email_address": string;
+        "phone_number": string;
+        "account_number": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["id", Number],
+            ["legacy_id", String],
+            ["active", Boolean],
+            ["source", Tradereferenceinputsource.spec],
+            ["source_company_id", Number],
+            ["company_name", String],
+            ["email_address", String],
+            ["phone_number", String],
+            ["account_number", String],
+        ] as const,
+    };
+}
+
+export namespace EmailLog {
+    export type t = {
+        "id": number;
+        "email_from": string;
+        "emails_to": string[];
+        "credit_app_id": number;
+        "template_name": string;
+        "created_at": Date;
+        "updated_at": Date;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["email_from", String],
+            ["emails_to", [String]],
+            ["credit_app_id", Number],
+            ["template_name", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+        ] as const,
+    };
+}
+
+export namespace Usernotificationsetting {
+    export type t =
+        | "ENABLED"
+        | "DISABLED"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "ENABLED",
+            "DISABLED",
+        ] as const,
+    };
+}
+
+
+export namespace ShareSheetEvent {
+    export type t = {
+        "created_at": Date;
+        "updated_at": Date;
+        "id": number;
+        "event_type": Sharesheeteventtype.t;
+        "relationship_id": number;
+        "credit_application_id": number;
+        "trade_reference_input_id": number;
+        "recipient_email": string;
+        "user_id": number;
+        "company_id": number;
+        "new_status": Relationshipstatus.t;
+        "existing_relationship_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["id", Number],
+            ["event_type", Sharesheeteventtype.spec],
+            ["relationship_id", Number],
+            ["credit_application_id", Number],
+            ["trade_reference_input_id", Number],
+            ["recipient_email", String],
+            ["user_id", Number],
+            ["company_id", Number],
+            ["new_status", Relationshipstatus.spec],
+            ["existing_relationship_id", Number],
+        ] as const,
+    };
+}
+
+export namespace UpsellEvent {
+    export type t = {
+        "created_at": Date;
+        "updated_at": Date;
+        "id": number;
+        "event_type": Upselleventtype.t;
+        "company_id": number;
+        "contact_id": number;
+        "trade_reference_id": number;
+        "dashboard_trigger": string;
+        "exit_flow_variant_name": string;
+        "email_template_name": string;
+        "hubspot_task_id": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["id", Number],
+            ["event_type", Upselleventtype.spec],
+            ["company_id", Number],
+            ["contact_id", Number],
+            ["trade_reference_id", Number],
+            ["dashboard_trigger", String],
+            ["exit_flow_variant_name", String],
+            ["email_template_name", String],
+            ["hubspot_task_id", String],
+        ] as const,
+    };
+}
+
+export namespace IrsStatus {
+    export type t = {
+        "event_time": Date;
+        "state": Irscurrentstate.t;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["event_time", Date],
+            ["state", Irscurrentstate.spec],
+        ] as const,
+    };
+}
+
+export namespace WebhookAddress {
+    export type t = {
+        "id": number;
+        "created_at": Date;
+        "callback_address": string;
+        "owner_company_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["created_at", Date],
+            ["callback_address", String],
+            ["owner_company_id", Number],
+        ] as const,
+    };
+}
+
+export namespace RelationshipCompletedStep {
+    export type t = {
+        "credit_application_id": number;
+        "step": Relationshipstep.t;
+        "created_at": Date;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["credit_application_id", Number],
+            ["step", Relationshipstep.spec],
+            ["created_at", Date],
+        ] as const,
+    };
+}
+
+export namespace Monitoreddatadomain {
+    export type t =
+        | "CREDITSAFE"
+        | "PLAID"
+        | "DNB"
+        | "EQUIFAX_BCIR"
+        | "EQUIFAX_BPR"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "CREDITSAFE",
+            "PLAID",
+            "DNB",
+            "EQUIFAX_BCIR",
+            "EQUIFAX_BPR",
+        ] as const,
+    };
+}
+
+
+export namespace CustomerInternalId {
+    export type t = {
+        "supplier_id": number;
+        "kind": Customeridkind.t;
+        "internal_id": string;
+        "customer_id": number;
+        "erp_entity_id": string;
+        "created_at": Date;
+        "updated_at": Date;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["supplier_id", Number],
+            ["kind", Customeridkind.spec],
+            ["internal_id", String],
+            ["customer_id", Number],
+            ["erp_entity_id", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+        ] as const,
+    };
+}
+
+export namespace Salesreplinksettingincludeselfstatus {
+    export type t =
+        | "PERSONALIZED_ONLY"
+        | "NON_PERSONALIZED_ONLY"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "PERSONALIZED_ONLY",
+            "NON_PERSONALIZED_ONLY",
+        ] as const,
+    };
+}
+
+
+export namespace NumericMonitoringChange {
+    export type t = {
+        "id": number;
+        "monitoring_update_id": number;
+        "monitoring_item_id": number;
+        "current_numeric_value": number;
+        "previous_numeric_value": number;
+        "normalized_difference_score": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["monitoring_update_id", Number],
+            ["monitoring_item_id", Number],
+            ["current_numeric_value", Number],
+            ["previous_numeric_value", Number],
+            ["normalized_difference_score", Number],
+        ] as const,
+    };
+}
+
+export namespace MonitoringEnablement {
+    export type t = {
+        "supplier_id": number;
+        "customer_id": number;
+        "domain": Monitoreddatadomain.t;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["supplier_id", Number],
+            ["customer_id", Number],
+            ["domain", Monitoreddatadomain.spec],
+        ] as const,
+    };
+}
+
+export namespace Verticalspecificinsightstype {
+    export type t =
+        | "NY_STATE_ALC_LICENSE"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "NY_STATE_ALC_LICENSE",
+        ] as const,
+    };
+}
+
+
+export namespace CreditApplicationOrderingAddress {
+    export type t = {
+        "created_at": Date;
+        "credit_application_id": number;
+        "company_ordering_address_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["created_at", Date],
+            ["credit_application_id", Number],
+            ["company_ordering_address_id", Number],
+        ] as const,
+    };
+}
+
+export namespace UserPendingSms {
+    export type t = {
+        "user_id": number;
+        "phone_number": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["user_id", Number],
+            ["phone_number", String],
+        ] as const,
+    };
+}
+
+export namespace BankAccountCreditAppAssociation {
+    export type t = {
+        "id": number;
+        "bank_account_id": number;
+        "credit_application_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["bank_account_id", Number],
+            ["credit_application_id", Number],
+        ] as const,
+    };
+}
+
+export namespace PendingOtp {
+    export type t = {
+        "id": number;
+        "attempts": number;
+        "email": string;
+        "otp": string;
+        "expiration": Date;
+        "used": boolean;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["attempts", Number],
+            ["email", String],
+            ["otp", String],
+            ["expiration", Date],
+            ["used", Boolean],
+        ] as const,
+    };
+}
+
+export namespace Salesreplinksettingincludeself {
+    export type t =
+        | "PERSONALIZED_ONLY"
+        | "NON_PERSONALIZED_ONLY"
+        | "BOTH"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "PERSONALIZED_ONLY",
+            "NON_PERSONALIZED_ONLY",
+            "BOTH",
+        ] as const,
+    };
+}
+
+
+export namespace StringMonitoringChange {
+    export type t = {
+        "id": number;
+        "monitoring_update_id": number;
+        "monitoring_item_id": number;
+        "current_string_value": string;
+        "previous_string_value": string;
+        "normalized_difference_score": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["monitoring_update_id", Number],
+            ["monitoring_item_id", Number],
+            ["current_string_value", String],
+            ["previous_string_value", String],
+            ["normalized_difference_score", Number],
+        ] as const,
+    };
+}
+
+export namespace Assettype {
+    export type t =
+        | "FILE"
+        | "IMAGE"
+        | "VIDEO"
+        | "LINK"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "FILE",
+            "IMAGE",
+            "VIDEO",
+            "LINK",
+        ] as const,
+    };
+}
+
+
+export namespace Companyassettype {
+    export type t =
+        | "TAX_EXEMPTION"
+        | "EQUIFAX_BPR_PDF_REPORT"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "TAX_EXEMPTION",
+            "EQUIFAX_BPR_PDF_REPORT",
+        ] as const,
+    };
+}
+
+
+export namespace CompletedSection {
+    export type t = {
+        "id": number;
+        "created_at": Date;
+        "section": Sections.t;
+        "company_id": number;
+        "credit_application_id": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["id", Number],
+            ["created_at", Date],
+            ["section", Sections.spec],
+            ["company_id", Number],
+            ["credit_application_id", Number],
+        ] as const,
+    };
 }
 

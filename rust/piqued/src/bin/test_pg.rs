@@ -1,4 +1,7 @@
-use std::env::{self, current_dir};
+use std::{
+    env::{self},
+    sync::Arc,
+};
 
 use piqued::{config::config::Config, query::query::Query};
 
@@ -13,7 +16,7 @@ async fn main() {
 
     println!("Current config: {:#?}", config);
 
-    let query = Query::new(&config).await.unwrap();
+    let query = Query::new(Arc::new(config)).await.unwrap();
     let result = query
         .client
         .query("SELECT first_name FROM \"user\"", &[])

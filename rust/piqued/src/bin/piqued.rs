@@ -1,7 +1,10 @@
 #![feature(try_trait_v2)]
 
 use piqued::codegen::{codegen::CodeGenerationContext, ts::schema::TSGenerator};
-use std::env::{self, current_dir};
+use std::{
+    env::{self, current_dir},
+    sync::Arc,
+};
 
 use piqued::config::config::Config;
 
@@ -24,7 +27,7 @@ async fn main() {
     let config_path = Config::find_dir(&working_dir).await;
     let config = Config::load(&config_path, &working_dir).await.unwrap();
 
-    let codegen = CodeGenerationContext::new(working_dir.as_path(), &config).await;
+    let codegen = CodeGenerationContext::new(working_dir.as_path(), Arc::new(config)).await;
 
     let ts_generator = TSGenerator::new();
 

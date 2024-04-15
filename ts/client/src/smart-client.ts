@@ -1,7 +1,10 @@
 import { PoolClient, QueryArrayResult, QueryResult, QueryResultRow } from "pg";
+import { AsyncLocalStorage } from "node:async_hooks";
 
 (Symbol as any).dispose ??= Symbol("Symbol.dispose");
 (Symbol as any).asyncDispose ??= Symbol("Symbol.asyncDispose");
+
+const CurrentTransaction = new AsyncLocalStorage<SmartClient>();
 
 export interface ClientOptions {
     txDepth?: number;
@@ -81,7 +84,7 @@ export class SmartClient {
             }
 
             this.active = false;
-            const result = await fn(newClient);
+            const result = await CurrentTransaction.run(newClient, () => fn(newClient));
 
             if (this.txDepth === 0) {
                 await this.client.query("COMMIT;");
@@ -107,4 +110,8 @@ export class SmartClient {
         this.client.release();
         this.active = false;
     }
+}
+
+export const getCurrentClient = () => {
+    return CurrentTransaction.getStore();
 }

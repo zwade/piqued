@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use tower_lsp::lsp_types::{Diagnostic, DiagnosticSeverity};
 
@@ -10,21 +10,21 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub struct Workspace<'a> {
-    root_dir: PathBuf,
-    config: &'a Config,
-    files: HashMap<&'a str, &'a str>,
-    query: Result<Query<'a>>,
+pub struct Workspace {
+    _root_dir: PathBuf,
+    config: Arc<Config>,
+    files: HashMap<String, String>,
+    pub query: Result<Query>,
 }
 
-impl<'a> Workspace<'a> {
-    pub async fn new(config: &'a Config, root_dir: PathBuf) -> Self {
-        let query = Query::new(config).await;
+impl Workspace {
+    pub async fn new(config: Arc<Config>, root_dir: PathBuf) -> Self {
+        let query = Query::new(config.clone()).await;
 
         Workspace {
-            root_dir,
-            config,
-            files: HashMap::<&'a str, &'a str>::new(),
+            _root_dir: root_dir,
+            config: config.clone(),
+            files: HashMap::<String, String>::new(),
             query,
         }
     }
@@ -34,15 +34,23 @@ impl<'a> Workspace<'a> {
         path.starts_with(root)
     }
 
-    pub fn patch_file(&mut self, path: &'a str, contents: &'a str) {
-        self.files
-            .entry(path)
-            .and_modify(|e| *e = contents)
-            .or_insert(contents);
+    pub fn get_file(&self, path: &str) -> Option<&String> {
+        self.files.get(path)
     }
 
-    pub async fn reload_config(&mut self, config: &'a Config) {
-        self.config = config;
+    pub fn patch_file(&mut self, path: String, contents: String) {
+        match self.files.entry(path) {
+            std::collections::hash_map::Entry::Occupied(mut o) => {
+                o.insert(contents);
+            }
+            std::collections::hash_map::Entry::Vacant(v) => {
+                v.insert(contents);
+            }
+        };
+    }
+
+    pub async fn reload_config(&mut self, config: Arc<Config>) {
+        self.config = config.clone();
         self.query = Query::new(config).await;
     }
 

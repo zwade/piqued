@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::sync::Arc;
 
 use tokio::sync::{MappedMutexGuard, Mutex, MutexGuard};
 use tower_lsp::jsonrpc;
@@ -10,29 +10,23 @@ use tower_lsp::lsp_types::{
 use tower_lsp::{Client, LanguageServer};
 
 use crate::config::config::Config;
-use crate::query::query::Query;
 use crate::workspace::workspace::Workspace;
 
 #[derive(Debug)]
 pub struct Backend {
     pub client: Client,
-    pub query: Query<'static>,
-    workspaces: Mutex<Vec<Workspace<'static>>>,
+    workspaces: Mutex<Vec<Workspace>>,
 }
 
 impl Backend {
-    pub fn new(client: Client, query: Query<'static>) -> Self {
+    pub fn new(client: Client) -> Self {
         Backend {
             client,
-            query,
             workspaces: Mutex::new(Vec::new()),
         }
     }
 
-    async fn workspace_for_file(
-        &self,
-        file_uri: &Url,
-    ) -> Option<MappedMutexGuard<'_, Workspace<'static>>> {
+    async fn workspace_for_file(&self, file_uri: &Url) -> Option<MappedMutexGuard<'_, Workspace>> {
         let file_name = file_uri.to_file_path().unwrap();
 
         let workspace_index = self
@@ -48,14 +42,7 @@ impl Backend {
         Some(result)
     }
 
-    pub async fn run_diagnostics(&self, uri: Url) {
-        let maybe_workspace = self.workspace_for_file(&uri).await;
-
-        let workspace = match maybe_workspace {
-            Some(workspace) => workspace,
-            None => return (),
-        };
-
+    pub async fn run_diagnostics(&self, workspace: &Workspace, uri: Url) {
         let diagnostics = workspace.get_diagnostics(uri.as_str()).await;
 
         match diagnostics {
@@ -91,9 +78,20 @@ impl LanguageServer for Backend {
                     continue;
                 }
 
-                let mut workspace = Workspace::new(&config.unwrap(), root_dir).await;
-                // workspace.reload().await;
-                workspaces.push(workspace)
+                self.client
+                    .log_message(
+                        MessageType::INFO,
+                        format!(
+                            "Added workspace at {:?}, with config: {:?}",
+                            root_dir.clone(),
+                            config.clone()
+                        ),
+                    )
+                    .await;
+
+                let config = config.unwrap();
+                let workspace = Workspace::new(Arc::new(config), root_dir).await;
+                workspaces.push(workspace);
             }
         }
 
@@ -124,37 +122,34 @@ impl LanguageServer for Backend {
 
         let maybe_workspace = self.workspace_for_file(&params.text_document.uri).await;
 
-        let workspace = match maybe_workspace {
+        let mut workspace = match maybe_workspace {
             Some(workspace) => workspace,
             None => return (),
         };
 
-        workspace.patch_file(
-            &params.text_document.uri.as_str(),
-            &params.text_document.text,
-        );
+        let uri = params.text_document.uri.clone();
 
-        self.run_diagnostics(params.text_document.uri).await;
+        workspace.patch_file(uri.to_string(), params.text_document.text.clone());
+
+        self.run_diagnostics(&workspace, params.text_document.uri)
+            .await;
     }
 
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
-        self.client
-            .log_message(MessageType::INFO, format!("Did change: {:#?}", params))
-            .await;
-
         let maybe_workspace = self.workspace_for_file(&params.text_document.uri).await;
 
-        let workspace = match maybe_workspace {
+        let mut workspace = match maybe_workspace {
             Some(workspace) => workspace,
             None => return (),
         };
 
         workspace.patch_file(
-            &params.text_document.uri.as_str(),
-            &params.content_changes[0].text,
+            params.text_document.uri.to_string(),
+            params.content_changes[0].text.clone(),
         );
 
-        self.run_diagnostics(params.text_document.uri).await;
+        self.run_diagnostics(&workspace, params.text_document.uri)
+            .await;
     }
 
     async fn shutdown(&self) -> jsonrpc::Result<()> {
@@ -169,10 +164,26 @@ impl LanguageServer for Backend {
             .uri
             .to_string();
 
-        let cache = self.file_cache.try_lock().unwrap();
-        let file_data = cache.get(&file_name);
+        let maybe_workspace = self
+            .workspace_for_file(&params.text_document_position_params.text_document.uri)
+            .await;
 
-        match self.get_hover_data(file_data, &position).await {
+        let workspace = match maybe_workspace {
+            Some(workspace) => workspace,
+            None => return Ok(None),
+        };
+
+        let file_data = match workspace.get_file(&file_name) {
+            Some(data) => data,
+            None => {
+                self.client
+                    .log_message(MessageType::ERROR, "File not found")
+                    .await;
+                return Ok(None);
+            }
+        };
+
+        match self.get_hover_data(&workspace, file_data, &position).await {
             Err(e) => {
                 self.client
                     .log_message(MessageType::ERROR, format!("{:#?}", e))

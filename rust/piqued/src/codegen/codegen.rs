@@ -77,18 +77,18 @@ pub trait CodeGenerator {
 }
 
 pub struct CodeGenerationContext<'a> {
-    pub config: &'a Config,
+    pub config: Arc<Config>,
     pub working_dir: &'a Path,
-    pub query: Query<'a>,
+    pub query: Query,
 }
 
 impl<'a> CodeGenerationContext<'a> {
-    pub async fn new(working_dir: &'a Path, config: &'a Config) -> CodeGenerationContext<'a> {
-        let query = Query::new(config).await;
+    pub async fn new(working_dir: &'a Path, config: Arc<Config>) -> CodeGenerationContext<'a> {
+        let query = Query::new(config.clone()).await;
 
         CodeGenerationContext {
             working_dir,
-            config,
+            config: config.clone(),
             query: query.unwrap(),
         }
     }

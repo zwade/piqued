@@ -20,7 +20,7 @@ pub struct ParserContext {
 }
 
 impl ParserContext {
-    pub fn new(sql: &String) -> Self {
+    pub fn new(sql: &str) -> Self {
         let dialect = PostgreSqlDialect {};
         let tokens = Tokenizer::new(&dialect, sql).tokenize().unwrap();
 
