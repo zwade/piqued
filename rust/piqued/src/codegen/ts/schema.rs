@@ -43,7 +43,9 @@ impl ResolvedType {
             ResolvedType::Native(val) if val == "Date" => "Date".to_string(),
             ResolvedType::Native(_) => "String".to_string(),
             ResolvedType::Import(val) => format!("{}.spec", val.to_string()),
-            ResolvedType::Array(inner) => format!("[{}]", inner.get_spec()),
+            ResolvedType::Array(inner) => {
+                format!("{{ \"kind\": \"array\", \"spec\": {} }}", inner.get_spec())
+            }
         }
     }
 
@@ -404,11 +406,15 @@ impl CodeGenerator for TSGenerator {
                 .zip(&probe_result.column_types)
                 .map(|(name, type_)| {
                     let resolved = self.resolve_type(ctx, type_);
-                    match resolved {
+                    match &resolved {
                         ResolvedType::Array(inner) if inner.is_ultimately_custom_type() => {
-                            (name, format!("[{}]", inner.get_spec()))
+                            imports.append(&mut resolved._get_imports());
+                            (name, resolved.get_spec())
                         }
-                        ResolvedType::Import(import) => (name, format!("{}.spec", import)),
+                        ResolvedType::Import(_) => {
+                            imports.append(&mut resolved._get_imports());
+                            (name, resolved.get_spec())
+                        }
                         _ => (name, "undefined".to_string()),
                     }
                 })

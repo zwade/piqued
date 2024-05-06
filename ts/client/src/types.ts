@@ -4,6 +4,7 @@ import { parseArray, parseObject } from "./parser";
 
 export type CustomParseSpec =
     | { kind: "composite", fields: () => readonly (readonly [name: string, spec: ParseSpec])[] }
+    | { kind: "array", spec: ParseSpec }
     | { kind: "enum", values: readonly string[] };
     ;
 
