@@ -1,6 +1,6 @@
 {
   "name": "@piqued/client",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "packageManager": "yarn@3.3.0",
