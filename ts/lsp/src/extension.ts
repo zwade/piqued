@@ -12,7 +12,6 @@ import {
 let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
-    console.log("Activating server")
     const options: Executable = {
         command: "piqued_lsp",
         transport: TransportKind.stdio,
@@ -21,6 +20,7 @@ export function activate(context: ExtensionContext) {
             cwd: workspace.workspaceFolders?.[0]?.uri?.fsPath ?? os.homedir(),
         },
     }
+
     const serverOptions: ServerOptions = {
         run: options,
         debug: options,
@@ -33,8 +33,6 @@ export function activate(context: ExtensionContext) {
         }
     };
 
-    context.subscriptions.push(commands.registerCommand("extension.sayHello", () => console.log("Hello")));
-
     client = new LanguageClient(
         "Piqued",
         "Piqued Language Server",
@@ -44,6 +42,10 @@ export function activate(context: ExtensionContext) {
     );
 
     client.start();
+
+    context.subscriptions.push(commands.registerCommand("piqued.restart", () => {
+        client.stop().then(() => client.start(), () => client.start());
+    }));
 }
 
 export function deactivate(): Thenable<void> | undefined {

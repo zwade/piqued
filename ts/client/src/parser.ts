@@ -1,39 +1,44 @@
 import { CustomParseSpec, ParseSpec, ResultSpec } from "./types";
 
-const parsePgObject = (spec: CustomParseSpec & { kind: "composite" }, value: string | null) => {
-    if (value === null) {
-        return null;
+class PgParser {
+    private idx = 0;
+    private value;
+
+    constructor(value: string) {
+        this.value = value;
     }
 
-    let idx = 0;
-
-    const consume = (expect?: string) => {
-        const char = value[idx];
+    consume(expect?: string) {
+        const char = this.value[this.idx];
         if (expect && char !== expect) {
             throw new Error(`Expected ${expect} but got ${char}`);
         }
 
-        idx++;
+        this.idx++;
         return char;
     }
 
-    const consumeRawString = () => {
+    consumeRawString(context: "array" | "object") {
+        const closeEl = context === "array" ? "}" : ")";
+
         const buffer = [];
         let char: string;
-        while (char = consume(), char !== ',' && char !== ")") {
+        while (char = this.consume(), char !== ',' && char !== closeEl) {
             buffer.push(char);
         }
 
         return buffer.join("");
     }
 
-    const consumeString = () => {
-        consume('"');
+    consumeString(context: "array" | "object") {
+        const closeEl = context === "array" ? "}" : ")";
+
+        this.consume('"');
         const buffer = [];
         let char: string;
         let sawQuote = false;
 
-        while (char = consume()) {
+        while (char = this.consume()) {
             if (char === "\"") {
                 if (sawQuote) {
                     buffer.push(char);
@@ -45,7 +50,7 @@ const parsePgObject = (spec: CustomParseSpec & { kind: "composite" }, value: str
                 continue;
             }
 
-            if ((char === "," || char === ")") && sawQuote) {
+            if ((char === "," || char === closeEl) && sawQuote) {
                 break;
             }
 
@@ -55,25 +60,64 @@ const parsePgObject = (spec: CustomParseSpec & { kind: "composite" }, value: str
         return buffer.join("");
     }
 
-    consume("(");
+    parseObject(spec: CustomParseSpec & { kind: "composite" }) {
+        this.consume("(");
 
-    let char: string;
-    const results: string[] = [];
+        let char: string;
+        const results: string[] = [];
 
-    while (char = value[idx], idx < value.length) {
-        if (char === '"') {
-            results.push(consumeString());
-        } else {
-            results.push(consumeRawString());
+        while (char = this.value[this.idx], this.idx < this.value.length) {
+            if (char === ")") {
+                this.consume(")");
+
+                if (this.idx !== this.value.length) {
+                    console.warn("Unexpected characters after closing parenthesis")
+                }
+
+                break;
+            }
+
+            if (char === '"') {
+                results.push(this.consumeString("object"));
+            } else {
+                results.push(this.consumeRawString("object"));
+            }
         }
+
+        const fields = spec.fields();
+        if (results.length !== fields.length) {
+            throw new Error("Mismatched fields");
+        }
+
+        return results.map((value, i) => parse(fields[i][1], value)).reduce((acc, value, i) => (acc[fields[i][0]] = value, acc), {});
     }
 
-    const fields = spec.fields();
-    if (results.length !== fields.length) {
-        throw new Error("Mismatched fields");
-    }
+    parseArray(spec: CustomParseSpec & { kind: "array" }) {
+        this.consume("{");
 
-    return results.map((value, i) => parse(fields[i][1], value)).reduce((acc, value, i) => (acc[fields[i][0]] = value, acc), {});
+        let char: string;
+        const results: string[] = [];
+
+        while (char = this.value[this.idx], this.idx < this.value.length) {
+            if (char === "}") {
+                this.consume("}");
+
+                if (this.idx !== this.value.length) {
+                    console.warn("Unexpected characters after closing brace")
+                }
+
+                break;
+            }
+
+            if (char === '"') {
+                results.push(this.consumeString("array"));
+            } else {
+                results.push(this.consumeRawString("array"));
+            }
+        }
+
+        return results.map((v) => parse(spec.spec, v));
+    }
 }
 
 export const parse = (parseSpec: ParseSpec, value: string | undefined): any => {
@@ -103,7 +147,13 @@ export const parse = (parseSpec: ParseSpec, value: string | undefined): any => {
 
     const customSpec = parseSpec as CustomParseSpec;
     if (customSpec.kind === "composite") {
-        return parsePgObject(customSpec, value);
+        const parser = new PgParser(value);
+        return parser.parseObject(customSpec);
+    }
+
+    if (customSpec.kind === "array") {
+        const parser = new PgParser(value);
+        return parser.parseArray(customSpec);
     }
 
     if (customSpec.kind === "enum") {

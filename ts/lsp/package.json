@@ -37,8 +37,8 @@
     ],
     "commands": [
       {
-        "command": "extension.sayHello",
-        "title": "Hello World"
+        "command": "piqued.restart",
+        "title": "Piqued LSP: Restart"
       }
     ],
     "configuration": {
