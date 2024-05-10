@@ -3,6 +3,7 @@ use std::{collections::HashMap, path::PathBuf, sync::Arc};
 use tower_lsp::lsp_types::{Diagnostic, DiagnosticSeverity};
 
 use crate::{
+    codegen::{codegen::CodeGenerationContext, ts::schema::TSGenerator},
     config::config::Config,
     parser::parser::{self, ParsedFile, RelocatedStmt},
     query::query::Query,
@@ -11,9 +12,9 @@ use crate::{
 
 #[derive(Debug)]
 pub struct Workspace {
-    _root_dir: PathBuf,
-    config: Arc<Config>,
     files: HashMap<String, String>,
+    pub root_dir: PathBuf,
+    pub config: Arc<Config>,
     pub query: Result<Query>,
 }
 
@@ -22,7 +23,7 @@ impl Workspace {
         let query = Query::new(config.clone()).await;
 
         Workspace {
-            _root_dir: root_dir,
+            root_dir,
             config: config.clone(),
             files: HashMap::<String, String>::new(),
             query,
@@ -112,5 +113,28 @@ impl Workspace {
         }
 
         Ok(diagnostics)
+    }
+
+    pub async fn gen_code(&self) -> Result<()> {
+        let query = match &self.query {
+            Err(e) => return Err(e.clone()),
+            Ok(q) => q,
+        };
+
+        let codegen = CodeGenerationContext::new(self.config.clone(), query);
+
+        let ts_generator = TSGenerator::new();
+
+        codegen.generate_system_types(&ts_generator).await;
+        codegen.generate_queries(&ts_generator).await;
+
+        Ok(())
+    }
+
+    pub async fn is_compile_target(&self, path: &PathBuf) -> bool {
+        let ext = path.extension().unwrap();
+
+        path.starts_with(&self.root_dir)
+            && (ext == "sql" || ext == "psql" || ext == "pgsql" || ext == "pg")
     }
 }

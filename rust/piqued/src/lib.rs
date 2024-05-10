@@ -30,7 +30,7 @@ pub mod code_builder {
     pub mod codegen_helper;
 }
 
-mod workspace {
+pub mod workspace {
     pub mod workspace;
 }
 
