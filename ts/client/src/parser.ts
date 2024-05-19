@@ -37,14 +37,27 @@ class PgParser {
         const buffer = [];
         let char: string;
         let sawQuote = false;
+        let sawEscape = false;
 
         while (char = this.consume()) {
             if (char === "\"") {
-                if (sawQuote) {
+                if (sawQuote || sawEscape) {
                     buffer.push(char);
                     sawQuote = false;
+                    sawEscape = false;
                 } else {
                     sawQuote = true;
+                }
+
+                continue;
+            }
+
+            if (char === "\\") {
+                if (sawEscape) {
+                    buffer.push(char);
+                    sawEscape = false;
+                } else {
+                    sawEscape = true;
                 }
 
                 continue;
