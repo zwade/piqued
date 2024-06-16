@@ -126,6 +126,7 @@ impl Workspace {
         let ts_generator = TSGenerator::new();
 
         codegen.generate_system_types(&ts_generator).await;
+        codegen.generate_table_file(&ts_generator).await;
         codegen.generate_queries(&ts_generator).await;
 
         Ok(())

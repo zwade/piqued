@@ -80,16 +80,6 @@ class PgParser {
         const results: string[] = [];
 
         while (char = this.value[this.idx], this.idx < this.value.length) {
-            if (char === ")") {
-                this.consume(")");
-
-                if (this.idx !== this.value.length) {
-                    console.warn("Unexpected characters after closing parenthesis")
-                }
-
-                break;
-            }
-
             if (char === '"') {
                 results.push(this.consumeString("object"));
             } else {
@@ -99,6 +89,7 @@ class PgParser {
 
         const fields = spec.fields();
         if (results.length !== fields.length) {
+            console.log(results, fields)
             throw new Error("Mismatched fields");
         }
 
@@ -112,16 +103,6 @@ class PgParser {
         const results: string[] = [];
 
         while (char = this.value[this.idx], this.idx < this.value.length) {
-            if (char === "}") {
-                this.consume("}");
-
-                if (this.idx !== this.value.length) {
-                    console.warn("Unexpected characters after closing brace")
-                }
-
-                break;
-            }
-
             if (char === '"') {
                 results.push(this.consumeString("array"));
             } else {

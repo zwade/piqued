@@ -74,6 +74,23 @@ pub trait CodeGenerator {
     ) -> Option<String> {
         None
     }
+
+    fn serialize_table_prefix(
+        &self,
+        _ctx: &CodeGenerationContext,
+        _tables: &Vec<&String>,
+    ) -> Option<String> {
+        None
+    }
+    fn serialize_table(&self, _ctx: &CodeGenerationContext, _table: &String)
+        -> SerializationResult;
+    fn serialize_table_suffix(
+        &self,
+        _ctx: &CodeGenerationContext,
+        _tables: &Vec<&String>,
+    ) -> Option<String> {
+        None
+    }
 }
 
 pub struct CodeGenerationContext<'a> {
@@ -124,6 +141,49 @@ impl<'a> CodeGenerationContext<'a> {
 
         let base_path = self.get_root_path();
         let source_path = generator.resolve_file_path(self, &base_path);
+
+        fs::write(source_path, b.string().unwrap()).await.unwrap();
+    }
+
+    pub async fn generate_table_file(&self, generator: &dyn CodeGenerator) -> () {
+        let table_file = match &self.config.emit.table_file {
+            Some(table_file) => table_file,
+            None => return,
+        };
+
+        let mut code_segments: Vec<String> = vec![];
+        let mut imports: Vec<String> = vec![];
+
+        let tables = self.query.tables.keys().into_iter().collect::<Vec<_>>();
+
+        if let Some(prefix) = generator.serialize_table_prefix(&self, &tables) {
+            code_segments.push(prefix);
+        }
+
+        for table_name in &tables {
+            let res = generator.serialize_table(&self, table_name);
+            imports.extend(res.requires_import);
+            code_segments.push(res.generated_code);
+        }
+
+        if let Some(suffix) = generator.serialize_table_suffix(&self, &tables) {
+            code_segments.push(suffix);
+        }
+
+        let mut b = Builder::default();
+
+        let base_path = self.working_dir.join(&table_file);
+        let source_path = generator.resolve_file_path(self, &base_path);
+
+        b.append(self.generate_import_statements(
+            &PathBuf::from(source_path.clone()),
+            &imports,
+            generator,
+        ));
+
+        for chunk in code_segments {
+            b.append(chunk);
+        }
 
         fs::write(source_path, b.string().unwrap()).await.unwrap();
     }
@@ -224,13 +284,32 @@ impl<'a> CodeGenerationContext<'a> {
             code_segments.push(suffix);
         }
 
+        let mut b = Builder::default();
+
+        b.append(self.generate_import_statements(&dst_file, &imports, generator));
+
+        for segment in code_segments {
+            b.append(segment);
+            b.append("\n\n");
+        }
+
+        fs::write(dst_file, b.string().unwrap()).await.unwrap();
+    }
+
+    fn generate_import_statements(
+        &self,
+        dst_file: &PathBuf,
+        imports: &Vec<String>,
+        generator: &dyn CodeGenerator,
+    ) -> String {
+        let mut b = Builder::default();
+
         let needed_imports = imports
             .into_iter()
-            .collect::<HashSet<String>>()
+            .collect::<HashSet<&String>>()
             .into_iter()
+            .map(|s| s.clone())
             .collect::<Vec<String>>();
-
-        let mut b = Builder::default();
 
         let type_file_path = self.working_dir.join(&self.config.emit.type_file);
         let mut start_file_path = dst_file.clone();
@@ -246,11 +325,6 @@ impl<'a> CodeGenerationContext<'a> {
         b.append(import.generated_code);
         b.append("\n\n");
 
-        for segment in code_segments {
-            b.append(segment);
-            b.append("\n\n");
-        }
-
-        fs::write(dst_file, b.string().unwrap()).await.unwrap();
+        return b.string().unwrap();
     }
 }

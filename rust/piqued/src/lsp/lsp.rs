@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use tokio::sync::{MappedMutexGuard, Mutex, MutexGuard};
+use tokio_postgres::config;
 use tower_lsp::jsonrpc;
 use tower_lsp::lsp_types::{
     DidChangeTextDocumentParams, DidOpenTextDocumentParams, Hover, HoverParams,
@@ -27,19 +28,30 @@ impl Backend {
     }
 
     async fn workspace_for_file(&self, file_uri: &Url) -> Option<MappedMutexGuard<'_, Workspace>> {
-        let file_name = file_uri.to_file_path().unwrap();
+        if let Ok(file_name) = file_uri.to_file_path() {
+            let workspace_index = self
+                .workspaces
+                .lock()
+                .await
+                .iter()
+                .position(|workspace| workspace.contains_file(&file_name))?;
 
-        let workspace_index = self
-            .workspaces
-            .lock()
-            .await
-            .iter()
-            .position(|workspace| workspace.contains_file(&file_name))?;
+            let workspaces = self.workspaces.lock().await;
+            let result = MutexGuard::map(workspaces, |workspaces| &mut workspaces[workspace_index]);
 
-        let workspaces = self.workspaces.lock().await;
-        let result = MutexGuard::map(workspaces, |workspaces| &mut workspaces[workspace_index]);
+            Some(result)
+        } else {
+            // If there's only one workspace, we can naively assume we want to use it.
+            let workspace_size = self.workspaces.lock().await.len();
+            if workspace_size == 1 {
+                let workspaces = self.workspaces.lock().await;
+                let result = MutexGuard::map(workspaces, |workspaces| &mut workspaces[0]);
 
-        Some(result)
+                Some(result)
+            } else {
+                None
+            }
+        }
     }
 
     pub async fn run_diagnostics(&self, workspace: &Workspace, uri: Url) {
@@ -69,6 +81,11 @@ impl LanguageServer for Backend {
             for folder in folders {
                 let root_dir = folder.uri.to_file_path().unwrap();
                 let config_path = Config::find_dir(&root_dir).await;
+                if config_path.is_none() {
+                    // We don't bother setting up an LSP if there's no active config
+                    continue;
+                }
+
                 let config = Config::load(&config_path, &root_dir).await;
 
                 if let Err(err) = config {

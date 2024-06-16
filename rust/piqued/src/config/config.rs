@@ -29,6 +29,8 @@ pub struct EmitConfig {
     pub type_file: String,
     #[serde(default = "default_module_type")]
     pub module_type: String,
+    #[serde(default)]
+    pub table_file: Option<String>,
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Deserialize, Default)]
@@ -78,6 +80,7 @@ fn default_emit_obj() -> EmitConfig {
     EmitConfig {
         type_file: default_type_file(),
         module_type: default_module_type().to_string(),
+        table_file: None,
     }
 }
 
