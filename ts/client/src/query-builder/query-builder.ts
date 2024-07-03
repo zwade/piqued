@@ -140,7 +140,7 @@ export class QueryState<T extends ResultState> extends ExecutableQuery<T> {
     }
 
     private with(stateChange: Partial<QueryState.State>) {
-        return new QueryState({ ...this.#state, ...stateChange });
+        return new QueryState<T>({ ...this.#state, ...stateChange });
     }
 
     public from(fromTable: TableBuilder) {
