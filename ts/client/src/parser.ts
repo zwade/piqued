@@ -139,6 +139,10 @@ export const parse = (parseSpec: ParseSpec, value: string | undefined): any => {
         return new Date(value);
     }
 
+    if (parseSpec === Object) {
+        return JSON.parse(value);
+    }
+
     const customSpec = parseSpec as CustomParseSpec;
     if (customSpec.kind === "composite") {
         const parser = new PgParser(value);

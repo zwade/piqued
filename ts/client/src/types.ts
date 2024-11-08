@@ -9,7 +9,7 @@ export type CustomParseSpec =
     ;
 
 export type ParseSpec =
-    | NumberConstructor | BooleanConstructor | StringConstructor | DateConstructor
+    | NumberConstructor | BooleanConstructor | StringConstructor | DateConstructor | ObjectConstructor
     | CustomParseSpec
     ;
 

@@ -58,6 +58,10 @@ export type LiteralExpression =
     | string
     | number
     | boolean
+    | null
+    | undefined
+    | Date
+    | LiteralExpression[]
     ;
 
 export type Expression<T = unknown, Name extends string = string> =
@@ -182,7 +186,15 @@ const addAndReturnParam = (state: MutableSerializationState, value: any) => {
 }
 
 export const serializeExpression = (e: Expression | Label, state: MutableSerializationState): string => {
-    if (typeof e === "string" || typeof e === "number" || typeof e === "boolean") {
+    if (
+        typeof e === "string"
+        || typeof e === "number"
+        || typeof e === "boolean"
+        || typeof e === "undefined"
+        || e === null
+        || Array.isArray(e)
+        || e instanceof Date
+    ) {
         return addAndReturnParam(state, e);
     }
 

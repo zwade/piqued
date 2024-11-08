@@ -41,6 +41,7 @@ impl ResolvedType {
             ResolvedType::Native(val) if val == "string" => "String".to_string(),
             ResolvedType::Native(val) if val == "boolean" => "Boolean".to_string(),
             ResolvedType::Native(val) if val == "Date" => "Date".to_string(),
+            ResolvedType::Native(val) if val == "any" => "Object".to_string(),
             ResolvedType::Native(_) => "String".to_string(),
             ResolvedType::Import(val) => format!("{}.spec", val.to_string()),
             ResolvedType::Array(inner) => {

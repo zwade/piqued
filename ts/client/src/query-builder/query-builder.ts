@@ -124,6 +124,8 @@ export namespace QueryState {
         orderClauses: [Expression, "asc" | "desc"][],
         limit: Expression<number> | null,
         offset: Expression<number> | null,
+        forUpdate: boolean,
+        skipLocked: boolean,
     }
 }
 
@@ -139,8 +141,8 @@ export class QueryState<T extends ResultState> extends ExecutableQuery<T> {
         this.#state = state;
     }
 
-    private with(stateChange: Partial<QueryState.State>) {
-        return new QueryState({ ...this.#state, ...stateChange });
+    private with<TNew extends ResultState = T>(stateChange: Partial<QueryState.State>) {
+        return new QueryState<TNew>({ ...this.#state, ...stateChange });
     }
 
     public from(fromTable: TableBuilder) {
@@ -171,6 +173,14 @@ export class QueryState<T extends ResultState> extends ExecutableQuery<T> {
         return this.with({ offset });
     }
 
+    public forUpdate() {
+        return this.with({ forUpdate: true });
+    }
+
+    public skipLocked() {
+        return this.with({ skipLocked: true });
+    }
+
     public serialize() {
         if (this.#state.fromTable === null) {
             throw new Error("Unable to serialize query without a from-table");
@@ -197,11 +207,19 @@ export class QueryState<T extends ResultState> extends ExecutableQuery<T> {
         }
 
         if (this.#state.limit !== null) {
-            accumulator += `limit ${serializeExpression(this.#state.limit, state)}`
+            accumulator += `limit ${serializeExpression(this.#state.limit, state)}\n`
         }
 
         if (this.#state.offset !== null) {
-            accumulator += `offset ${serializeExpression(this.#state.offset, state)}`
+            accumulator += `offset ${serializeExpression(this.#state.offset, state)}\n`
+        }
+
+        if (this.#state.forUpdate) {
+            accumulator += "for update\n";
+        }
+
+        if (this.#state.skipLocked) {
+            accumulator += "skip locked\n";
         }
 
         return {
@@ -325,6 +343,12 @@ export class UpdateState<ColumnState, T extends ResultState = { results: {} }> e
         return this.with({ whereClauses: [...this.#state.whereClauses, condition] });
     }
 
+    public whereEq(clauses: { [K in keyof ColumnState]?: Expression<ColumnState[K]> }) {
+        const newClauses = Object.entries(clauses).map(([key, value]) => Op.eq(this.#state.table.c[key as keyof ColumnState], value as Expression<any>));
+
+        return this.with({ whereClauses: [...this.#state.whereClauses, ...newClauses] });
+    }
+
     public returning<const T extends unknown[]>(...args: T): UpdateState<ColumnState, { results: DecodeExpression<T> }> {
         return this.with({ returning: args as Expression[] });
     }
@@ -420,7 +444,7 @@ type DecodeExpression<T extends unknown[], Acc = {}> =
 
 
 export const Select = <const T extends unknown[]>(...args: T): QueryState<{ results: DecodeExpression<T> }> => {
-    return new QueryState({ selections: args as (Expression | Label)[], fromTable: null, joins: [], whereClauses: [], orderClauses: [], limit: null, offset: null });
+    return new QueryState({ selections: args as (Expression | Label)[], fromTable: null, joins: [], whereClauses: [], orderClauses: [], limit: null, offset: null, forUpdate: false, skipLocked: false });
 }
 
 export const Update = <const T>(table: TableBuilder<any, T, string>): UpdateState<T> => {
