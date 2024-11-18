@@ -1,20 +1,30 @@
 import { QueryResultRow } from "pg";
+
+import { parse } from "../parser";
 import { SmartClient } from "../smart-client";
 import { ParseSpec } from "../types";
-import { ColumnExpression, Expression, FunctionOperation, Label, Op, TableBuilder, TableExpression, serializeExpression } from "./expression-builder";
+import {
+    ColumnExpression,
+    Expression,
+    FunctionOperation,
+    Label,
+    Op,
+    serializeExpression,
+    TableBuilder,
+    TableExpression,
+} from "./expression-builder";
 import { MutableSerializationState } from "./serialize";
-import { parse } from "../parser";
 
 export type ResultState = {
     results: Record<string, unknown>;
-}
+};
 
 export abstract class ExecutableQuery<T extends ResultState> {
     #parserMap: Record<string, ParseSpec | null> | null = null;
 
     protected abstract selections: (Expression | Label)[];
 
-    public abstract serialize(): { data: string, values: any[] };
+    public abstract serialize(): { data: string; values: any[] };
 
     public async execute(client: SmartClient): Promise<void> {
         const { data, values } = this.serialize();
@@ -70,9 +80,11 @@ export abstract class ExecutableQuery<T extends ResultState> {
         if (this.#parserMap === null) {
             const parserMap = Object.create(null) as Record<string, ParseSpec | null>;
 
-            const needsParse = (parser: ParseSpec | null): parser is typeof parser & { kind: "composite" | "array" | "enum" } => {
+            const needsParse = (
+                parser: ParseSpec | null,
+            ): parser is typeof parser & { kind: "composite" | "array" | "enum" } => {
                 return parser !== null && typeof parser === "object";
-            }
+            };
 
             const getParser = (e: Expression | Label): [string, ParseSpec] | null => {
                 if (e instanceof Label) {
@@ -98,7 +110,7 @@ export abstract class ExecutableQuery<T extends ResultState> {
                 }
 
                 return null;
-            }
+            };
 
             for (const e of this.selections) {
                 const parser = getParser(e);
@@ -117,25 +129,23 @@ export abstract class ExecutableQuery<T extends ResultState> {
 
 export namespace QueryState {
     export type State = {
-        selections: (Expression | Label)[],
-        fromTable: TableBuilder | null,
-        joins: ["inner" | "left", TableBuilder, Expression<boolean>][],
-        whereClauses: Expression<boolean>[],
-        orderClauses: [Expression, "asc" | "desc"][],
-        limit: Expression<number> | null,
-        offset: Expression<number> | null,
-        forUpdate: boolean,
-        skipLocked: boolean,
-    }
+        selections: (Expression | Label)[];
+        fromTable: TableBuilder | null;
+        joins: ["inner" | "left", TableBuilder, Expression<boolean>][];
+        whereClauses: Expression<boolean>[];
+        orderClauses: [Expression, "asc" | "desc"][];
+        limit: Expression<number> | null;
+        offset: Expression<number> | null;
+        forUpdate: boolean;
+        skipLocked: boolean;
+    };
 }
 
 export class QueryState<T extends ResultState> extends ExecutableQuery<T> {
-    #state
+    #state;
     protected selections: (Expression | Label)[] = [];
 
-    constructor(
-        private state: QueryState.State,
-    ) {
+    constructor(private state: QueryState.State) {
         super();
         this.selections = state.selections;
         this.#state = state;
@@ -189,9 +199,10 @@ export class QueryState<T extends ResultState> extends ExecutableQuery<T> {
         const state: MutableSerializationState = {
             paramCount: 0,
             paramValues: [],
-        }
+        };
 
-        let accumulator = "select " + this.#state.selections.map((e) => serializeExpression(e, state)).join(", ") + "\n";
+        let accumulator =
+            "select " + this.#state.selections.map((e) => serializeExpression(e, state)).join(", ") + "\n";
         accumulator += `from "${this.#state.fromTable.name}"\n`;
 
         for (const [kind, table, exp] of this.#state.joins) {
@@ -199,19 +210,19 @@ export class QueryState<T extends ResultState> extends ExecutableQuery<T> {
         }
 
         if (this.#state.whereClauses.length > 0) {
-            accumulator += `where ${this.#state.whereClauses.map((e) => serializeExpression(e, state)).join(" and ")}`
+            accumulator += `where ${this.#state.whereClauses.map((e) => serializeExpression(e, state)).join(" and ")}`;
         }
 
         if (this.#state.orderClauses.length > 0) {
-            accumulator += `order by ${this.#state.orderClauses.map(([e, dir]) => `${serializeExpression(e, state)} ${dir}`).join(", ")}`
+            accumulator += `order by ${this.#state.orderClauses.map(([e, dir]) => `${serializeExpression(e, state)} ${dir}`).join(", ")}`;
         }
 
         if (this.#state.limit !== null) {
-            accumulator += `limit ${serializeExpression(this.#state.limit, state)}\n`
+            accumulator += `limit ${serializeExpression(this.#state.limit, state)}\n`;
         }
 
         if (this.#state.offset !== null) {
-            accumulator += `offset ${serializeExpression(this.#state.offset, state)}\n`
+            accumulator += `offset ${serializeExpression(this.#state.offset, state)}\n`;
         }
 
         if (this.#state.forUpdate) {
@@ -227,23 +238,22 @@ export class QueryState<T extends ResultState> extends ExecutableQuery<T> {
             values: state.paramValues,
         };
     }
-
 }
 
 export namespace InsertState {
     export type State<ColumnState> = {
-        table: TableBuilder<any, ColumnState, string>,
-        values: Record<string, Expression>,
+        table: TableBuilder<any, ColumnState, string>;
+        values: Record<string, Expression>;
         conflictExpression:
-            | { kind: "nothing", keys: ColumnExpression<unknown, string>[] }
-            | { kind: "update", keys: ColumnExpression<unknown, string>[], updates: Record<string, Expression> }
-            | null,
-        returning: (Expression | Label)[] | null,
-    }
+            | { kind: "nothing"; keys: ColumnExpression<unknown, string>[] }
+            | { kind: "update"; keys: ColumnExpression<unknown, string>[]; updates: Record<string, Expression> }
+            | null;
+        returning: (Expression | Label)[] | null;
+    };
 }
 
 export class InsertState<ColumnState, T extends ResultState = { results: {} }> extends ExecutableQuery<T> {
-    #state: InsertState.State<ColumnState>
+    #state: InsertState.State<ColumnState>;
 
     protected selections: (Expression | Label)[];
 
@@ -265,11 +275,18 @@ export class InsertState<ColumnState, T extends ResultState = { results: {} }> e
         return this.with({ conflictExpression: { kind: "nothing", keys } });
     }
 
-    public onConflictDoUpdate(keys: ColumnExpression<unknown, string>[], updates: { [K in keyof ColumnState]?: Expression<ColumnState[K]> }) {
-        return this.with({ conflictExpression: { kind: "update", keys, updates: updates as Record<string, Expression> } });
+    public onConflictDoUpdate(
+        keys: ColumnExpression<unknown, string>[],
+        updates: { [K in keyof ColumnState]?: Expression<ColumnState[K]> },
+    ) {
+        return this.with({
+            conflictExpression: { kind: "update", keys, updates: updates as Record<string, Expression> },
+        });
     }
 
-    public returning<const T extends unknown[]>(...args: T): InsertState<ColumnState, { results: DecodeExpression<T> }> {
+    public returning<const T extends unknown[]>(
+        ...args: T
+    ): InsertState<ColumnState, { results: DecodeExpression<T> }> {
         return this.with({ returning: args as Expression[] });
     }
 
@@ -277,7 +294,7 @@ export class InsertState<ColumnState, T extends ResultState = { results: {} }> e
         const state: MutableSerializationState = {
             paramCount: 0,
             paramValues: [],
-        }
+        };
 
         const keys = Object.keys(this.#state.values);
         const columns = keys.join(", ");
@@ -294,14 +311,16 @@ export class InsertState<ColumnState, T extends ResultState = { results: {} }> e
                 accumulator += "do nothing";
             } else {
                 accumulator += "do update set ";
-                accumulator += Object.entries(this.#state.conflictExpression.updates).map(([key, value]) => `"${key}" = ${serializeExpression(value, state)}`).join(", ");
+                accumulator += Object.entries(this.#state.conflictExpression.updates)
+                    .map(([key, value]) => `"${key}" = ${serializeExpression(value, state)}`)
+                    .join(", ");
             }
 
             accumulator += "\n";
         }
 
         if (this.#state.returning !== null) {
-            accumulator += `returning ${this.#state.returning.map((e) => serializeExpression(e, state)).join(", ")}`
+            accumulator += `returning ${this.#state.returning.map((e) => serializeExpression(e, state)).join(", ")}`;
         }
 
         return {
@@ -313,19 +332,19 @@ export class InsertState<ColumnState, T extends ResultState = { results: {} }> e
 
 export namespace UpdateState {
     export type State<ColumnState> = {
-        table: TableBuilder<any, ColumnState, string>,
-        updates: Record<string, Expression>,
-        whereClauses: Expression<boolean>[],
-        returning: Expression[] | null,
-    }
+        table: TableBuilder<any, ColumnState, string>;
+        updates: Record<string, Expression>;
+        whereClauses: Expression<boolean>[];
+        returning: Expression[] | null;
+    };
 }
 
 export class UpdateState<ColumnState, T extends ResultState = { results: {} }> extends ExecutableQuery<T> {
-    #state: UpdateState.State<ColumnState>
+    #state: UpdateState.State<ColumnState>;
 
     protected selections: (Expression | Label)[];
 
-    constructor (state: UpdateState.State<ColumnState>) {
+    constructor(state: UpdateState.State<ColumnState>) {
         super();
         this.selections = state.returning ?? [];
         this.#state = state;
@@ -344,12 +363,16 @@ export class UpdateState<ColumnState, T extends ResultState = { results: {} }> e
     }
 
     public whereEq(clauses: { [K in keyof ColumnState]?: Expression<ColumnState[K]> }) {
-        const newClauses = Object.entries(clauses).map(([key, value]) => Op.eq(this.#state.table.c[key as keyof ColumnState], value as Expression<any>));
+        const newClauses = Object.entries(clauses).map(([key, value]) =>
+            Op.eq(this.#state.table.c[key as keyof ColumnState], value as Expression<any>),
+        );
 
         return this.with({ whereClauses: [...this.#state.whereClauses, ...newClauses] });
     }
 
-    public returning<const T extends unknown[]>(...args: T): UpdateState<ColumnState, { results: DecodeExpression<T> }> {
+    public returning<const T extends unknown[]>(
+        ...args: T
+    ): UpdateState<ColumnState, { results: DecodeExpression<T> }> {
         return this.with({ returning: args as Expression[] });
     }
 
@@ -357,17 +380,19 @@ export class UpdateState<ColumnState, T extends ResultState = { results: {} }> e
         const state: MutableSerializationState = {
             paramCount: 0,
             paramValues: [],
-        }
+        };
 
-        const updates = Object.entries(this.#state.updates).map(([key, value]) => `"${key}" = ${serializeExpression(value, state)}`).join(", ");
+        const updates = Object.entries(this.#state.updates)
+            .map(([key, value]) => `"${key}" = ${serializeExpression(value, state)}`)
+            .join(", ");
         let accumulator = `update "${this.#state.table.name}" set ` + updates + "\n";
 
         if (this.#state.whereClauses.length > 0) {
-            accumulator += `where ${this.#state.whereClauses.map((e) => serializeExpression(e, state)).join(" and ")}`
+            accumulator += `where ${this.#state.whereClauses.map((e) => serializeExpression(e, state)).join(" and ")}`;
         }
 
         if (this.#state.returning !== null) {
-            accumulator += `returning ${this.#state.returning.map((e) => serializeExpression(e, state)).join(", ")}`
+            accumulator += `returning ${this.#state.returning.map((e) => serializeExpression(e, state)).join(", ")}`;
         }
 
         return {
@@ -379,18 +404,18 @@ export class UpdateState<ColumnState, T extends ResultState = { results: {} }> e
 
 export namespace DeleteState {
     export type State = {
-        table: TableBuilder,
-        whereClauses: Expression<boolean>[],
-        returning: Expression[] | null,
-    }
+        table: TableBuilder;
+        whereClauses: Expression<boolean>[];
+        returning: Expression[] | null;
+    };
 }
 
 export class DeleteState<T extends ResultState = { results: {} }> extends ExecutableQuery<T> {
-    #state: DeleteState.State
+    #state: DeleteState.State;
 
     protected selections: (Expression | Label)[];
 
-    constructor (state: DeleteState.State) {
+    constructor(state: DeleteState.State) {
         super();
         this.#state = state;
         this.selections = state.returning ?? [];
@@ -412,16 +437,16 @@ export class DeleteState<T extends ResultState = { results: {} }> extends Execut
         const state: MutableSerializationState = {
             paramCount: 0,
             paramValues: [],
-        }
+        };
 
         let accumulator = `delete from "${this.#state.table.name}"\n`;
 
         if (this.#state.whereClauses.length > 0) {
-            accumulator += `where ${this.#state.whereClauses.map((e) => serializeExpression(e, state)).join(" and ")}`
+            accumulator += `where ${this.#state.whereClauses.map((e) => serializeExpression(e, state)).join(" and ")}`;
         }
 
         if (this.#state.returning !== null) {
-            accumulator += `returning ${this.#state.returning.map((e) => serializeExpression(e, state)).join(", ")}`
+            accumulator += `returning ${this.#state.returning.map((e) => serializeExpression(e, state)).join(", ")}`;
         }
 
         return {
@@ -429,28 +454,36 @@ export class DeleteState<T extends ResultState = { results: {} }> extends Execut
             values: state.paramValues,
         };
     }
-
 }
 
-type DecodeExpression<T extends unknown[], Acc = {}> =
-    T extends [] ? Acc :
-    T extends [Expression<infer Value, infer Name extends string>, ...(infer Tail)] ?
-        DecodeExpression<Tail, Acc & { [K in Name]: Value }> :
-    T extends [Label<infer Value, infer Name extends string>, ...(infer Tail)] ?
-        DecodeExpression<Tail, Acc & { [K in Name]: Value }> :
-    T extends [infer Literal, ...(infer Tail)] ?
-        DecodeExpression<Tail, Acc & { [K in "?column?"]: Literal }> :
-        never;
-
+type DecodeExpression<T extends unknown[], Acc = {}> = T extends []
+    ? Acc
+    : T extends [Expression<infer Value, infer Name extends string>, ...infer Tail]
+      ? DecodeExpression<Tail, Acc & { [K in Name]: Value }>
+      : T extends [Label<infer Value, infer Name extends string>, ...infer Tail]
+        ? DecodeExpression<Tail, Acc & { [K in Name]: Value }>
+        : T extends [infer Literal, ...infer Tail]
+          ? DecodeExpression<Tail, Acc & { [K in "?column?"]: Literal }>
+          : never;
 
 export const Select = <const T extends unknown[]>(...args: T): QueryState<{ results: DecodeExpression<T> }> => {
-    return new QueryState({ selections: args as (Expression | Label)[], fromTable: null, joins: [], whereClauses: [], orderClauses: [], limit: null, offset: null, forUpdate: false, skipLocked: false });
-}
+    return new QueryState({
+        selections: args as (Expression | Label)[],
+        fromTable: null,
+        joins: [],
+        whereClauses: [],
+        orderClauses: [],
+        limit: null,
+        offset: null,
+        forUpdate: false,
+        skipLocked: false,
+    });
+};
 
 export const Update = <const T>(table: TableBuilder<any, T, string>): UpdateState<T> => {
     return new UpdateState({ table, returning: null, updates: {}, whereClauses: [] });
-}
+};
 
 export const Insert = <const T>(table: TableBuilder<any, T, string>): InsertState<T> => {
     return new InsertState({ table, values: {}, conflictExpression: null, returning: null });
-}
+};

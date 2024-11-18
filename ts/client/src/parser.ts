@@ -23,7 +23,7 @@ class PgParser {
 
         const buffer = [];
         let char: string;
-        while (char = this.consume(), char !== ',' && char !== closeEl) {
+        while (((char = this.consume()), char !== "," && char !== closeEl)) {
             buffer.push(char);
         }
 
@@ -39,8 +39,8 @@ class PgParser {
         let sawQuote = false;
         let sawEscape = false;
 
-        while (char = this.consume()) {
-            if (char === "\"") {
+        while ((char = this.consume())) {
+            if (char === '"') {
                 if (sawQuote || sawEscape) {
                     buffer.push(char);
                     sawQuote = false;
@@ -79,7 +79,7 @@ class PgParser {
         let char: string;
         const results: string[] = [];
 
-        while (char = this.value[this.idx], this.idx < this.value.length) {
+        while (((char = this.value[this.idx]), this.idx < this.value.length)) {
             if (char === '"') {
                 results.push(this.consumeString("object"));
             } else {
@@ -89,11 +89,13 @@ class PgParser {
 
         const fields = spec.fields();
         if (results.length !== fields.length) {
-            console.log(results, fields)
+            console.log(results, fields);
             throw new Error("Mismatched fields");
         }
 
-        return results.map((value, i) => parse(fields[i][1], value)).reduce((acc, value, i) => (acc[fields[i][0]] = value, acc), {});
+        return results
+            .map((value, i) => parse(fields[i][1], value))
+            .reduce((acc, value, i) => ((acc[fields[i][0]] = value), acc), {});
     }
 
     parseArray(spec: CustomParseSpec & { kind: "array" }) {
@@ -102,7 +104,7 @@ class PgParser {
         let char: string;
         const results: string[] = [];
 
-        while (char = this.value[this.idx], this.idx < this.value.length) {
+        while (((char = this.value[this.idx]), this.idx < this.value.length)) {
             if (char === '"') {
                 results.push(this.consumeString("array"));
             } else {
@@ -114,9 +116,13 @@ class PgParser {
     }
 }
 
-export const parse = (parseSpec: ParseSpec, value: string | undefined): any => {
+export const parse = (parseSpec: ParseSpec, value: string | undefined | null): any => {
     if (value === undefined) {
         return undefined;
+    }
+
+    if (value === null) {
+        return null;
     }
 
     if (value === "") {
@@ -157,18 +163,18 @@ export const parse = (parseSpec: ParseSpec, value: string | undefined): any => {
     if (customSpec.kind === "enum") {
         return value;
     }
-}
+};
 
 export const parseArray = <OO, OA>(spec: ResultSpec<OO>, row: any[]): OA => {
     return row.map((value, i) => {
-        const [name, parseSpec] = spec[i];
+        const [_name, parseSpec] = spec[i];
         if (parseSpec === undefined) {
             return value;
         }
 
         return parse(parseSpec, value);
-    }) as OA
-}
+    }) as OA;
+};
 
 export const parseObject = <OO>(spec: ResultSpec<OO>, row: any): OO => {
     return spec.reduce((acc, [name, parseSpec]) => {
@@ -180,4 +186,4 @@ export const parseObject = <OO>(spec: ResultSpec<OO>, row: any): OO => {
 
         return acc;
     }, {} as OO);
-}
+};

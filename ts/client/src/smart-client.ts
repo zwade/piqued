@@ -1,5 +1,5 @@
-import { PoolClient, QueryArrayResult, QueryResult, QueryResultRow } from "pg";
 import { AsyncLocalStorage } from "node:async_hooks";
+import { PoolClient, QueryArrayResult, QueryResult, QueryResultRow } from "pg";
 
 (Symbol as any).dispose ??= Symbol("Symbol.dispose");
 (Symbol as any).asyncDispose ??= Symbol("Symbol.asyncDispose");
@@ -114,4 +114,4 @@ export class SmartClient {
 
 export const getCurrentClient = () => {
     return CurrentTransaction.getStore();
-}
+};
