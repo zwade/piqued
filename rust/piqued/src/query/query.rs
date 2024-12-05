@@ -139,12 +139,12 @@ impl Query {
                 SELECT
                     table_name,
                     column_name,
-                    data_type,
+                    udt_name as data_type,
                     coalesce(pg_type.oid, -1) as type_oid,
                     is_nullable,
                     ordinal_position
                 FROM information_schema.columns
-                    LEFT JOIN pg_type ON pg_type.typname = data_type
+                    LEFT JOIN pg_type ON pg_type.typname = udt_name
                 WHERE table_schema = $1
                 ORDER BY table_name, ordinal_position
             ",
@@ -199,7 +199,7 @@ impl Query {
                     ON pg_type.typrelid = pg_attribute.attrelid
                 INNER JOIN pg_type col_type
                     ON pg_attribute.atttypid = col_type.oid
-                WHERE pg_namespace.nspname = $1
+                WHERE pg_namespace.nspname in ($1, 'pg_catalog')
                     AND pg_type.typcategory = 'C'
                     AND pg_attribute.attnum > 0
                     AND pg_type.typname NOT LIKE '%_seq' -- CR zwade for zwade: is there a better way to do this?
@@ -262,7 +262,7 @@ impl Query {
                     ON pg_type.typnamespace = pg_namespace.oid
                 INNER JOIN pg_enum
                     ON pg_type.oid = pg_enum.enumtypid
-                WHERE pg_namespace.nspname = $1
+                WHERE pg_namespace.nspname in ($1, 'pg_catalog')
                     AND pg_type.typcategory = 'E'
                 ORDER BY
                     pg_type.oid ASC,
@@ -371,6 +371,17 @@ impl Query {
                 }
             }
             _ => None,
+        }
+    }
+
+    pub fn get_column_type(&self, column: &Column) -> String {
+        if let Some(name) = self.custom_types_by_oid.get(&column.type_oid) {
+            match **name {
+                CustomType::Composite(ref t) => t.name.clone(),
+                CustomType::Enum(ref t) => t.name.clone(),
+            }
+        } else {
+            column.type_name.clone()
         }
     }
 }

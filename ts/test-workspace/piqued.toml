@@ -1,5 +1,5 @@
 [postgres]
-uri = "postgresql://postgres:hola12@localhost:5432/postgres"
+uri = "postgresql://postgres:password@localhost:5432/postgres"
 
 [emit]
 typeFile = "./src/types"

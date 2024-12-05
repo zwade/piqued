@@ -1,10 +1,13 @@
 {
   "name": "@piqued/client",
-  "version": "0.3.16",
+  "version": "0.3.17",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "packageManager": "yarn@3.3.0",
   "license": "MIT",
+  "scripts": {
+    "prepublish": "yarn eslint src --fix && yarn tsc"
+  },
   "peerDependencies": {
     "pg": "*"
   },

@@ -4,9 +4,9 @@ pub mod parser {
     pub mod parser;
 }
 pub mod lsp {
+    mod backend;
+    mod formatters;
     pub mod lsp;
-    mod lsp_fmt;
-    mod utils;
 }
 pub mod query {
     pub mod query;

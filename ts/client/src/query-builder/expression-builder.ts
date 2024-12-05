@@ -109,6 +109,14 @@ export namespace Op {
     export const exp = <T>(strings: TemplateStringsArray, ...expressions: Expression[]) => {
         return new InterpolatedExpression<T, "?column?">("?column?", strings, expressions);
     };
+
+    export const and = <T>(...expressions: Expression<T>[]) => {
+        return new FunctionOperation<boolean, "and">("and", expressions);
+    };
+
+    export const or = <T>(...expressions: Expression<T>[]) => {
+        return new FunctionOperation<boolean, "or">("or", expressions);
+    };
 }
 
 type Despecify<
@@ -152,6 +160,19 @@ export class TableBuilder<
                 return new ColumnExpression(this.name, key, this.parseSpecByName[key as keyof Result]);
             },
         });
+    }
+
+    public match(args: { [K in keyof Result]: K extends string ? Expression<Result[K], K> : never }) {
+        const entries = Object.entries(args);
+        if (entries.length === 0) {
+            return true;
+        }
+
+        const booleanExpressions = entries.map(([key, value]) => {
+            return Op.eq(this.c[key as keyof Result], value as Expression);
+        });
+
+        return booleanExpressions.reduce((acc, e) => Op.and(acc, e), true as Expression<boolean>);
     }
 
     public get table() {

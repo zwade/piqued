@@ -7,4 +7,10 @@ SELECT $1::text || ' from another postgres!', $2 AS input;
 
 SELECT 'This query has messy characters: \ ` ''';
 
-SELECT company, 1 from company;
+-- @name ppl
+SELECT person, practice,
+FROM person pe
+INNER JOIN practice_person_patient ppp
+    ON ppp.person_uid = pe.uid
+INNER JOIN practice pr
+    ON pr.name

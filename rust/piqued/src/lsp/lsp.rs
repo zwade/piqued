@@ -4,9 +4,10 @@ use tokio::sync::{MappedMutexGuard, Mutex, MutexGuard};
 use tokio_postgres::config;
 use tower_lsp::jsonrpc;
 use tower_lsp::lsp_types::{
-    DidChangeTextDocumentParams, DidOpenTextDocumentParams, Hover, HoverParams,
-    HoverProviderCapability, InitializeParams, InitializeResult, InitializedParams, MessageType,
-    ServerCapabilities, TextDocumentSyncCapability, TextDocumentSyncKind, Url,
+    CompletionOptions, CompletionParams, CompletionResponse, DidChangeTextDocumentParams,
+    DidOpenTextDocumentParams, Hover, HoverParams, HoverProviderCapability, InitializeParams,
+    InitializeResult, InitializedParams, MessageType, ServerCapabilities,
+    TextDocumentSyncCapability, TextDocumentSyncKind, Url,
 };
 use tower_lsp::{Client, LanguageServer};
 
@@ -120,6 +121,9 @@ impl LanguageServer for Backend {
                 text_document_sync: Some(TextDocumentSyncCapability::Kind(
                     TextDocumentSyncKind::FULL,
                 )),
+                completion_provider: Some(CompletionOptions {
+                    ..Default::default()
+                }),
                 ..Default::default()
             },
             ..Default::default()
@@ -208,6 +212,46 @@ impl LanguageServer for Backend {
                 Ok(None)
             }
             Ok(hov) => Ok(Some(hov)),
+        }
+    }
+
+    async fn completion(
+        &self,
+        params: CompletionParams,
+    ) -> jsonrpc::Result<Option<CompletionResponse>> {
+        let position = params.text_document_position.position;
+        let file_name = params.text_document_position.text_document.uri.to_string();
+
+        let maybe_workspace = self
+            .workspace_for_file(&params.text_document_position.text_document.uri)
+            .await;
+
+        let workspace = match maybe_workspace {
+            Some(workspace) => workspace,
+            None => return Ok(None),
+        };
+
+        let file_contents = match workspace.get_file(&file_name) {
+            Some(data) => data,
+            None => {
+                self.client
+                    .log_message(MessageType::ERROR, "File not found")
+                    .await;
+                return Ok(None);
+            }
+        };
+
+        match self
+            .get_completion_data(&workspace, file_contents, &position)
+            .await
+        {
+            Ok(completions) => Ok(Some(completions)),
+            Err(e) => {
+                self.client
+                    .log_message(MessageType::ERROR, format!("{:#?}", e))
+                    .await;
+                Err(jsonrpc::Error::internal_error())
+            }
         }
     }
 }

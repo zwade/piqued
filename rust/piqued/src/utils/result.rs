@@ -43,6 +43,12 @@ impl From<std::io::Error> for PiquedError {
     }
 }
 
+impl From<&PiquedError> for PiquedError {
+    fn from(err: &PiquedError) -> Self {
+        err.clone()
+    }
+}
+
 impl From<tokio_postgres::Error> for PiquedError {
     fn from(err: tokio_postgres::Error) -> Self {
         match err.as_db_error() {

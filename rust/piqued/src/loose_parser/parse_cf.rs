@@ -66,10 +66,37 @@ pub struct FromExpression {
     pub alias: Option<String>,
 }
 
+impl FromExpression {
+    pub fn effective_name(&self) -> &str {
+        if let Some(ref alias) = self.alias {
+            alias
+        } else {
+            let TableLike::Table(ref table) = *self.table;
+            table
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub enum JoinKind {
+    Outer,
+    Inner,
+    Left,
+    Right, // This is a real thing, right?
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub struct JoinExpression {
+    pub from: Arc<FromExpression>,
+    pub condition: Option<Arc<Expression>>,
+    pub join_kind: JoinKind,
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct SelectQuery {
     pub columns: Vec<Arc<ColumnExpression>>,
     pub from: Option<Vec<Arc<FromExpression>>>,
+    pub joins: Vec<Arc<JoinExpression>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
@@ -82,11 +109,38 @@ pub enum LR1Kind {
     TableLike(Arc<TableLike>),
     FromExpression(Arc<FromExpression>),
     FromExpressionList(Vec<Arc<FromExpression>>),
+    JoinKind(JoinKind),
 
     SelectStmt(Vec<Arc<ColumnExpression>>),
     FromStmt(Vec<Arc<FromExpression>>),
+    JoinStmt(Arc<JoinExpression>),
 
     SelectQuery(Arc<SelectQuery>),
+}
+
+impl LR1Kind {
+    pub fn to_name(&self) -> String {
+        if let LR1Kind::Token(t) = self {
+            return format!("Token({:?})", t.to_string());
+        }
+
+        match self {
+            LR1Kind::ColumnExpression(_) => "ColumnExpression",
+            LR1Kind::Operator(_) => "Operator",
+            LR1Kind::ExpressionList(_) => "ExpressionList",
+            LR1Kind::Expression(_) => "Expression",
+            LR1Kind::TableLike(_) => "TableLike",
+            LR1Kind::FromExpression(_) => "FromExpression",
+            LR1Kind::FromExpressionList(_) => "FromExpressionList",
+            LR1Kind::SelectStmt(_) => "SelectStmt",
+            LR1Kind::FromStmt(_) => "FromStmt",
+            LR1Kind::SelectQuery(_) => "SelectQuery",
+            LR1Kind::JoinKind(_) => "JoinKind",
+            LR1Kind::JoinStmt(_) => "JoinStmt",
+            LR1Kind::Token(_) => "N/A",
+        }
+        .to_string()
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]

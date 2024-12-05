@@ -34,11 +34,16 @@ pub struct ParsedPreparedQuery {
 }
 
 pub fn parse_single_query<'a>(query: &str) -> Result<RawStmt> {
-    Ok(pg_query::parse(query)?.protobuf.stmts[0].clone())
+    let stmts = pg_query::parse(query)?.protobuf.stmts;
+    if stmts.len() == 0 {
+        return Err(PiquedError::OtherError(query.to_string()));
+    }
+
+    Ok(stmts[0].clone())
 }
 
 pub fn load_file(contents: &str) -> Result<ParsedFile> {
-    let queries = pg_query::split_with_scanner(&contents)?;
+    let queries = contents.split(";").collect::<Vec<_>>();
     let index_by_line: Vec<u32> = (contents.to_string() + "\n")
         .split("\n")
         .scan(0, |acc, line| {
@@ -83,11 +88,17 @@ pub fn load_file(contents: &str) -> Result<ParsedFile> {
             }
 
             let location = *state;
-            let len = query.len() as u32 + 1; // Add one for the semicolon
+            let len = query.len() as u32;
             *state += &len;
 
             let index_start = location + whitespace as u32;
             let index_len = len - whitespace as u32;
+
+            if index_len == 0 {
+                return None;
+            }
+
+            *state += 1; // For the semicolon
 
             Some(RelocatedStmt {
                 stmt: stmt.clone(),

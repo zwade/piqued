@@ -1,6 +1,6 @@
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
-use tower_lsp::lsp_types::{Diagnostic, DiagnosticSeverity};
+use tower_lsp::lsp_types::{Diagnostic, DiagnosticSeverity, Position, Range};
 
 use crate::{
     codegen::{codegen::CodeGenerationContext, ts::schema::TSGenerator},
@@ -92,15 +92,26 @@ impl Workspace {
             {
                 Ok(_) => {}
                 Err(err) => {
-                    let msg = match err {
+                    let msg = match &err {
                         PiquedError::ParseErrorAt(e) => format!("Error parsing query at \"{e}\""),
-                        PiquedError::PostgresError(e) => e,
+                        PiquedError::PostgresError(e) => e.clone(),
                         PiquedError::OtherError(e) => format!("Error: {e}"),
-                        PiquedError::SerdeParseError(e) => format!("Error: {e}"),
+                        PiquedError::SerdeParseError(e) => format!("Serde error: {e}"),
+                    };
+
+                    let range = match &err {
+                        PiquedError::ParseErrorAt(_) => Range {
+                            start: stmt.range.start,
+                            end: Position {
+                                line: stmt.range.start.line,
+                                character: stmt.range.start.character + 2,
+                            },
+                        },
+                        _ => stmt.range.clone(),
                     };
 
                     diagnostics.push(Diagnostic::new(
-                        stmt.range.clone(),
+                        range,
                         Some(DiagnosticSeverity::ERROR),
                         None,
                         None,

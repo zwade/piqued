@@ -6,17 +6,22 @@ fn partially_parse() {
     //     SELECT 1->>2, foo.bar as column_sample, |/3 as number_sample, -3 <=> +2
     //     FROM company as foo, other bar;
     // ";
-    let sql: &str = "
-        SELECT * FROM \"user\";
+    let sql: &str = r"
+SELECT person, practice,
+FROM person
+INNER JOIN practice_person_patient ppp
+    ON ppp.person_uid = person.uid
+INNER JOIN practice
+    ON
+;
     ";
     println!("Attempting to parse: {}", sql);
     let mut token_prediction = ParserContext::new(&sql.to_string());
     let predictions = token_prediction.parse();
     let stack = predictions.inspect(&Position {
-        line: 1,
-        character: 9,
+        line: 2,
+        character: 3,
     });
-    println!("Stack: {:#?}", stack);
 
     predictions.states.iter().for_each(|pred| {
         println!("{:#?}", pred.kind);
