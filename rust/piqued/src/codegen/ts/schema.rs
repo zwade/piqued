@@ -39,6 +39,7 @@ impl ResolvedType {
         match self {
             ResolvedType::Native(val) if val == "number" => "Number".to_string(),
             ResolvedType::Native(val) if val == "string" => "String".to_string(),
+            ResolvedType::Native(val) if val == "Buffer" => "Buffer".to_string(),
             ResolvedType::Native(val) if val == "boolean" => "Boolean".to_string(),
             ResolvedType::Native(val) if val == "Date" => "Date".to_string(),
             ResolvedType::Native(val) if val == "any" => "Object".to_string(),
@@ -87,7 +88,8 @@ impl TSGenerator {
 
         let native_type = match type_ {
             "int4" | "int8" | "float4" | "float8" | "numeric" => "number",
-            "text" | "bytea" | "varchar" | "char" | "uuid" => "string",
+            "text" | "varchar" | "char" | "uuid" => "string",
+            "bytea" => "Buffer",
             "bool" => "boolean",
             "date" | "timestamp" | "time" | "timestamptz" => "Date",
             "json" | "jsonb" => "any",

@@ -60,7 +60,7 @@ export type StructuredExpression<T, Name extends string> =
     | FunctionOperation<T, Name>
     | InterpolatedExpression<T, Name>;
 
-export type LiteralExpression = string | number | boolean | null | undefined | Date | LiteralExpression[];
+export type LiteralExpression = string | number | boolean | null | undefined | Date | Buffer | LiteralExpression[];
 
 export type Expression<T = unknown, Name extends string = string> = StructuredExpression<T, Name> | LiteralExpression;
 
@@ -212,6 +212,7 @@ export const serializeExpression = (e: Expression | Label, state: MutableSeriali
         typeof e === "number" ||
         typeof e === "boolean" ||
         typeof e === "undefined" ||
+        e instanceof Buffer ||
         e === null ||
         Array.isArray(e) ||
         e instanceof Date

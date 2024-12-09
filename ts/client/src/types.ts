@@ -13,6 +13,7 @@ export type ParseSpec =
     | StringConstructor
     | DateConstructor
     | ObjectConstructor
+    | BufferConstructor
     | CustomParseSpec;
 
 export type ResultSpec<OO> = [name: keyof OO, spec: ParseSpec | undefined][];

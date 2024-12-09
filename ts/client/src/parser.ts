@@ -145,6 +145,10 @@ export const parse = (parseSpec: ParseSpec, value: string | undefined | null): a
         return new Date(value);
     }
 
+    if (parseSpec === Buffer) {
+        return parseBuffer(value);
+    }
+
     if (parseSpec === Object) {
         return JSON.parse(value);
     }
@@ -162,6 +166,24 @@ export const parse = (parseSpec: ParseSpec, value: string | undefined | null): a
 
     if (customSpec.kind === "enum") {
         return value;
+    }
+};
+
+export const parseBuffer = (value: string): Buffer => {
+    if (value.match(/^\\x/)) {
+        // Hex encoded
+        return Buffer.from(value.slice(2), "hex");
+    } else {
+        // Escape encoded
+        // TODO(zwade): Make an actual parser here to speed this up
+        const asUtf8String = value
+            .replace(/\\\\/g, "\\134")
+            .replace(/''/g, "\\047")
+            .replace(/\\\d{3}/g, (match) => {
+                return String.fromCharCode(parseInt(match.slice(1), 8));
+            });
+
+        return Buffer.from(asUtf8String, "utf8");
     }
 };
 
