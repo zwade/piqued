@@ -245,7 +245,7 @@ export namespace InsertState {
         table: TableBuilder<any, ColumnState, string>;
         values: Record<string, Expression>;
         conflictExpression:
-            | { kind: "nothing"; keys: ColumnExpression<unknown, string>[] }
+            | { kind: "nothing"; keys?: ColumnExpression<unknown, string>[] }
             | { kind: "update"; keys: ColumnExpression<unknown, string>[]; updates: Record<string, Expression> }
             | null;
         returning: (Expression | Label)[] | null;
@@ -271,7 +271,7 @@ export class InsertState<ColumnState, T extends ResultState = { results: {} }> e
         return this.with({ values: values as Record<string, Expression> });
     }
 
-    public onConflictDoNothing(keys: ColumnExpression<unknown, string>[]) {
+    public onConflictDoNothing(keys?: ColumnExpression<unknown, string>[]) {
         return this.with({ conflictExpression: { kind: "nothing", keys } });
     }
 
@@ -303,9 +303,13 @@ export class InsertState<ColumnState, T extends ResultState = { results: {} }> e
         let accumulator = `insert into "${this.#state.table.name}" (${columns}) values (${values})\n`;
 
         if (this.#state.conflictExpression !== null) {
-            accumulator += "on conflict (";
-            accumulator += this.#state.conflictExpression.keys.map((e) => `"${e.columnName}"`).join(", ");
-            accumulator += ") ";
+            if (this.#state.conflictExpression.keys === undefined) {
+                accumulator += "on conflict ";
+            } else {
+                accumulator += "on conflict (";
+                accumulator += this.#state.conflictExpression.keys.map((e) => `"${e.columnName}"`).join(", ");
+                accumulator += ") ";
+            }
 
             if (this.#state.conflictExpression.kind === "nothing") {
                 accumulator += "do nothing";

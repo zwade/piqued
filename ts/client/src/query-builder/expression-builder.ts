@@ -52,15 +52,33 @@ export class InterpolatedExpression<_Result, Name extends string> {
     }
 }
 
+export class TupleExpression<_T, _Name extends string> {
+    constructor(public expressions: LiteralExpression[]) {}
+}
+
+export const tuple = (expressions: LiteralExpression[]) => {
+    return new TupleExpression(expressions);
+};
+
 export type StructuredExpression<T, Name extends string> =
     | ColumnExpression<T, Name>
     | TableExpression<T, Name>
     | BinaryOperation<T, Name>
     | UnaryOperation<T, Name>
     | FunctionOperation<T, Name>
+    | TupleExpression<T, Name>
     | InterpolatedExpression<T, Name>;
 
-export type LiteralExpression = string | number | boolean | null | undefined | Date | Buffer | LiteralExpression[];
+export type LiteralExpression =
+    | string
+    | number
+    | boolean
+    | null
+    | undefined
+    | Date
+    | Buffer
+    | { [key: string]: LiteralExpression }
+    | LiteralExpression[];
 
 export type Expression<T = unknown, Name extends string = string> = StructuredExpression<T, Name> | LiteralExpression;
 
@@ -93,6 +111,14 @@ export namespace Op {
 
     export function eq(left: Expression, right: Expression) {
         return new BinaryOperation<boolean, "?column?">("=", left, right);
+    }
+
+    export function in_(left: Expression, right: Expression) {
+        if (Array.isArray(right)) {
+            right = tuple(right);
+        }
+
+        return new BinaryOperation<boolean, "?column?">("IN", left, right);
     }
 
     export function coalesce<T>(...args: Expression<T>[]) {
@@ -206,7 +232,15 @@ const addAndReturnParam = (state: MutableSerializationState, value: any) => {
     return `$${state.paramCount}`;
 };
 
-export const serializeExpression = (e: Expression | Label, state: MutableSerializationState): string => {
+export interface SerializeOptions {
+    inlineOnly?: boolean;
+}
+
+export const serializeExpression = (
+    e: Expression | Label,
+    state: MutableSerializationState,
+    options: SerializeOptions = {},
+): string => {
     if (
         typeof e === "string" ||
         typeof e === "number" ||
@@ -217,7 +251,11 @@ export const serializeExpression = (e: Expression | Label, state: MutableSeriali
         Array.isArray(e) ||
         e instanceof Date
     ) {
-        return addAndReturnParam(state, e);
+        if (options.inlineOnly) {
+            return serializeInlineExpression(e);
+        } else {
+            return addAndReturnParam(state, e);
+        }
     }
 
     if (e instanceof TableExpression) {
@@ -229,27 +267,82 @@ export const serializeExpression = (e: Expression | Label, state: MutableSeriali
     }
 
     if (e instanceof UnaryOperation) {
-        return `(${e.operand} ${serializeExpression(e.expression, state)})`;
+        return `(${e.operand} ${serializeExpression(e.expression, state, options)})`;
     }
 
     if (e instanceof BinaryOperation) {
-        return `(${serializeExpression(e.left, state)} ${e.operand} ${serializeExpression(e.right, state)})`;
+        return `(${serializeExpression(e.left, state, options)} ${e.operand} ${serializeExpression(e.right, state, options)})`;
     }
 
     if (e instanceof FunctionOperation) {
-        return `${e.name}(${e.args.map((e) => serializeExpression(e, state)).join(", ")})`;
+        return `${e.name}(${e.args.map((e) => serializeExpression(e, state, options)).join(", ")})`;
     }
 
     if (e instanceof InterpolatedExpression) {
         return (
-            e.expressions.map((exp, i) => `${e.parts[i]}${serializeExpression(exp, state)}`).join("") +
+            e.expressions.map((exp, i) => `${e.parts[i]}${serializeExpression(exp, state, options)}`).join("") +
             e.parts[e.parts.length - 1]
         );
+    }
+
+    if (e instanceof TupleExpression) {
+        return `(${e.expressions.map((e) => serializeExpression(e, state, { ...options, inlineOnly: true })).join(",")})`;
     }
 
     if (e instanceof Label) {
         return `${serializeExpression(e.e, state)} as ${e.name}`;
     }
 
-    throw new Error("Unexpected expression", e);
+    return addAndReturnParam(state, e);
+};
+
+/**
+ * Serializes a postgres expression for use in a tuple
+ */
+export const serializeInlineExpression = (e: LiteralExpression): string => {
+    switch (typeof e) {
+        case "string": {
+            return `'${e.replace(/"/g, '\\"')}'`; // Only support non-extended strings
+        }
+        case "number": {
+            if (isNaN(e)) {
+                return "NaN";
+            }
+
+            if (!isFinite(e)) {
+                return e > 0 ? "Infinity" : "-Infinity";
+            }
+
+            return e.toString();
+        }
+        case "boolean": {
+            return e ? "TRUE" : "FALSE";
+        }
+        case "undefined": {
+            return "NULL";
+        }
+        default: {
+            if (e === null) {
+                return "NULL";
+            }
+
+            if (e instanceof Buffer) {
+                return `"\\\\x${e.toString("hex")}"`;
+            }
+
+            if (e instanceof Date) {
+                return `"${e.toISOString()}"`;
+            }
+
+            if (e instanceof Array) {
+                return `{${e.map(serializeInlineExpression).join(",")}}`;
+            }
+
+            if (e instanceof TupleExpression) {
+                return `(${e.expressions.map(serializeInlineExpression).join(",")})`;
+            }
+
+            throw new Error("Unable to serialize expression", e);
+        }
+    }
 };
