@@ -5,5 +5,7 @@
 !.yarn/sdks
 !.yarn/versions
 
+test-workspace/.yarn/*
+
 dist
 node_modules

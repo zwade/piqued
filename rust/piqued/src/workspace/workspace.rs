@@ -55,23 +55,13 @@ impl Workspace {
         self.query = Query::new(config).await;
     }
 
-    pub async fn diagnostics_for_statment(
-        &self,
-        file_contents: &str,
-        parsed: &ParsedFile,
-        stmt: &RelocatedStmt,
-    ) -> Result<()> {
+    pub async fn diagnostics_for_statment(&self, stmt: &RelocatedStmt) -> Result<()> {
         let query = match &self.query {
             Err(e) => return Err(e.clone()),
             Ok(q) => q,
         };
 
-        let prepared_statement =
-            parser::get_prepared_statement(&stmt, &parsed.tokens, &file_contents, || {
-                "query".to_string()
-            })?;
-
-        let _ = query.probe_type(&prepared_statement).await?;
+        let _ = query.probe_type(&stmt).await?;
 
         Ok(())
     }
@@ -86,10 +76,7 @@ impl Workspace {
 
         let mut diagnostics: Vec<Diagnostic> = Vec::new();
         for stmt in &parsed.statements {
-            match self
-                .diagnostics_for_statment(file_contents, &parsed, stmt)
-                .await
-            {
+            match self.diagnostics_for_statment(stmt).await {
                 Ok(_) => {}
                 Err(err) => {
                     let msg = match &err {

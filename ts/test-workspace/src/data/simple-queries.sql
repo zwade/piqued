@@ -7,10 +7,10 @@ SELECT $1::text || ' from another postgres!', $2 AS input;
 
 SELECT 'This query has messy characters: \ ` ''';
 
--- @name ppl
-SELECT person, practice,
-FROM person pe
-INNER JOIN practice_person_patient ppp
-    ON ppp.person_uid = pe.uid
-INNER JOIN practice pr
-    ON pr.name
+-- @params force
+-- @xtemplate uids (uuid_generate_v4())
+PREPARE test AS
+    SELECT name FROM person
+    WHERE
+        uid IN :uids OR
+        $1;

@@ -322,6 +322,13 @@ impl CodeGenerator for TSGenerator {
             format!("[\n{}    ]", comma_separated)
         };
 
+        let template_arg_names = &parsed_query
+            .details
+            .templates
+            .iter()
+            .map(|arg| to_camel_case(&arg.name, false))
+            .collect::<Vec<_>>();
+
         let (input_array_type, input_object_type) = {
             let resolved_types = probe_result
                 .args
@@ -432,38 +439,68 @@ impl CodeGenerator for TSGenerator {
             format!("[\n{}    ]", additional_spec)
         };
 
+        let template_params = {
+            let args = template_arg_names
+                .iter()
+                .map(|name| format!("\"{}\"", name))
+                .collect::<Vec<_>>()
+                .join(", ");
+
+            format!("[{}]", args)
+        };
+
+        let template_input_object = {
+            let args = template_arg_names
+                .iter()
+                .map(|name| format!("\"{}\": any", name))
+                .collect::<Vec<_>>()
+                .join(", ");
+
+            format!("{{{}}}", args)
+        };
+
         let escaped_query = parsed_query.contents.replace('`', "\\`");
 
-        let mut b = Builder::default();
-        b.append(format!("export const {}: Query<{}.InputArray, {}.InputObject, {}.OutputArray, {}.OutputObject> = {{\n", identifier, identifier, identifier, identifier, identifier));
-        b.append(format!("    name: \"{}\",\n", name));
-        b.append(format!("    query: `{}`,\n", escaped_query));
-        b.append(format!("    params: {},\n", param_names));
-        b.append(format!("    spec: {},\n", parse_spec));
-        b.append("    _brand: undefined as any,\n");
-        b.append("};\n\n");
+        let mut c = CodegenHelper::new("    ", "\n");
+        c.write_line(Some(&format!("export const {}: Query<{}.InputArray, {}.InputObject, {}.TemplateInputObject, {}.OutputArray, {}.OutputObject> = {{", identifier, identifier, identifier, identifier, identifier, identifier)));
+        c.with_indent(|c| {
+            c.write_line(Some(&format!("name: \"{}\",", name)));
+            c.write_line(Some(&format!("query: `{}`,", escaped_query)));
+            c.write_line(Some(&format!("params: {},", param_names)));
+            c.write_line(Some(&format!("templateParams: {},", template_params)));
+            c.write_line(Some(&format!("spec: {},", parse_spec)));
+            c.write_line(Some("_brand: undefined as any,"));
+        });
+        c.write_line(Some("};"));
+        c.write_line(None);
 
-        b.append(format!("export namespace {} {{\n", identifier));
-        b.append(indent_block(
-            &format!("export type InputArray = {};\n", input_array_type),
-            1,
-        ));
-        b.append(indent_block(
-            &format!("export type InputObject = {};\n", input_object_type),
-            1,
-        ));
-        b.append(indent_block(
-            &format!("export type OutputArray = {};\n", output_array_type),
-            1,
-        ));
-        b.append(indent_block(
-            &format!("export type OutputObject = {};\n", output_object_type),
-            1,
-        ));
-        b.append("}");
+        c.write_line(Some(&format!("export namespace {} {{", identifier)));
+        c.with_indent(|c| {
+            c.write_line(Some(&format!(
+                "export type InputArray = {};",
+                input_array_type
+            )));
+            c.write_line(Some(&format!(
+                "export type InputObject = {};",
+                input_object_type
+            )));
+            c.write_line(Some(&format!(
+                "export type TemplateInputObject = {};",
+                template_input_object
+            )));
+            c.write_line(Some(&format!(
+                "export type OutputArray = {};",
+                output_array_type
+            )));
+            c.write_line(Some(&format!(
+                "export type OutputObject = {};",
+                output_object_type
+            )))
+        });
+        c.write_line(Some("}"));
 
         SerializationResult {
-            generated_code: b.string().unwrap(),
+            generated_code: c.serialize(),
             identifier,
             requires_import: imports,
         }

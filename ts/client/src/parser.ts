@@ -101,6 +101,11 @@ class PgParser {
     parseArray(spec: CustomParseSpec & { kind: "array" }) {
         this.consume("{");
 
+        if (this.value[this.idx] === "}") {
+            this.consume("}");
+            return [];
+        }
+
         let char: string;
         const results: string[] = [];
 

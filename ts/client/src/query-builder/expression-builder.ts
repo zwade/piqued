@@ -60,6 +60,14 @@ export const tuple = (expressions: LiteralExpression[]) => {
     return new TupleExpression(expressions);
 };
 
+export class RawExpression<_T, _Name extends string> {
+    constructor(public expression: string) {}
+}
+
+export const raw = (expression: string) => {
+    return new RawExpression(expression);
+};
+
 export type StructuredExpression<T, Name extends string> =
     | ColumnExpression<T, Name>
     | TableExpression<T, Name>
@@ -67,7 +75,8 @@ export type StructuredExpression<T, Name extends string> =
     | UnaryOperation<T, Name>
     | FunctionOperation<T, Name>
     | TupleExpression<T, Name>
-    | InterpolatedExpression<T, Name>;
+    | InterpolatedExpression<T, Name>
+    | RawExpression<T, Name>;
 
 export type LiteralExpression =
     | string
@@ -287,6 +296,10 @@ export const serializeExpression = (
 
     if (e instanceof TupleExpression) {
         return `(${e.expressions.map((e) => serializeExpression(e, state, { ...options, inlineOnly: true })).join(",")})`;
+    }
+
+    if (e instanceof RawExpression) {
+        return e.expression;
     }
 
     if (e instanceof Label) {

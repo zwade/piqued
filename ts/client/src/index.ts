@@ -9,10 +9,14 @@ export {
     label,
     LiteralExpression,
     Op,
+    raw,
+    RawExpression,
     serializeExpression,
     StructuredExpression,
     TableBuilder,
     TableExpression,
+    tuple,
+    TupleExpression,
     UnaryOperation,
 } from "./query-builder/expression-builder";
 export { Insert, Select, Update } from "./query-builder/query-builder";

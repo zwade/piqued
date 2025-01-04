@@ -1,6 +1,8 @@
 import { Pool } from "pg";
 
 import { parseArray, parseObject } from "./parser";
+import { Expression, serializeExpression } from "./query-builder/expression-builder";
+import { MutableSerializationState } from "./query-builder/serialize";
 import { getCurrentClient, SmartClient } from "./smart-client";
 
 export type CustomParseSpec =
@@ -18,15 +20,17 @@ export type ParseSpec =
 
 export type ResultSpec<OO> = [name: keyof OO, spec: ParseSpec | undefined][];
 
-export type Query<IA extends any[], IO, OA, OO> = {
+export type Query<IA extends any[], IO, TIO, OA, OO> = {
     name: string;
     query: string;
     params: (keyof IO)[];
+    templateParams: (keyof TIO)[];
     spec: ResultSpec<OO>;
 
     _brand: {
         inputArray: IA;
-        inputobject: IO;
+        inputObject: IO;
+        templateInputObject: TIO;
         outputArray: OA;
         outputObject: OO;
     };
@@ -44,9 +48,35 @@ export type Cursor<OA, OO> = {
 };
 
 export const QueryExecutor =
-    <IA extends any[], IO, OA, OO>(query: Query<IA, IO, OA, OO>, pool: Pool): QueryExecutor<IA, IO, OA, OO> =>
-    (args) => {
-        const argsAsArray: unknown[] = Array.isArray(args) ? args : query.params.map((param) => args[param]);
+    <IA extends any[], IO, TIO, OA, OO>(
+        query: Query<IA, IO, TIO, OA, OO>,
+        pool: Pool,
+    ): QueryExecutor<IA, IO, TIO, OA, OO> =>
+    (args, templateArgs: TIO = {} as TIO) => {
+        let argsAsArray: unknown[];
+        let resolvedTemplateArgs: TIO;
+
+        if (Array.isArray(args)) {
+            argsAsArray = args;
+            resolvedTemplateArgs = templateArgs;
+        } else {
+            argsAsArray = query.params.map((param) => args[param]);
+            resolvedTemplateArgs = query.templateParams.reduce(
+                (acc, tp) => ((acc[tp] ??= (args as IO & TIO)[tp]), acc),
+                (templateArgs ?? {}) as TIO,
+            );
+        }
+
+        const state: MutableSerializationState = { paramCount: 0, paramValues: [] };
+        const formattedQuery = query.query.replace(/:__tmpl_([\w\d_]+)/g, (_, name) => {
+            return serializeExpression(resolvedTemplateArgs[name as keyof TIO] as Expression, state, {
+                inlineOnly: true,
+            });
+        });
+
+        if (state.paramCount !== 0) {
+            throw new Error("Inline expansion failed");
+        }
 
         const q =
             <T>(fn: (client: SmartClient) => Promise<T>) =>
@@ -66,7 +96,7 @@ export const QueryExecutor =
 
         const result: Cursor<OA, OO> = {
             optTuple: q(async (client) => {
-                const result = await client.queryArray(query.query, argsAsArray);
+                const result = await client.queryArray(formattedQuery, argsAsArray);
                 if (result.rows.length === 0) {
                     return undefined;
                 }
@@ -75,7 +105,7 @@ export const QueryExecutor =
             }),
 
             oneTuple: q(async (client) => {
-                const result = await client.queryArray(query.query, argsAsArray);
+                const result = await client.queryArray(formattedQuery, argsAsArray);
                 if (result.rows.length === 0) {
                     throw new Error("No results");
                 }
@@ -84,12 +114,12 @@ export const QueryExecutor =
             }),
 
             manyTuples: q(async (client) => {
-                const result = await client.queryArray(query.query, argsAsArray);
+                const result = await client.queryArray(formattedQuery, argsAsArray);
                 return result.rows.map((row) => parseArray<OO, OA>(query.spec, row));
             }),
 
             opt: q(async (client) => {
-                const result = await client.query(query.query, argsAsArray);
+                const result = await client.query(formattedQuery, argsAsArray);
                 if (result.rows.length === 0) {
                     return undefined;
                 }
@@ -98,7 +128,7 @@ export const QueryExecutor =
             }),
 
             one: q(async (client) => {
-                const result = await client.query(query.query, argsAsArray);
+                const result = await client.query(formattedQuery, argsAsArray);
                 if (result.rows.length === 0) {
                     throw new Error("No results");
                 }
@@ -107,7 +137,7 @@ export const QueryExecutor =
             }),
 
             many: q(async (client) => {
-                const result = await client.query(query.query, argsAsArray);
+                const result = await client.query(formattedQuery, argsAsArray);
                 return result.rows.map((row) => parseObject<OO>(query.spec, row));
             }),
         };
@@ -115,17 +145,20 @@ export const QueryExecutor =
         return result;
     };
 
-export interface QueryExecutor<IA extends any[], IO, OA, OO> {
-    (args: IA): Cursor<OA, OO>;
-    (args: IO): Cursor<OA, OO>;
+export interface QueryExecutor<IA extends any[], IO, TIO, OA, OO> {
+    (args: IA, templateArgs: TIO): Cursor<OA, OO>;
+    (args: IO, templateArgs: TIO): Cursor<OA, OO>;
+    (args: IO & TIO): Cursor<OA, OO>;
 }
 
-export type QueryExecutors<T extends Record<string, Query<any[], any, any, any>>> = {
-    [K in keyof T]: T[K] extends Query<infer IA, infer IO, infer OA, infer OO> ? QueryExecutor<IA, IO, OA, OO> : never;
+export type QueryExecutors<T extends Record<string, Query<any[], any, any, any, any>>> = {
+    [K in keyof T]: T[K] extends Query<infer IA, infer IO, infer TIO, infer OA, infer OO>
+        ? QueryExecutor<IA, IO, TIO, OA, OO>
+        : never;
 };
 
 export const EntityQueries =
-    <T extends Record<string, Query<any[], any, any, any>>>(entities: T) =>
+    <T extends Record<string, Query<any[], any, any, any, any>>>(entities: T) =>
     (pool: Pool) => {
         const result = {} as QueryExecutors<T>;
         for (const entity in entities) {

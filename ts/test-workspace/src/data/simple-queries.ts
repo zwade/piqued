@@ -1,14 +1,15 @@
-import { Company } from "../types";
+import {  } from "../types";
 
 import { Query, EntityQueries } from "@piqued/client";
 
 
-export const Reflect: Query<Reflect.InputArray, Reflect.InputObject, Reflect.OutputArray, Reflect.OutputObject> = {
+export const Reflect: Query<Reflect.InputArray, Reflect.InputObject, Reflect.TemplateInputObject, Reflect.OutputArray, Reflect.OutputObject> = {
     name: "reflect",
-    query: `SELECT $1::text || ' from postgres!' AS input`,
+    query: ` SELECT $1::text || ' from postgres!' AS input;`,
     params: [
         "$0",
     ],
+    templateParams: [],
     spec: [
         ["input", undefined],
     ],
@@ -17,26 +18,29 @@ export const Reflect: Query<Reflect.InputArray, Reflect.InputObject, Reflect.Out
 
 export namespace Reflect {
     export type InputArray = [
-        $0: string,
-    ];
+    $0: string,
+];
     export type InputObject = {
-        "$0": string,
-    };
+    "$0": string,
+};
+    export type TemplateInputObject = {};
     export type OutputArray = [
-        input: string,
-    ];
+    input: string,
+];
     export type OutputObject = {
-        "input": string,
-    };
+    "input": string,
+};
 }
 
-export const Reflect2: Query<Reflect2.InputArray, Reflect2.InputObject, Reflect2.OutputArray, Reflect2.OutputObject> = {
+
+export const Reflect2: Query<Reflect2.InputArray, Reflect2.InputObject, Reflect2.TemplateInputObject, Reflect2.OutputArray, Reflect2.OutputObject> = {
     name: "reflect_2",
-    query: `SELECT $1::text || ' from another postgres!', $2 AS input`,
+    query: `SELECT $1::text || ' from another postgres!', $2 AS input;`,
     params: [
         "first",
         "second",
     ],
+    templateParams: [],
     spec: [
         ["?column?", undefined],
         ["input", undefined],
@@ -46,28 +50,31 @@ export const Reflect2: Query<Reflect2.InputArray, Reflect2.InputObject, Reflect2
 
 export namespace Reflect2 {
     export type InputArray = [
-        first: string,
-        second: string,
-    ];
+    first: string,
+    second: string,
+];
     export type InputObject = {
-        "first": string,
-        "second": string,
-    };
+    "first": string,
+    "second": string,
+};
+    export type TemplateInputObject = {};
     export type OutputArray = [
-        column: string,
-        input: string,
-    ];
+    column: string,
+    input: string,
+];
     export type OutputObject = {
-        "?column?": string,
-        "input": string,
-    };
+    "?column?": string,
+    "input": string,
+};
 }
 
-export const Query2: Query<Query2.InputArray, Query2.InputObject, Query2.OutputArray, Query2.OutputObject> = {
+
+export const Query2: Query<Query2.InputArray, Query2.InputObject, Query2.TemplateInputObject, Query2.OutputArray, Query2.OutputObject> = {
     name: "query_2",
-    query: `SELECT E'This query has messy characters: \\ \` '''`,
+    query: `SELECT 'This query has messy characters: \ \` ''';`,
     params: [
     ],
+    templateParams: [],
     spec: [
         ["?column?", undefined],
     ],
@@ -76,48 +83,53 @@ export const Query2: Query<Query2.InputArray, Query2.InputObject, Query2.OutputA
 
 export namespace Query2 {
     export type InputArray = [
-    ];
+];
     export type InputObject = {
-    };
+};
+    export type TemplateInputObject = {};
     export type OutputArray = [
-        column: string,
-    ];
+    column: string,
+];
     export type OutputObject = {
-        "?column?": string,
-    };
+    "?column?": string,
+};
 }
 
-export const Query3: Query<Query3.InputArray, Query3.InputObject, Query3.OutputArray, Query3.OutputObject> = {
-    name: "query_3",
-    query: `SELECT company, 1 FROM company`,
+
+export const Test: Query<Test.InputArray, Test.InputObject, Test.TemplateInputObject, Test.OutputArray, Test.OutputObject> = {
+    name: "test",
+    query: ` SELECT name FROM person WHERE uid IN :__tmpl_uids OR $1;`,
     params: [
+        "force",
     ],
+    templateParams: ["uids"],
     spec: [
-        ["company", Company.spec],
-        ["?column?", undefined],
+        ["name", undefined],
     ],
     _brand: undefined as any,
 };
 
-export namespace Query3 {
+export namespace Test {
     export type InputArray = [
-    ];
+    force: boolean,
+];
     export type InputObject = {
-    };
+    "force": boolean,
+};
+    export type TemplateInputObject = {"uids": any};
     export type OutputArray = [
-        company: Company.t,
-        column: number,
-    ];
+    name: string,
+];
     export type OutputObject = {
-        "company": Company.t,
-        "?column?": number,
-    };
+    "name": string,
+};
 }
+
 
 export default EntityQueries({
     "reflect": Reflect,
     "reflect2": Reflect2,
     "query2": Query2,
-    "query3": Query3,
+    "test": Test,
 })
 

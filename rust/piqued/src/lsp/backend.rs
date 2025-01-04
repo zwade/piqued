@@ -170,20 +170,16 @@ impl Backend {
         }
 
         let (i, statement) = statement.unwrap();
-        let prepared_statement =
-            parser::get_prepared_statement(&statement, &parsed.tokens, &file_contents, || {
-                format!("query_{i}", i = i)
-            })?;
 
         self.client
             .log_message(MessageType::INFO, "Found prepared statement")
             .await;
 
-        let probed_type = query_obj.probe_type(&prepared_statement).await?;
+        let probed_type = query_obj.probe_type(&statement).await?;
 
         let mut arg_string_vec: Vec<String> = vec![];
         for (i, arg) in probed_type.args.iter().enumerate() {
-            match &prepared_statement.details.params {
+            match &statement.details.params {
                 Some(params) if params.len() > i => {
                     arg_string_vec.push(format!("{} {}", params[i], arg))
                 }
@@ -196,7 +192,7 @@ impl Backend {
             col_string_vec.push(format!("    {} {}", name, typ));
         }
 
-        let header = format!("(query) {}", prepared_statement.details.name);
+        let header = format!("(query) {}", statement.details.name);
         let response_str = format!(
             "({}) => (\n{}\n)\n",
             arg_string_vec.join(", "),
@@ -213,7 +209,7 @@ impl Backend {
                     language: "pgsql".to_string(),
                     value: response_str,
                 }),
-                MarkedString::String(prepared_statement.details.comment),
+                MarkedString::String(statement.details.comment.clone()),
             ]),
             range: None,
         })

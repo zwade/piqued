@@ -13,7 +13,7 @@ use tokio_postgres::{
 
 use crate::{
     config::config::Config,
-    parser::parser::{node_to_string, ParsedPreparedQuery},
+    parser::parser::{node_to_string, RelocatedStmt},
     utils::result::Result,
 };
 
@@ -85,18 +85,14 @@ impl Query {
         Ok(query)
     }
 
-    pub async fn probe_type(&self, stmt: &ParsedPreparedQuery) -> Result<ProbeResponse> {
+    pub async fn probe_type(&self, stmt: &RelocatedStmt) -> Result<ProbeResponse> {
         let as_prepared_statement: ParseResult = ParseResult {
-            stmts: vec![RawStmt {
-                stmt: stmt.query.stmt.clone(),
-
-                stmt_len: 0,
-                stmt_location: 0,
-            }],
+            stmts: vec![stmt.stmt.as_ref()?.clone()],
             version: 160001,
         };
 
         let prepared_statement = as_prepared_statement.deparse().unwrap();
+        println!(">>> {:}", prepared_statement);
         let argtypes: Vec<Type> = stmt
             .variables
             .iter()
