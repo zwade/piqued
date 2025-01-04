@@ -210,11 +210,11 @@ export class QueryState<T extends ResultState> extends ExecutableQuery<T> {
         }
 
         if (this.#state.whereClauses.length > 0) {
-            accumulator += `where ${this.#state.whereClauses.map((e) => serializeExpression(e, state)).join(" and ")}`;
+            accumulator += `where ${this.#state.whereClauses.map((e) => serializeExpression(e, state)).join(" and ")}\n`;
         }
 
         if (this.#state.orderClauses.length > 0) {
-            accumulator += `order by ${this.#state.orderClauses.map(([e, dir]) => `${serializeExpression(e, state)} ${dir}`).join(", ")}`;
+            accumulator += `order by ${this.#state.orderClauses.map(([e, dir]) => `${serializeExpression(e, state)} ${dir}`).join(", ")}\n`;
         }
 
         if (this.#state.limit !== null) {

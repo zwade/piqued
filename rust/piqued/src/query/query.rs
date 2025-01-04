@@ -92,7 +92,6 @@ impl Query {
         };
 
         let prepared_statement = as_prepared_statement.deparse().unwrap();
-        println!(">>> {:}", prepared_statement);
         let argtypes: Vec<Type> = stmt
             .variables
             .iter()

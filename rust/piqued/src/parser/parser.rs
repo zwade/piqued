@@ -127,8 +127,6 @@ pub fn parse_single_query<'a>(
     let full_query = strings_with_examples.join("");
     let templated_query = strings_with_variables.join("");
 
-    println!("full_query: {}", full_query);
-    println!("templated_query: {}", templated_query);
     let stmts = pg_query::parse(&full_query)?.protobuf.stmts;
     if stmts.len() == 0 {
         return Err(PiquedError::OtherError(query.to_string()));
