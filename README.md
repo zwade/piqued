@@ -6,6 +6,21 @@ Piqued is a query compiler for postgres & a language server. The goal of piqued 
 
 Piqued is not even remotely stable. I'm building the boat as I set sail so that I can more easily understand the way it should work. If you want to work on it, I'd love the help but please do not use this for anything real yet.
 
+## Install
+
+You can install the binaries by running
+
+```bash
+https://raw.githubusercontent.com/zwade/piqued/refs/heads/master/rust/piqued/scripts/install.sh | bash
+```
+
+And you can add the client by installing
+
+```bash
+npm i @piqued/client
+yarn add @piqued/client
+```
+
 ## Features
 
 - 🛠️ Query Compiling
