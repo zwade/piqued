@@ -58,7 +58,7 @@ const execForResult = async (command: string): Promise<string> => {
     });
 }
 
-const binaries = await fs.readdir(path.join(dirname, "../compiler/builds")).then((files) => files.filter((file) => !file.startsWith(".")));
+const binaries = await fs.readdir(path.join(dirname, "../builds")).then((files) => files.filter((file) => !file.startsWith(".")));
 
 const latest = await githubRequest("releases/latest");
 const latestVersion = latest.tag_name;
@@ -101,7 +101,7 @@ const release = await githubRequest("releases", {
 const uploadURL = new URL(release.upload_url.replace("{?name,label}", ""));
 
 for (const file of binaries) {
-    const filePath = path.join(dirname, "../compiler/builds", file);
+    const filePath = path.join(dirname, "../builds", file);
     const fileBuffer = await fs.readFile(filePath);
 
     const fileUploadUrl = new URL(uploadURL);

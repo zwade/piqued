@@ -6,9 +6,13 @@
   "type": "module",
   "devDependencies": {
     "@types/node": "^22.15.3",
+    "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   },
   "dependencies": {
     "node-fetch": "^3.3.2"
+  },
+  "scripts": {
+    "release": "yarn tsx new-release.mts"
   }
 }
