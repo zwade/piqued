@@ -26,7 +26,7 @@ pub struct Query {
     pub config: Arc<Config>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub struct Column {
     pub name: String,
     pub type_name: String,
@@ -34,21 +34,21 @@ pub struct Column {
     pub nullable: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub struct CompositeType {
     pub oid: u32,
     pub name: String,
     pub fields: Vec<Column>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, PartialOrd, Ord, Eq)]
 pub struct EnumType {
     pub oid: u32,
     pub name: String,
     pub values: Vec<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, PartialOrd, Ord, Eq)]
 pub enum CustomType {
     Composite(CompositeType),
     Enum(EnumType),

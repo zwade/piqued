@@ -114,13 +114,14 @@ impl<'a> CodeGenerationContext<'a> {
         let mut b = Builder::default();
         let mut imports: Vec<String> = vec![];
 
-        let all_types = self
+        let mut all_types = self
             .query
             .custom_types_by_name
             .values()
             .into_iter()
             .map(|refrence| refrence.clone())
             .collect::<Vec<Arc<CustomType>>>();
+        all_types.sort();
 
         if let Some(prefix) = generator.serialize_type_prefix(self, &all_types) {
             b.append(prefix.as_bytes());
@@ -128,7 +129,10 @@ impl<'a> CodeGenerationContext<'a> {
 
         b.append("\n");
 
-        for type_ in self.query.custom_types_by_name.values() {
+        let mut type_names = self.query.custom_types_by_name.values().collect::<Vec<_>>();
+        type_names.sort();
+
+        for type_ in type_names {
             let res = generator.serialize_type(self, type_);
             b.append(res.generated_code);
             b.append("\n\n");
@@ -154,7 +158,8 @@ impl<'a> CodeGenerationContext<'a> {
         let mut code_segments: Vec<String> = vec![];
         let mut imports: Vec<String> = vec![];
 
-        let tables = self.query.tables.keys().into_iter().collect::<Vec<_>>();
+        let mut tables = self.query.tables.keys().into_iter().collect::<Vec<_>>();
+        tables.sort();
 
         if let Some(prefix) = generator.serialize_table_prefix(&self, &tables) {
             code_segments.push(prefix);
@@ -297,12 +302,13 @@ impl<'a> CodeGenerationContext<'a> {
     ) -> String {
         let mut b = Builder::default();
 
-        let needed_imports = imports
+        let mut needed_imports = imports
             .into_iter()
             .collect::<HashSet<&String>>()
             .into_iter()
             .map(|s| s.clone())
             .collect::<Vec<String>>();
+        needed_imports.sort();
 
         let type_file_path = self.working_dir.join(&self.config.emit.type_file);
         let mut start_file_path = dst_file.clone();

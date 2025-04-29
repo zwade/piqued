@@ -10,7 +10,10 @@ SELECT 'This query has messy characters: \ ` ''';
 -- @params force
 -- @xtemplate uids (uuid_generate_v4())
 PREPARE test AS
-    SELECT name FROM person
+    SELECT first_name FROM person
     WHERE
         uid IN :uids OR
         $1;
+
+PREPARE several AS
+    SELECT unnest('{1,2,3,4,5,6,7,8,9}'::int[]) as num;

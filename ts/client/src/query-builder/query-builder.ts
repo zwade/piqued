@@ -138,6 +138,10 @@ export namespace QueryState {
         offset: Expression<number> | null;
         forUpdate: boolean;
         skipLocked: boolean;
+        tablesample: {
+            kind: string;
+            args: Expression[];
+        } | null;
     };
 }
 
@@ -191,6 +195,10 @@ export class QueryState<T extends ResultState> extends ExecutableQuery<T> {
         return this.with({ skipLocked: true });
     }
 
+    public tableSample(kind: string, args: Expression[]) {
+        return this.with({ tablesample: { kind, args } });
+    }
+
     public serialize() {
         if (this.#state.fromTable === null) {
             throw new Error("Unable to serialize query without a from-table");
@@ -231,6 +239,10 @@ export class QueryState<T extends ResultState> extends ExecutableQuery<T> {
 
         if (this.#state.skipLocked) {
             accumulator += "skip locked\n";
+        }
+
+        if (this.#state.tablesample) {
+            accumulator += `tablesample ${this.#state.tablesample.kind} (${this.#state.tablesample.args.map((e) => serializeExpression(e, state)).join(", ")})\n`;
         }
 
         return {
@@ -460,7 +472,7 @@ export class DeleteState<T extends ResultState = { results: {} }> extends Execut
     }
 }
 
-type DecodeExpression<T extends unknown[], Acc = {}> = T extends []
+export type DecodeExpression<T extends unknown[], Acc = {}> = T extends []
     ? Acc
     : T extends [Expression<infer Value, infer Name extends string>, ...infer Tail]
       ? DecodeExpression<Tail, Acc & { [K in Name]: Value }>
@@ -481,6 +493,7 @@ export const Select = <const T extends unknown[]>(...args: T): QueryState<{ resu
         offset: null,
         forUpdate: false,
         skipLocked: false,
+        tablesample: null,
     });
 };
 
@@ -490,4 +503,8 @@ export const Update = <const T>(table: TableBuilder<any, T, string>): UpdateStat
 
 export const Insert = <const T>(table: TableBuilder<any, T, string>): InsertState<T> => {
     return new InsertState({ table, values: {}, conflictExpression: null, returning: null });
+};
+
+export const Delete = <const T>(table: TableBuilder<any, T, string>): DeleteState => {
+    return new DeleteState({ table, returning: null, whereClauses: [] });
 };

@@ -3,7 +3,7 @@ import { Pool } from "pg";
 import { parseArray, parseObject } from "./parser";
 import { Expression, serializeExpression } from "./query-builder/expression-builder";
 import { MutableSerializationState } from "./query-builder/serialize";
-import { getCurrentClient, SmartClient } from "./smart-client";
+import { getCurrentClient, SmartClient, StreamOptions, StreamShape } from "./smart-client";
 
 export type CustomParseSpec =
     | { kind: "composite"; fields: () => readonly (readonly [name: string, spec: ParseSpec])[] }
@@ -38,13 +38,19 @@ export type Query<IA extends any[], IO, TIO, OA, OO> = {
 
 export type Partialify<T extends boolean, Val> = T extends true ? Partial<Val> : Val;
 
-export type Cursor<OA, OO> = {
+export type Retrieval<OA, OO> = {
     optTuple: <Partial extends boolean = false>(client?: SmartClient) => Promise<Partialify<Partial, OA> | undefined>;
     oneTuple: <Partial extends boolean = false>(client?: SmartClient) => Promise<Partialify<Partial, OA>>;
     manyTuples: <Partial extends boolean = false>(client?: SmartClient) => Promise<Partialify<Partial, OA>[]>;
+
     opt: <Partial extends boolean = false>(client?: SmartClient) => Promise<Partialify<Partial, OO> | undefined>;
     one: <Partial extends boolean = false>(client?: SmartClient) => Promise<Partialify<Partial, OO>>;
     many: <Partial extends boolean = false>(client?: SmartClient) => Promise<Partialify<Partial, OO>[]>;
+
+    stream: <Options extends StreamOptions, Partial extends boolean = false>(
+        client?: SmartClient,
+        options?: Options,
+    ) => Promise<StreamShape<Partialify<Partial, OO>, Options>>;
 };
 
 export const QueryExecutor =
@@ -79,22 +85,20 @@ export const QueryExecutor =
         }
 
         const q =
-            <T>(fn: (client: SmartClient) => Promise<T>) =>
-            async <IS_PARTIAL extends boolean = false>(
-                client?: SmartClient,
-            ): Promise<IS_PARTIAL extends true ? Partial<T> : T> => {
+            <T, A extends any[]>(fn: (client: SmartClient, ...args: A) => Promise<T>) =>
+            async (client?: SmartClient, ...args: A): Promise<T> => {
                 const foundClient = client ?? getCurrentClient();
                 if (foundClient) {
-                    return await fn(foundClient);
+                    return await fn(foundClient, ...args);
                 }
 
                 const freshClient = await pool.connect();
                 using smartClient = new SmartClient(freshClient);
 
-                return await fn(smartClient);
+                return await fn(smartClient, ...args);
             };
 
-        const result: Cursor<OA, OO> = {
+        const result: Retrieval<OA, OO> = {
             optTuple: q(async (client) => {
                 const result = await client.queryArray(formattedQuery, argsAsArray);
                 if (result.rows.length === 0) {
@@ -140,15 +144,23 @@ export const QueryExecutor =
                 const result = await client.query(formattedQuery, argsAsArray);
                 return result.rows.map((row) => parseObject<OO>(query.spec, row));
             }),
+
+            stream: q(async (client, options?: StreamOptions) => {
+                const stream = client.queryStream<OO, StreamOptions>(formattedQuery, argsAsArray, options, (row) =>
+                    parseObject<OO>(query.spec, row),
+                );
+
+                return stream as AsyncIterableIterator<any>; // Too hard to get the overload right
+            }),
         };
 
         return result;
     };
 
 export interface QueryExecutor<IA extends any[], IO, TIO, OA, OO> {
-    (args: IA, templateArgs: TIO): Cursor<OA, OO>;
-    (args: IO, templateArgs: TIO): Cursor<OA, OO>;
-    (args: IO & TIO): Cursor<OA, OO>;
+    (args: IA, templateArgs: TIO): Retrieval<OA, OO>;
+    (args: IO, templateArgs: TIO): Retrieval<OA, OO>;
+    (args: IO & TIO): Retrieval<OA, OO>;
 }
 
 export type QueryExecutors<T extends Record<string, Query<any[], any, any, any, any>>> = {

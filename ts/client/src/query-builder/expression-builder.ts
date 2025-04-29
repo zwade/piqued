@@ -39,10 +39,8 @@ export class FunctionOperation<_Result, Name extends string> {
     ) {}
 }
 
-export class InterpolatedExpression<_Result, Name extends string> {
+export class InterpolatedExpression<_Result, _Name extends string> {
     constructor(
-        public name: Name,
-
         public parts: TemplateStringsArray,
         public expressions: Expression[],
     ) {
@@ -68,6 +66,32 @@ export const raw = (expression: string) => {
     return new RawExpression(expression);
 };
 
+export type ColumnNames = {
+    int: "int4";
+    float: "float8";
+    char: "bpchar";
+};
+
+export type CastToColumnName<T extends string> = T extends keyof ColumnNames
+    ? ColumnNames[T]
+    : T extends `${infer F}[]`
+      ? CastToColumnName<F>
+      : T;
+
+export class CastExpression<_Result, _Name extends string> {
+    constructor(
+        public expression: Expression,
+        public cast: string,
+    ) {}
+}
+
+export const cast = <Result, Cast extends string, Name extends string = CastToColumnName<Cast>>(
+    e: Expression,
+    cast: Cast,
+) => {
+    return new CastExpression<Result, Name>(e, cast);
+};
+
 export type StructuredExpression<T, Name extends string> =
     | ColumnExpression<T, Name>
     | TableExpression<T, Name>
@@ -76,7 +100,8 @@ export type StructuredExpression<T, Name extends string> =
     | FunctionOperation<T, Name>
     | TupleExpression<T, Name>
     | InterpolatedExpression<T, Name>
-    | RawExpression<T, Name>;
+    | RawExpression<T, Name>
+    | CastExpression<T, Name>;
 
 export type LiteralExpression =
     | string
@@ -118,6 +143,18 @@ export namespace Op {
         return new BinaryOperation<boolean, "?column?">("<", left, right);
     }
 
+    export function lte(left: Expression, right: Expression) {
+        return new BinaryOperation<boolean, "?column?">("<=", left, right);
+    }
+
+    export function gt(left: Expression, right: Expression) {
+        return new BinaryOperation<boolean, "?column?">(">", left, right);
+    }
+
+    export function gte(left: Expression, right: Expression) {
+        return new BinaryOperation<boolean, "?column?">(">=", left, right);
+    }
+
     export function eq(left: Expression, right: Expression) {
         return new BinaryOperation<boolean, "?column?">("=", left, right);
     }
@@ -141,16 +178,35 @@ export namespace Op {
         return new FunctionOperation<V[], "array_agg">("array_agg", [e], spec);
     }
 
-    export const exp = <T>(strings: TemplateStringsArray, ...expressions: Expression[]) => {
-        return new InterpolatedExpression<T, "?column?">("?column?", strings, expressions);
+    export function max(e: Expression<number>) {
+        return new FunctionOperation<number, "max">("max", [e], Number);
+    }
+
+    export function min(e: Expression<number>) {
+        return new FunctionOperation<number, "min">("min", [e], Number);
+    }
+
+    export const exp = <T, Name extends string = "?column?">(
+        strings: TemplateStringsArray,
+        ...expressions: Expression[]
+    ) => {
+        return new InterpolatedExpression<T, Name>(strings, expressions);
     };
 
-    export const and = <T>(...expressions: Expression<T>[]) => {
-        return new FunctionOperation<boolean, "and">("and", expressions);
+    export const and = <T>(lhs: Expression<T>, rhs: Expression<T>) => {
+        return new BinaryOperation<boolean, "?column?">("and", lhs, rhs);
     };
 
-    export const or = <T>(...expressions: Expression<T>[]) => {
-        return new FunctionOperation<boolean, "or">("or", expressions);
+    export const or = <T>(lhs: Expression<T>, rhs: Expression<T>) => {
+        return new BinaryOperation<boolean, "?column?">("or", lhs, rhs);
+    };
+
+    export const count = (e?: Expression) => {
+        if (!e) {
+            return exp<number, "count">`count(*)::integer as count`;
+        } else {
+            return exp<number, "count">`count(${e})::integer as count`;
+        }
     };
 }
 
@@ -300,6 +356,10 @@ export const serializeExpression = (
 
     if (e instanceof RawExpression) {
         return e.expression;
+    }
+
+    if (e instanceof CastExpression) {
+        return `(${serializeExpression(e.expression, state, options)}::${e.cast})`;
     }
 
     if (e instanceof Label) {

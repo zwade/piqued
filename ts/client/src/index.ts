@@ -1,6 +1,8 @@
 export { PiquedUpgradeControl, PiquedUpgradeInstance } from "./control";
 export {
     BinaryOperation,
+    cast,
+    CastExpression,
     ColumnExpression as ColumnBuilder,
     Expression,
     FunctionOperation,
@@ -19,6 +21,19 @@ export {
     TupleExpression,
     UnaryOperation,
 } from "./query-builder/expression-builder";
-export { Insert, Select, Update } from "./query-builder/query-builder";
+export {
+    DecodeExpression,
+    Delete,
+    DeleteState,
+    ExecutableQuery,
+    Insert,
+    InsertState,
+    QueryState,
+    ResultState,
+    Select,
+    Update,
+    UpdateState,
+} from "./query-builder/query-builder";
 export { ClientOptions, SmartClient } from "./smart-client";
-export { Cursor, EntityQueries, Query, QueryExecutor, QueryExecutors } from "./types";
+export { Retrieval as Cursor, EntityQueries, Query, QueryExecutor, QueryExecutors } from "./types";
+export type { Pool } from "pg";
