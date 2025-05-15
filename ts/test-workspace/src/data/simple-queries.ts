@@ -1,6 +1,7 @@
-import {  } from "../types";
+import { Practice } from "../types";
 
 import { Query, EntityQueries } from "@piqued/client";
+
 
 export const Reflect: Query<Reflect.InputArray, Reflect.InputObject, Reflect.TemplateInputObject, Reflect.OutputArray, Reflect.OutputObject> = {
     name: "reflect",
@@ -152,11 +153,39 @@ export namespace Several {
 }
 
 
+export const GetPractices: Query<GetPractices.InputArray, GetPractices.InputObject, GetPractices.TemplateInputObject, GetPractices.OutputArray, GetPractices.OutputObject> = {
+    name: "get_practices",
+    query: ` SELECT array_agg(practice) FROM practice;`,
+    params: [
+    ],
+    templateParams: [],
+    spec: [
+        ["array_agg", { "kind": "array", "spec": Practice.spec }],
+    ],
+    _brand: undefined as any,
+};
+
+export namespace GetPractices {
+    export type InputArray = [
+];
+    export type InputObject = {
+};
+    export type TemplateInputObject = {};
+    export type OutputArray = [
+    array_agg: Practice.t[],
+];
+    export type OutputObject = {
+    "array_agg": Practice.t[],
+};
+}
+
+
 export default EntityQueries({
     "reflect": Reflect,
     "reflect2": Reflect2,
     "query2": Query2,
     "test": Test,
     "several": Several,
+    "getPractices": GetPractices,
 })
 

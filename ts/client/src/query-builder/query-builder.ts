@@ -1,5 +1,6 @@
 import { QueryResultRow } from "pg";
 
+import { ColumnOrderCache } from "../order-managment";
 import { parse } from "../parser";
 import { SmartClient } from "../smart-client";
 import { ParseSpec } from "../types";
@@ -40,7 +41,7 @@ export abstract class ExecutableQuery<T extends ResultState> {
             throw new Error("No results");
         }
 
-        return this.postProcessRow(row);
+        return this.postProcessRow(row, client.columnOrderCache);
     }
 
     public async opt(client: SmartClient): Promise<T["results"] | undefined> {
@@ -52,22 +53,22 @@ export abstract class ExecutableQuery<T extends ResultState> {
             return undefined;
         }
 
-        return this.postProcessRow(row);
+        return this.postProcessRow(row, client.columnOrderCache);
     }
 
     public async many(client: SmartClient): Promise<T["results"][]> {
         const { data, values } = this.serialize();
         const result = await client.query(data, values);
-        return result.rows.map((row) => this.postProcessRow(row));
+        return result.rows.map((row) => this.postProcessRow(row, client.columnOrderCache));
     }
 
-    private postProcessRow(row: QueryResultRow): T["results"] {
+    private postProcessRow(row: QueryResultRow, columnOrderCache: ColumnOrderCache): T["results"] {
         const result = {} as Record<string, any>;
 
         for (const [key, value] of Object.entries(row)) {
             const parser = this.parserMap[key];
             if (parser) {
-                result[key] = parse(parser, value);
+                result[key] = parse(parser, value, columnOrderCache);
             } else {
                 result[key] = value;
             }

@@ -190,6 +190,9 @@ impl CodeGenerator for TSGenerator {
                 c.write_token(&identifier);
                 c.write_line(Some(&"{"));
                 c.with_indent(|c| {
+                    c.write_line(Some(&format!("export const name = \"{}\";", name)));
+                    c.write_line(None);
+
                     c.write_line(Some(&"export type t = {"));
                     c.with_indent(|c| {
                         for field in fields {
@@ -250,6 +253,9 @@ impl CodeGenerator for TSGenerator {
                 c.write_line(Some(&"{"));
 
                 c.with_indent(|c| {
+                    c.write_line(Some(&format!("export const name = \"{}\";", name)));
+                    c.write_line(None);
+
                     c.write_line(Some(&"export type t ="));
                     c.with_indent(|c| {
                         for value in values {
