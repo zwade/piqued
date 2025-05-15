@@ -1,4 +1,4 @@
-export { PiquedUpgradeControl, PiquedUpgradeInstance } from "./control";
+export { acquireColumnOrderCache, buildColumnOrderCache, ColumnOrderCache } from "./order-managment";
 export {
     BinaryOperation,
     cast,
@@ -36,4 +36,5 @@ export {
 } from "./query-builder/query-builder";
 export { ClientOptions, SmartClient } from "./smart-client";
 export { Retrieval as Cursor, EntityQueries, Query, QueryExecutor, QueryExecutors } from "./types";
+export { PiquedUpgradeControl } from "./upgrade-control/control";
 export type { Pool } from "pg";

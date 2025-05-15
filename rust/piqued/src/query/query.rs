@@ -198,6 +198,7 @@ impl Query {
                     AND pg_type.typcategory = 'C'
                     AND pg_attribute.attnum > 0
                     AND pg_type.typname NOT LIKE '%_seq' -- CR zwade for zwade: is there a better way to do this?
+                    AND (pg_namespace.nspname, substring(pg_type.typname, 0, 4)) <> ('pg_catalog', 'pg_')
                 ORDER BY
                     pg_type.oid ASC,
                     pg_attribute.attnum ASC

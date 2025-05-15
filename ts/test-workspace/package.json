@@ -1,6 +1,5 @@
 {
     "name": "@piqued/test-workspace",
-    "packageManager": "yarn@3.3.0",
     "devDependencies": {
         "@types/pg": "^8",
         "@types/pg-cursor": "^2",
@@ -14,5 +13,6 @@
     },
     "resolutions": {
         "@piqued/client": "portal:../client"
-    }
+    },
+    "packageManager": "yarn@3.3.0"
 }

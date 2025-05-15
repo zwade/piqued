@@ -2,7 +2,6 @@
   "name": "piqued-lsp",
   "displayName": "piqued-lsp",
   "description": "Piqued Language Server",
-  "packageManager": "yarn@3.2.4",
   "version": "0.0.1",
   "dependencies": {
     "vscode-languageclient": "^8.0.2"
@@ -75,7 +74,8 @@
   "scripts": {
     "vscode:prepublish": "yarn build",
     "build": "esbuild --bundle --outfile=dist/extension.js --external:vscode --platform=node --format=cjs ./src/extension.ts",
-    "vscode-package": "pwd && yarn build && vsce package",
+    "vscode-package": "pwd && yarn build && yarn dlx vsce package --no-yarn",
     "watch": "tsc -w"
-  }
+  },
+  "packageManager": "yarn@3.2.4"
 }
