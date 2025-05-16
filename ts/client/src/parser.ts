@@ -1,3 +1,4 @@
+import { ColumnOrderCache } from "./order-managment";
 import { CustomParseSpec, ParseSpec, ResultSpec } from "./types";
 
 class PgParser {
@@ -73,7 +74,7 @@ class PgParser {
         return buffer.join("");
     }
 
-    parseObject(spec: CustomParseSpec & { kind: "composite" }) {
+    parseObject(spec: CustomParseSpec & { kind: "composite" }, columnOrderCache: ColumnOrderCache) {
         this.consume("(");
 
         let char: string;
@@ -94,11 +95,11 @@ class PgParser {
         }
 
         return results
-            .map((value, i) => parse(fields[i][1], value))
+            .map((value, i) => parse(fields[i][1], value, columnOrderCache))
             .reduce((acc, value, i) => ((acc[fields[i][0]] = value), acc), {});
     }
 
-    parseArray(spec: CustomParseSpec & { kind: "array" }) {
+    parseArray(spec: CustomParseSpec & { kind: "array" }, columnOrderCache: ColumnOrderCache) {
         this.consume("{");
 
         if (this.value[this.idx] === "}") {
@@ -117,11 +118,17 @@ class PgParser {
             }
         }
 
-        return results.map((v) => parse(spec.spec, v));
+        return results.map((v) => parse(spec.spec, v, columnOrderCache));
     }
 }
 
-export const parse = (parseSpec: ParseSpec, value: string | undefined | null): any => {
+export const parse = (
+    rawParseSpec: ParseSpec,
+    value: string | undefined | null,
+    columnOrderCache: ColumnOrderCache,
+): any => {
+    const parseSpec = columnOrderCache.get(rawParseSpec) ?? rawParseSpec;
+
     if (value === undefined) {
         return undefined;
     }
@@ -161,12 +168,12 @@ export const parse = (parseSpec: ParseSpec, value: string | undefined | null): a
     const customSpec = parseSpec as CustomParseSpec;
     if (customSpec.kind === "composite") {
         const parser = new PgParser(value);
-        return parser.parseObject(customSpec);
+        return parser.parseObject(customSpec, columnOrderCache);
     }
 
     if (customSpec.kind === "array") {
         const parser = new PgParser(value);
-        return parser.parseArray(customSpec);
+        return parser.parseArray(customSpec, columnOrderCache);
     }
 
     if (customSpec.kind === "enum") {
@@ -192,23 +199,23 @@ export const parseBuffer = (value: string): Buffer => {
     }
 };
 
-export const parseArray = <OO, OA>(spec: ResultSpec<OO>, row: any[]): OA => {
+export const parseArray = <OO, OA>(spec: ResultSpec<OO>, row: any[], columnOrderCache: ColumnOrderCache): OA => {
     return row.map((value, i) => {
         const [_name, parseSpec] = spec[i];
         if (parseSpec === undefined) {
             return value;
         }
 
-        return parse(parseSpec, value);
+        return parse(parseSpec, value, columnOrderCache);
     }) as OA;
 };
 
-export const parseObject = <OO>(spec: ResultSpec<OO>, row: any): OO => {
+export const parseObject = <OO>(spec: ResultSpec<OO>, row: any, columnOrderCache: ColumnOrderCache): OO => {
     return spec.reduce((acc, [name, parseSpec]) => {
         if (parseSpec === undefined) {
             acc[name] = row[name];
         } else {
-            acc[name] = parse(parseSpec, row[name]);
+            acc[name] = parse(parseSpec, row[name], columnOrderCache);
         }
 
         return acc;

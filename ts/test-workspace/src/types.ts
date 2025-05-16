@@ -4,856 +4,57 @@
 // Or file a bug report on our definitely-extant github
 
 
-export namespace PgPublication {
+export namespace PiquedVersion {
+    export const name = "_piqued_version";
+
     export type t = {
-        "oid": string;
-        "pubname": string;
-        "pubowner": string;
-        "puballtables": boolean;
-        "pubinsert": boolean;
-        "pubupdate": boolean;
-        "pubdelete": boolean;
-        "pubtruncate": boolean;
-        "pubviaroot": boolean;
+        "index_key": number;
+        "version": number;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
-            ["oid", String],
-            ["pubname", String],
-            ["pubowner", String],
-            ["puballtables", Boolean],
-            ["pubinsert", Boolean],
-            ["pubupdate", Boolean],
-            ["pubdelete", Boolean],
-            ["pubtruncate", Boolean],
-            ["pubviaroot", Boolean],
+            ["index_key", Number],
+            ["version", Number],
         ] as const,
     };
 }
 
-export namespace PgConversion {
-    export type t = {
-        "oid": string;
-        "conname": string;
-        "connamespace": string;
-        "conowner": string;
-        "conforencoding": number;
-        "contoencoding": number;
-        "conproc": string;
-        "condefault": boolean;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["conname", String],
-            ["connamespace", String],
-            ["conowner", String],
-            ["conforencoding", Number],
-            ["contoencoding", Number],
-            ["conproc", String],
-            ["condefault", Boolean],
-        ] as const,
-    };
-}
+export namespace Person {
+    export const name = "person";
 
-export namespace PgCast {
-    export type t = {
-        "oid": string;
-        "castsource": string;
-        "casttarget": string;
-        "castfunc": string;
-        "castcontext": string;
-        "castmethod": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["castsource", String],
-            ["casttarget", String],
-            ["castfunc", String],
-            ["castcontext", String],
-            ["castmethod", String],
-        ] as const,
-    };
-}
-
-export namespace Pipeline {
     export type t = {
         "uid": string;
         "created_at": Date;
         "updated_at": Date;
-        "name": string;
-        "description": string;
-        "last_indexed_record": Date;
-        "practice_uid": string;
-        "source": PipelineSource.t;
-        "active": boolean;
+        "email": string;
+        "phone_number": string;
+        "system_admin_witness": string;
+        "pds_person_uid": string;
+        "first_name": string;
+        "last_name": string;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
             ["uid", String],
             ["created_at", Date],
             ["updated_at", Date],
-            ["name", String],
-            ["description", String],
-            ["last_indexed_record", Date],
-            ["practice_uid", String],
-            ["source", PipelineSource.spec],
-            ["active", Boolean],
-        ] as const,
-    };
-}
-
-export namespace PgRoles {
-    export type t = {
-        "rolname": string;
-        "rolsuper": boolean;
-        "rolinherit": boolean;
-        "rolcreaterole": boolean;
-        "rolcreatedb": boolean;
-        "rolcanlogin": boolean;
-        "rolreplication": boolean;
-        "rolconnlimit": number;
-        "rolpassword": string;
-        "rolvaliduntil": Date;
-        "rolbypassrls": boolean;
-        "rolconfig": string[];
-        "oid": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["rolname", String],
-            ["rolsuper", Boolean],
-            ["rolinherit", Boolean],
-            ["rolcreaterole", Boolean],
-            ["rolcreatedb", Boolean],
-            ["rolcanlogin", Boolean],
-            ["rolreplication", Boolean],
-            ["rolconnlimit", Number],
-            ["rolpassword", String],
-            ["rolvaliduntil", Date],
-            ["rolbypassrls", Boolean],
-            ["rolconfig", { "kind": "array", "spec": String }],
-            ["oid", String],
-        ] as const,
-    };
-}
-
-export namespace PgGroup {
-    export type t = {
-        "groname": string;
-        "grosysid": string;
-        "grolist": string[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["groname", String],
-            ["grosysid", String],
-            ["grolist", { "kind": "array", "spec": String }],
-        ] as const,
-    };
-}
-
-export namespace PdsFile {
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "pds_system_uid": string;
-        "status": PdsFileStatus.t;
-        "name": string;
-        "data": Buffer;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["pds_system_uid", String],
-            ["status", PdsFileStatus.spec],
-            ["name", String],
-            ["data", Buffer],
-        ] as const,
-    };
-}
-
-export namespace PgPolicies {
-    export type t = {
-        "schemaname": string;
-        "tablename": string;
-        "policyname": string;
-        "permissive": string;
-        "roles": string[];
-        "cmd": string;
-        "qual": string;
-        "with_check": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["schemaname", String],
-            ["tablename", String],
-            ["policyname", String],
-            ["permissive", String],
-            ["roles", { "kind": "array", "spec": String }],
-            ["cmd", String],
-            ["qual", String],
-            ["with_check", String],
-        ] as const,
-    };
-}
-
-export namespace PgUserMapping {
-    export type t = {
-        "oid": string;
-        "umuser": string;
-        "umserver": string;
-        "umoptions": string[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["umuser", String],
-            ["umserver", String],
-            ["umoptions", { "kind": "array", "spec": String }],
-        ] as const,
-    };
-}
-
-export namespace PgStatProgressCopy {
-    export type t = {
-        "pid": number;
-        "datid": string;
-        "datname": string;
-        "relid": string;
-        "command": string;
-        "type": string;
-        "bytes_processed": number;
-        "bytes_total": number;
-        "tuples_processed": number;
-        "tuples_excluded": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["pid", Number],
-            ["datid", String],
-            ["datname", String],
-            ["relid", String],
-            ["command", String],
-            ["type", String],
-            ["bytes_processed", Number],
-            ["bytes_total", Number],
-            ["tuples_processed", Number],
-            ["tuples_excluded", Number],
-        ] as const,
-    };
-}
-
-export namespace PgLanguage {
-    export type t = {
-        "oid": string;
-        "lanname": string;
-        "lanowner": string;
-        "lanispl": boolean;
-        "lanpltrusted": boolean;
-        "lanplcallfoid": string;
-        "laninline": string;
-        "lanvalidator": string;
-        "lanacl": string[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["lanname", String],
-            ["lanowner", String],
-            ["lanispl", Boolean],
-            ["lanpltrusted", Boolean],
-            ["lanplcallfoid", String],
-            ["laninline", String],
-            ["lanvalidator", String],
-            ["lanacl", { "kind": "array", "spec": String }],
-        ] as const,
-    };
-}
-
-export namespace PgStatProgressBasebackup {
-    export type t = {
-        "pid": number;
-        "phase": string;
-        "backup_total": number;
-        "backup_streamed": number;
-        "tablespaces_total": number;
-        "tablespaces_streamed": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["pid", Number],
-            ["phase", String],
-            ["backup_total", Number],
-            ["backup_streamed", Number],
-            ["tablespaces_total", Number],
-            ["tablespaces_streamed", Number],
-        ] as const,
-    };
-}
-
-export namespace PgInherits {
-    export type t = {
-        "inhrelid": string;
-        "inhparent": string;
-        "inhseqno": number;
-        "inhdetachpending": boolean;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["inhrelid", String],
-            ["inhparent", String],
-            ["inhseqno", Number],
-            ["inhdetachpending", Boolean],
-        ] as const,
-    };
-}
-
-export namespace PgStatioSysIndexes {
-    export type t = {
-        "relid": string;
-        "indexrelid": string;
-        "schemaname": string;
-        "relname": string;
-        "indexrelname": string;
-        "idx_blks_read": number;
-        "idx_blks_hit": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["relid", String],
-            ["indexrelid", String],
-            ["schemaname", String],
-            ["relname", String],
-            ["indexrelname", String],
-            ["idx_blks_read", Number],
-            ["idx_blks_hit", Number],
-        ] as const,
-    };
-}
-
-export namespace ProgramCacheStatus {
-    export type t = {
-        "program_uid": string;
-        "cache_primed": boolean;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["program_uid", String],
-            ["cache_primed", Boolean],
-        ] as const,
-    };
-}
-
-export namespace PgStatIo {
-    export type t = {
-        "backend_type": string;
-        "object": string;
-        "context": string;
-        "reads": number;
-        "read_time": number;
-        "writes": number;
-        "write_time": number;
-        "writebacks": number;
-        "writeback_time": number;
-        "extends": number;
-        "extend_time": number;
-        "op_bytes": number;
-        "hits": number;
-        "evictions": number;
-        "reuses": number;
-        "fsyncs": number;
-        "fsync_time": number;
-        "stats_reset": Date;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["backend_type", String],
-            ["object", String],
-            ["context", String],
-            ["reads", Number],
-            ["read_time", Number],
-            ["writes", Number],
-            ["write_time", Number],
-            ["writebacks", Number],
-            ["writeback_time", Number],
-            ["extends", Number],
-            ["extend_time", Number],
-            ["op_bytes", Number],
-            ["hits", Number],
-            ["evictions", Number],
-            ["reuses", Number],
-            ["fsyncs", Number],
-            ["fsync_time", Number],
-            ["stats_reset", Date],
-        ] as const,
-    };
-}
-
-export namespace PgUser {
-    export type t = {
-        "usename": string;
-        "usesysid": string;
-        "usecreatedb": boolean;
-        "usesuper": boolean;
-        "userepl": boolean;
-        "usebypassrls": boolean;
-        "passwd": string;
-        "valuntil": Date;
-        "useconfig": string[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["usename", String],
-            ["usesysid", String],
-            ["usecreatedb", Boolean],
-            ["usesuper", Boolean],
-            ["userepl", Boolean],
-            ["usebypassrls", Boolean],
-            ["passwd", String],
-            ["valuntil", Date],
-            ["useconfig", { "kind": "array", "spec": String }],
-        ] as const,
-    };
-}
-
-export namespace PgStatReplicationSlots {
-    export type t = {
-        "slot_name": string;
-        "spill_txns": number;
-        "spill_count": number;
-        "spill_bytes": number;
-        "stream_txns": number;
-        "stream_count": number;
-        "stream_bytes": number;
-        "total_txns": number;
-        "total_bytes": number;
-        "stats_reset": Date;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["slot_name", String],
-            ["spill_txns", Number],
-            ["spill_count", Number],
-            ["spill_bytes", Number],
-            ["stream_txns", Number],
-            ["stream_count", Number],
-            ["stream_bytes", Number],
-            ["total_txns", Number],
-            ["total_bytes", Number],
-            ["stats_reset", Date],
-        ] as const,
-    };
-}
-
-export namespace PgBackendMemoryContexts {
-    export type t = {
-        "name": string;
-        "ident": string;
-        "parent": string;
-        "level": number;
-        "total_bytes": number;
-        "total_nblocks": number;
-        "free_bytes": number;
-        "free_chunks": number;
-        "used_bytes": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["name", String],
-            ["ident", String],
-            ["parent", String],
-            ["level", Number],
-            ["total_bytes", Number],
-            ["total_nblocks", Number],
-            ["free_bytes", Number],
-            ["free_chunks", Number],
-            ["used_bytes", Number],
-        ] as const,
-    };
-}
-
-export namespace PgStatArchiver {
-    export type t = {
-        "archived_count": number;
-        "last_archived_wal": string;
-        "last_archived_time": Date;
-        "failed_count": number;
-        "last_failed_wal": string;
-        "last_failed_time": Date;
-        "stats_reset": Date;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["archived_count", Number],
-            ["last_archived_wal", String],
-            ["last_archived_time", Date],
-            ["failed_count", Number],
-            ["last_failed_wal", String],
-            ["last_failed_time", Date],
-            ["stats_reset", Date],
-        ] as const,
-    };
-}
-
-export namespace PgStatisticExt {
-    export type t = {
-        "oid": string;
-        "stxrelid": string;
-        "stxname": string;
-        "stxnamespace": string;
-        "stxowner": string;
-        "stxstattarget": number;
-        "stxkeys": string;
-        "stxkind": string[];
-        "stxexprs": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["stxrelid", String],
-            ["stxname", String],
-            ["stxnamespace", String],
-            ["stxowner", String],
-            ["stxstattarget", Number],
-            ["stxkeys", String],
-            ["stxkind", { "kind": "array", "spec": String }],
-            ["stxexprs", String],
-        ] as const,
-    };
-}
-
-export namespace PgStatReplication {
-    export type t = {
-        "pid": number;
-        "usesysid": string;
-        "usename": string;
-        "application_name": string;
-        "client_addr": string;
-        "client_hostname": string;
-        "client_port": number;
-        "backend_start": Date;
-        "backend_xmin": string;
-        "state": string;
-        "sent_lsn": string;
-        "write_lsn": string;
-        "flush_lsn": string;
-        "replay_lsn": string;
-        "write_lag": string;
-        "flush_lag": string;
-        "replay_lag": string;
-        "sync_priority": number;
-        "sync_state": string;
-        "reply_time": Date;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["pid", Number],
-            ["usesysid", String],
-            ["usename", String],
-            ["application_name", String],
-            ["client_addr", String],
-            ["client_hostname", String],
-            ["client_port", Number],
-            ["backend_start", Date],
-            ["backend_xmin", String],
-            ["state", String],
-            ["sent_lsn", String],
-            ["write_lsn", String],
-            ["flush_lsn", String],
-            ["replay_lsn", String],
-            ["write_lag", String],
-            ["flush_lag", String],
-            ["replay_lag", String],
-            ["sync_priority", Number],
-            ["sync_state", String],
-            ["reply_time", Date],
-        ] as const,
-    };
-}
-
-export namespace PgAggregate {
-    export type t = {
-        "aggfnoid": string;
-        "aggkind": string;
-        "aggnumdirectargs": string;
-        "aggtransfn": string;
-        "aggfinalfn": string;
-        "aggcombinefn": string;
-        "aggserialfn": string;
-        "aggdeserialfn": string;
-        "aggmtransfn": string;
-        "aggminvtransfn": string;
-        "aggmfinalfn": string;
-        "aggfinalextra": boolean;
-        "aggmfinalextra": boolean;
-        "aggfinalmodify": string;
-        "aggmfinalmodify": string;
-        "aggsortop": string;
-        "aggtranstype": string;
-        "aggtransspace": number;
-        "aggmtranstype": string;
-        "aggmtransspace": number;
-        "agginitval": string;
-        "aggminitval": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["aggfnoid", String],
-            ["aggkind", String],
-            ["aggnumdirectargs", String],
-            ["aggtransfn", String],
-            ["aggfinalfn", String],
-            ["aggcombinefn", String],
-            ["aggserialfn", String],
-            ["aggdeserialfn", String],
-            ["aggmtransfn", String],
-            ["aggminvtransfn", String],
-            ["aggmfinalfn", String],
-            ["aggfinalextra", Boolean],
-            ["aggmfinalextra", Boolean],
-            ["aggfinalmodify", String],
-            ["aggmfinalmodify", String],
-            ["aggsortop", String],
-            ["aggtranstype", String],
-            ["aggtransspace", Number],
-            ["aggmtranstype", String],
-            ["aggmtransspace", Number],
-            ["agginitval", String],
-            ["aggminitval", String],
-        ] as const,
-    };
-}
-
-export namespace Practice {
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "name": string;
-        "domain": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["name", String],
-            ["domain", String],
-        ] as const,
-    };
-}
-
-export namespace PgStatBgwriter {
-    export type t = {
-        "checkpoints_timed": number;
-        "checkpoints_req": number;
-        "checkpoint_write_time": number;
-        "checkpoint_sync_time": number;
-        "buffers_checkpoint": number;
-        "buffers_clean": number;
-        "maxwritten_clean": number;
-        "buffers_backend": number;
-        "buffers_backend_fsync": number;
-        "buffers_alloc": number;
-        "stats_reset": Date;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["checkpoints_timed", Number],
-            ["checkpoints_req", Number],
-            ["checkpoint_write_time", Number],
-            ["checkpoint_sync_time", Number],
-            ["buffers_checkpoint", Number],
-            ["buffers_clean", Number],
-            ["maxwritten_clean", Number],
-            ["buffers_backend", Number],
-            ["buffers_backend_fsync", Number],
-            ["buffers_alloc", Number],
-            ["stats_reset", Date],
-        ] as const,
-    };
-}
-
-export namespace PgAm {
-    export type t = {
-        "oid": string;
-        "amname": string;
-        "amhandler": string;
-        "amtype": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["amname", String],
-            ["amhandler", String],
-            ["amtype", String],
-        ] as const,
-    };
-}
-
-export namespace ChannelFd {
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "kind": ChannelKind.t;
-        "fd_state_uid": string;
-        "fd": number;
-        "name": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["kind", ChannelKind.spec],
-            ["fd_state_uid", String],
-            ["fd", Number],
-            ["name", String],
-        ] as const,
-    };
-}
-
-export namespace PdsFileStatus {
-    export type t =
-        | "PENDING"
-        | "INGESTED"
-        | "PROCESSED"
-        ;
-    
-    export const spec = {
-        kind: "enum" as const,
-        values: [
-            "PENDING",
-            "INGESTED",
-            "PROCESSED",
-        ] as const,
-    };
-}
-
-
-export namespace PgAvailableExtensionVersions {
-    export type t = {
-        "name": string;
-        "version": string;
-        "installed": boolean;
-        "superuser": boolean;
-        "trusted": boolean;
-        "relocatable": boolean;
-        "schema": string;
-        "requires": string[];
-        "comment": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["name", String],
-            ["version", String],
-            ["installed", Boolean],
-            ["superuser", Boolean],
-            ["trusted", Boolean],
-            ["relocatable", Boolean],
-            ["schema", String],
-            ["requires", { "kind": "array", "spec": String }],
-            ["comment", String],
-        ] as const,
-    };
-}
-
-export namespace PgHbaFileRules {
-    export type t = {
-        "rule_number": number;
-        "file_name": string;
-        "line_number": number;
-        "type": string;
-        "database": string[];
-        "user_name": string[];
-        "address": string;
-        "netmask": string;
-        "auth_method": string;
-        "options": string[];
-        "error": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["rule_number", Number],
-            ["file_name", String],
-            ["line_number", Number],
-            ["type", String],
-            ["database", { "kind": "array", "spec": String }],
-            ["user_name", { "kind": "array", "spec": String }],
-            ["address", String],
-            ["netmask", String],
-            ["auth_method", String],
-            ["options", { "kind": "array", "spec": String }],
-            ["error", String],
+            ["email", String],
+            ["phone_number", String],
+            ["system_admin_witness", String],
+            ["pds_person_uid", String],
+            ["first_name", String],
+            ["last_name", String],
         ] as const,
     };
 }
 
 export namespace UserAuth {
+    export const name = "user_auth";
+
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -862,7 +63,7 @@ export namespace UserAuth {
         "password_hash": string;
         "person_uid": string;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -876,80 +77,93 @@ export namespace UserAuth {
     };
 }
 
-export namespace PgShdescription {
+export namespace AuthToken {
+    export const name = "auth_token";
+
     export type t = {
-        "objoid": string;
-        "classoid": string;
-        "description": string;
+        "token": string;
+        "user_auth_uid": string;
+        "expires_at": Date;
+        "active_practice_uid": string;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
-            ["objoid", String],
-            ["classoid", String],
-            ["description", String],
+            ["token", String],
+            ["user_auth_uid", String],
+            ["expires_at", Date],
+            ["active_practice_uid", String],
         ] as const,
     };
 }
 
-export namespace PgAuthMembers {
-    export type t = {
-        "oid": string;
-        "roleid": string;
-        "member": string;
-        "grantor": string;
-        "admin_option": boolean;
-        "inherit_option": boolean;
-        "set_option": boolean;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["roleid", String],
-            ["member", String],
-            ["grantor", String],
-            ["admin_option", Boolean],
-            ["inherit_option", Boolean],
-            ["set_option", Boolean],
-        ] as const,
-    };
-}
+export namespace Practice {
+    export const name = "practice";
 
-export namespace PersonConsent {
     export type t = {
         "uid": string;
         "created_at": Date;
         "updated_at": Date;
-        "person_uid": string;
-        "status": ConsentStatus.t;
-        "surface": ConsentSurface.t;
-        "consent_text": string;
+        "name": string;
+        "domain": string;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
             ["uid", String],
+            ["name", String],
+            ["domain", String],
             ["created_at", Date],
             ["updated_at", Date],
+        ] as const,
+    };
+}
+
+export namespace PracticePersonStaff {
+    export const name = "practice_person_staff";
+
+    export type t = {
+        "practice_uid": string;
+        "person_uid": string;
+    };
+
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["practice_uid", String],
             ["person_uid", String],
-            ["status", ConsentStatus.spec],
-            ["surface", ConsentSurface.spec],
-            ["consent_text", String],
+        ] as const,
+    };
+}
+
+export namespace PracticePersonPatient {
+    export const name = "practice_person_patient";
+
+    export type t = {
+        "practice_uid": string;
+        "person_uid": string;
+    };
+
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["practice_uid", String],
+            ["person_uid", String],
         ] as const,
     };
 }
 
 export namespace ChatMessageData {
+    export const name = "chat_message_data";
+
     export type t = {
         "uid": string;
         "created_at": Date;
         "content": string;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -960,302 +174,313 @@ export namespace ChatMessageData {
     };
 }
 
-export namespace PgReplicationOrigin {
+export namespace ChatMessage {
+    export const name = "chat_message";
+
     export type t = {
-        "roident": string;
-        "roname": string;
+        "sender_uid": string;
+        "receiver_uid": string;
+        "sequence_id": number;
+        "created_at": Date;
+        "expires_at": Date;
+        "message_data_uid": string;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
-            ["roident", String],
-            ["roname", String],
+            ["sender_uid", String],
+            ["receiver_uid", String],
+            ["sequence_id", Number],
+            ["created_at", Date],
+            ["expires_at", Date],
+            ["message_data_uid", String],
         ] as const,
     };
 }
 
-export namespace PgReplicationSlots {
+export namespace PersonChallenge {
+    export const name = "person_challenge";
+
     export type t = {
-        "slot_name": string;
-        "plugin": string;
-        "slot_type": string;
-        "datoid": string;
-        "database": string;
-        "temporary": boolean;
-        "active": boolean;
-        "active_pid": number;
-        "xmin": string;
-        "catalog_xmin": string;
-        "restart_lsn": string;
-        "confirmed_flush_lsn": string;
-        "wal_status": string;
-        "safe_wal_size": number;
-        "two_phase": boolean;
-        "conflicting": boolean;
+        "person_uid": string;
+        "challenge": string;
+        "expires_at": Date;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
-            ["slot_name", String],
-            ["plugin", String],
-            ["slot_type", String],
-            ["datoid", String],
-            ["database", String],
-            ["temporary", Boolean],
-            ["active", Boolean],
-            ["active_pid", Number],
-            ["xmin", String],
-            ["catalog_xmin", String],
-            ["restart_lsn", String],
-            ["confirmed_flush_lsn", String],
-            ["wal_status", String],
-            ["safe_wal_size", Number],
-            ["two_phase", Boolean],
-            ["conflicting", Boolean],
+            ["person_uid", String],
+            ["challenge", String],
+            ["expires_at", Date],
         ] as const,
     };
 }
 
-export namespace PgIdentFileMappings {
+export namespace PersonAuthenticator {
+    export const name = "person_authenticator";
+
     export type t = {
-        "map_number": number;
-        "file_name": string;
-        "line_number": number;
-        "map_name": string;
-        "sys_name": string;
-        "pg_username": string;
-        "error": string;
+        "person_uid": string;
+        "credential_id": string;
+        "credential_public_key": string;
+        "counter": number;
+        "credential_device_type": string;
+        "credential_backed_up": boolean;
+        "transports": string[];
+        "friendly_name": string;
+        "created_at": Date;
+        "last_used": Date;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
-            ["map_number", Number],
-            ["file_name", String],
-            ["line_number", Number],
-            ["map_name", String],
-            ["sys_name", String],
-            ["pg_username", String],
-            ["error", String],
+            ["person_uid", String],
+            ["credential_id", String],
+            ["credential_public_key", String],
+            ["counter", Number],
+            ["credential_device_type", String],
+            ["credential_backed_up", Boolean],
+            ["transports", { "kind": "array", "spec": String }],
+            ["friendly_name", String],
+            ["created_at", Date],
+            ["last_used", Date],
         ] as const,
     };
 }
 
-export namespace EvalResult {
+export namespace PharmacyItem {
+    export const name = "pharmacy_item";
+
     export type t = {
         "uid": string;
         "created_at": Date;
         "updated_at": Date;
-        "eval_spec_uid": string;
-        "program_uid": string;
-        "status": EvalResultStatus.t;
-        "success_rate": number;
-        "result": any;
+        "sku": string;
+        "name": string;
+        "description": string;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
             ["uid", String],
             ["created_at", Date],
             ["updated_at", Date],
-            ["eval_spec_uid", String],
-            ["program_uid", String],
-            ["status", EvalResultStatus.spec],
-            ["success_rate", Number],
-            ["result", Object],
+            ["sku", String],
+            ["name", String],
+            ["description", String],
         ] as const,
     };
 }
 
-export namespace PracticePersonStaff {
+export namespace PracticeItemInventory {
+    export const name = "practice_item_inventory";
+
     export type t = {
         "practice_uid": string;
-        "person_uid": string;
+        "pharmacy_item_uid": string;
+        "current_quantity": number;
+        "available_quantity": number;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
             ["practice_uid", String],
+            ["pharmacy_item_uid", String],
+            ["current_quantity", Number],
+            ["available_quantity", Number],
+        ] as const,
+    };
+}
+
+export namespace ShippingAddress {
+    export const name = "shipping_address";
+
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "person_uid": string;
+        "street": string;
+        "street2": string;
+        "street3": string;
+        "city": string;
+        "state": string;
+        "postal_code": string;
+        "country": string;
+    };
+
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
             ["person_uid", String],
+            ["street", String],
+            ["street2", String],
+            ["street3", String],
+            ["city", String],
+            ["state", String],
+            ["postal_code", String],
+            ["country", String],
         ] as const,
     };
 }
 
-export namespace PgStatUserIndexes {
+export namespace ShippingOrder {
+    export const name = "shipping_order";
+
     export type t = {
-        "relid": string;
-        "indexrelid": string;
-        "schemaname": string;
-        "relname": string;
-        "indexrelname": string;
-        "idx_scan": number;
-        "last_idx_scan": Date;
-        "idx_tup_read": number;
-        "idx_tup_fetch": number;
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "status": ShippingStatus.t;
+        "shipping_address_uid": string;
+        "practice_uid": string;
+        "patient_uid": string;
+        "tracking_number": string;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
-            ["relid", String],
-            ["indexrelid", String],
-            ["schemaname", String],
-            ["relname", String],
-            ["indexrelname", String],
-            ["idx_scan", Number],
-            ["last_idx_scan", Date],
-            ["idx_tup_read", Number],
-            ["idx_tup_fetch", Number],
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["status", ShippingStatus.spec],
+            ["shipping_address_uid", String],
+            ["practice_uid", String],
+            ["patient_uid", String],
+            ["tracking_number", String],
         ] as const,
     };
 }
 
-export namespace PgAttribute {
+export namespace ShippingOrderItem {
+    export const name = "shipping_order_item";
+
     export type t = {
-        "attrelid": string;
-        "attname": string;
-        "atttypid": string;
-        "attlen": string;
-        "attnum": string;
-        "attcacheoff": number;
-        "atttypmod": number;
-        "attndims": string;
-        "attbyval": boolean;
-        "attalign": string;
-        "attstorage": string;
-        "attcompression": string;
-        "attnotnull": boolean;
-        "atthasdef": boolean;
-        "atthasmissing": boolean;
-        "attidentity": string;
-        "attgenerated": string;
-        "attisdropped": boolean;
-        "attislocal": boolean;
-        "attinhcount": string;
-        "attstattarget": string;
-        "attcollation": string;
-        "attacl": string[];
-        "attoptions": string[];
-        "attfdwoptions": string[];
-        "attmissingval": string;
+        "shipping_order_uid": string;
+        "pharmacy_item_uid": string;
+        "quantity": number;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
-            ["attrelid", String],
-            ["attname", String],
-            ["atttypid", String],
-            ["attlen", String],
-            ["attnum", String],
-            ["attcacheoff", Number],
-            ["atttypmod", Number],
-            ["attndims", String],
-            ["attbyval", Boolean],
-            ["attalign", String],
-            ["attstorage", String],
-            ["attcompression", String],
-            ["attnotnull", Boolean],
-            ["atthasdef", Boolean],
-            ["atthasmissing", Boolean],
-            ["attidentity", String],
-            ["attgenerated", String],
-            ["attisdropped", Boolean],
-            ["attislocal", Boolean],
-            ["attinhcount", String],
-            ["attstattarget", String],
-            ["attcollation", String],
-            ["attacl", { "kind": "array", "spec": String }],
-            ["attoptions", { "kind": "array", "spec": String }],
-            ["attfdwoptions", { "kind": "array", "spec": String }],
-            ["attmissingval", String],
+            ["shipping_order_uid", String],
+            ["pharmacy_item_uid", String],
+            ["quantity", Number],
         ] as const,
     };
 }
 
-export namespace PatientAdherenceType {
-    export type t =
-        | "ACTIVE"
-        | "INACTIVE"
-        ;
-    
-    export const spec = {
-        kind: "enum" as const,
-        values: [
-            "ACTIVE",
-            "INACTIVE",
-        ] as const,
-    };
-}
+export namespace PatientMedication {
+    export const name = "patient_medication";
 
-
-export namespace PgStatSlru {
     export type t = {
+        "patient_uid": string;
+        "pharmacy_item_uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "status": MedicationStatus.t;
+        "dosage": string;
+        "roa": string;
+        "date_last_script": Date;
+    };
+
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["patient_uid", String],
+            ["pharmacy_item_uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["status", MedicationStatus.spec],
+            ["dosage", String],
+            ["roa", String],
+            ["date_last_script", Date],
+        ] as const,
+    };
+}
+
+export namespace PatientAdherenceEvent {
+    export const name = "patient_adherence_event";
+
+    export type t = {
+        "patient_uid": string;
+        "pharmacy_item_uid": string;
+        "created_at": Date;
+        "event_type": string;
+        "event_data": any;
+    };
+
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["patient_uid", String],
+            ["pharmacy_item_uid", String],
+            ["created_at", Date],
+            ["event_type", String],
+            ["event_data", Object],
+        ] as const,
+    };
+}
+
+export namespace PatientList {
+    export const name = "patient_list";
+
+    export type t = {
+        "person_uid": string;
+        "practice_uid": string;
+        "person": Person.t;
+        "medications": PharmacyItem.t[];
+    };
+
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["person_uid", String],
+            ["practice_uid", String],
+            ["person", Person.spec],
+            ["medications", { "kind": "array", "spec": PharmacyItem.spec }],
+        ] as const,
+    };
+}
+
+export namespace Fsm {
+    export const name = "fsm";
+
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
         "name": string;
-        "blks_zeroed": number;
-        "blks_hit": number;
-        "blks_read": number;
-        "blks_written": number;
-        "blks_exists": number;
-        "flushes": number;
-        "truncates": number;
-        "stats_reset": Date;
+        "description": string;
+        "practice_uid": string;
     };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["name", String],
-            ["blks_zeroed", Number],
-            ["blks_hit", Number],
-            ["blks_read", Number],
-            ["blks_written", Number],
-            ["blks_exists", Number],
-            ["flushes", Number],
-            ["truncates", Number],
-            ["stats_reset", Date],
-        ] as const,
-    };
-}
 
-export namespace PgStatProgressVacuum {
-    export type t = {
-        "pid": number;
-        "datid": string;
-        "datname": string;
-        "relid": string;
-        "phase": string;
-        "heap_blks_total": number;
-        "heap_blks_scanned": number;
-        "heap_blks_vacuumed": number;
-        "index_vacuum_count": number;
-        "max_dead_tuples": number;
-        "num_dead_tuples": number;
-    };
-    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
-            ["pid", Number],
-            ["datid", String],
-            ["datname", String],
-            ["relid", String],
-            ["phase", String],
-            ["heap_blks_total", Number],
-            ["heap_blks_scanned", Number],
-            ["heap_blks_vacuumed", Number],
-            ["index_vacuum_count", Number],
-            ["max_dead_tuples", Number],
-            ["num_dead_tuples", Number],
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["name", String],
+            ["description", String],
+            ["practice_uid", String],
         ] as const,
     };
 }
 
 export namespace FsmNode {
+    export const name = "fsm_node";
+
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -1267,7 +492,7 @@ export namespace FsmNode {
         "fsm_uid": string;
         "is_start": boolean;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -1284,360 +509,65 @@ export namespace FsmNode {
     };
 }
 
-export namespace PipelineDefinition {
+export namespace FsmEdge {
+    export const name = "fsm_edge";
+
     export type t = {
         "uid": string;
         "created_at": Date;
         "updated_at": Date;
-        "pipeline_uid": string;
-        "version": number;
-        "definition": any;
+        "start_node_uid": string;
+        "end_node_uid": string;
+        "trigger": FsmEdgeTrigger.t;
+        "description": string;
+        "options": any;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
             ["uid", String],
             ["created_at", Date],
             ["updated_at", Date],
-            ["pipeline_uid", String],
-            ["version", Number],
-            ["definition", Object],
+            ["start_node_uid", String],
+            ["end_node_uid", String],
+            ["trigger", FsmEdgeTrigger.spec],
+            ["description", String],
+            ["options", Object],
         ] as const,
     };
 }
 
-export namespace PdsSftpLocalEgressFile {
+export namespace FsmInstance {
+    export const name = "fsm_instance";
+
     export type t = {
         "uid": string;
         "created_at": Date;
         "updated_at": Date;
-        "pds_registration_uid": string;
-        "export_timestamp": Date;
-        "file_name": string;
-        "body": Buffer;
+        "fsm_uid": string;
+        "patient_uid": string;
+        "current_node_uid": string;
+        "last_event_time": Date;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
             ["uid", String],
             ["created_at", Date],
             ["updated_at", Date],
-            ["pds_registration_uid", String],
-            ["export_timestamp", Date],
-            ["file_name", String],
-            ["body", Buffer],
-        ] as const,
-    };
-}
-
-export namespace PgParameterAcl {
-    export type t = {
-        "oid": string;
-        "parname": string;
-        "paracl": string[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["parname", String],
-            ["paracl", { "kind": "array", "spec": String }],
-        ] as const,
-    };
-}
-
-export namespace PgStatSysIndexes {
-    export type t = {
-        "relid": string;
-        "indexrelid": string;
-        "schemaname": string;
-        "relname": string;
-        "indexrelname": string;
-        "idx_scan": number;
-        "last_idx_scan": Date;
-        "idx_tup_read": number;
-        "idx_tup_fetch": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["relid", String],
-            ["indexrelid", String],
-            ["schemaname", String],
-            ["relname", String],
-            ["indexrelname", String],
-            ["idx_scan", Number],
-            ["last_idx_scan", Date],
-            ["idx_tup_read", Number],
-            ["idx_tup_fetch", Number],
-        ] as const,
-    };
-}
-
-export namespace PgSequence {
-    export type t = {
-        "seqrelid": string;
-        "seqtypid": string;
-        "seqstart": number;
-        "seqincrement": number;
-        "seqmax": number;
-        "seqmin": number;
-        "seqcache": number;
-        "seqcycle": boolean;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["seqrelid", String],
-            ["seqtypid", String],
-            ["seqstart", Number],
-            ["seqincrement", Number],
-            ["seqmax", Number],
-            ["seqmin", Number],
-            ["seqcache", Number],
-            ["seqcycle", Boolean],
-        ] as const,
-    };
-}
-
-export namespace PgPolicy {
-    export type t = {
-        "oid": string;
-        "polname": string;
-        "polrelid": string;
-        "polcmd": string;
-        "polpermissive": boolean;
-        "polroles": string[];
-        "polqual": string;
-        "polwithcheck": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["polname", String],
-            ["polrelid", String],
-            ["polcmd", String],
-            ["polpermissive", Boolean],
-            ["polroles", { "kind": "array", "spec": String }],
-            ["polqual", String],
-            ["polwithcheck", String],
-        ] as const,
-    };
-}
-
-export namespace PgStatProgressAnalyze {
-    export type t = {
-        "pid": number;
-        "datid": string;
-        "datname": string;
-        "relid": string;
-        "phase": string;
-        "sample_blks_total": number;
-        "sample_blks_scanned": number;
-        "ext_stats_total": number;
-        "ext_stats_computed": number;
-        "child_tables_total": number;
-        "child_tables_done": number;
-        "current_child_table_relid": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["pid", Number],
-            ["datid", String],
-            ["datname", String],
-            ["relid", String],
-            ["phase", String],
-            ["sample_blks_total", Number],
-            ["sample_blks_scanned", Number],
-            ["ext_stats_total", Number],
-            ["ext_stats_computed", Number],
-            ["child_tables_total", Number],
-            ["child_tables_done", Number],
-            ["current_child_table_relid", String],
-        ] as const,
-    };
-}
-
-export namespace PgStatioUserTables {
-    export type t = {
-        "relid": string;
-        "schemaname": string;
-        "relname": string;
-        "heap_blks_read": number;
-        "heap_blks_hit": number;
-        "idx_blks_read": number;
-        "idx_blks_hit": number;
-        "toast_blks_read": number;
-        "toast_blks_hit": number;
-        "tidx_blks_read": number;
-        "tidx_blks_hit": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["relid", String],
-            ["schemaname", String],
-            ["relname", String],
-            ["heap_blks_read", Number],
-            ["heap_blks_hit", Number],
-            ["idx_blks_read", Number],
-            ["idx_blks_hit", Number],
-            ["toast_blks_read", Number],
-            ["toast_blks_hit", Number],
-            ["tidx_blks_read", Number],
-            ["tidx_blks_hit", Number],
-        ] as const,
-    };
-}
-
-export namespace PgStatSubscription {
-    export type t = {
-        "subid": string;
-        "subname": string;
-        "pid": number;
-        "leader_pid": number;
-        "relid": string;
-        "received_lsn": string;
-        "last_msg_send_time": Date;
-        "last_msg_receipt_time": Date;
-        "latest_end_lsn": string;
-        "latest_end_time": Date;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["subid", String],
-            ["subname", String],
-            ["pid", Number],
-            ["leader_pid", Number],
-            ["relid", String],
-            ["received_lsn", String],
-            ["last_msg_send_time", Date],
-            ["last_msg_receipt_time", Date],
-            ["latest_end_lsn", String],
-            ["latest_end_time", Date],
-        ] as const,
-    };
-}
-
-export namespace MessageStatus {
-    export type t =
-        | "PENDING"
-        | "SENT"
-        | "DELIVERED"
-        | "READ"
-        | "FAILED"
-        ;
-    
-    export const spec = {
-        kind: "enum" as const,
-        values: [
-            "PENDING",
-            "SENT",
-            "DELIVERED",
-            "READ",
-            "FAILED",
-        ] as const,
-    };
-}
-
-
-export namespace AuthToken {
-    export type t = {
-        "token": string;
-        "user_auth_uid": string;
-        "expires_at": Date;
-        "active_practice_uid": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["token", String],
-            ["user_auth_uid", String],
-            ["expires_at", Date],
-            ["active_practice_uid", String],
-        ] as const,
-    };
-}
-
-export namespace PgSeclabel {
-    export type t = {
-        "objoid": string;
-        "classoid": string;
-        "objsubid": number;
-        "provider": string;
-        "label": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["objoid", String],
-            ["classoid", String],
-            ["objsubid", Number],
-            ["provider", String],
-            ["label", String],
-        ] as const,
-    };
-}
-
-export namespace PgAvailableExtensions {
-    export type t = {
-        "name": string;
-        "default_version": string;
-        "installed_version": string;
-        "comment": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["name", String],
-            ["default_version", String],
-            ["installed_version", String],
-            ["comment", String],
-        ] as const,
-    };
-}
-
-export namespace PdsStagedExport {
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "pds_system_uid": string;
-        "data_row": any;
-        "done": boolean;
-        "file_name": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["pds_system_uid", String],
-            ["data_row", Object],
-            ["done", Boolean],
-            ["file_name", String],
+            ["fsm_uid", String],
+            ["patient_uid", String],
+            ["current_node_uid", String],
+            ["last_event_time", Date],
         ] as const,
     };
 }
 
 export namespace Message {
+    export const name = "message";
+
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -1653,7 +583,7 @@ export namespace Message {
         "processed": boolean;
         "campaign_uid": string;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -1674,1888 +604,9 @@ export namespace Message {
     };
 }
 
-export namespace PgStatSubscriptionStats {
-    export type t = {
-        "subid": string;
-        "subname": string;
-        "apply_error_count": number;
-        "sync_error_count": number;
-        "stats_reset": Date;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["subid", String],
-            ["subname", String],
-            ["apply_error_count", Number],
-            ["sync_error_count", Number],
-            ["stats_reset", Date],
-        ] as const,
-    };
-}
-
-export namespace PgStatXactUserTables {
-    export type t = {
-        "relid": string;
-        "schemaname": string;
-        "relname": string;
-        "seq_scan": number;
-        "seq_tup_read": number;
-        "idx_scan": number;
-        "idx_tup_fetch": number;
-        "n_tup_ins": number;
-        "n_tup_upd": number;
-        "n_tup_del": number;
-        "n_tup_hot_upd": number;
-        "n_tup_newpage_upd": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["relid", String],
-            ["schemaname", String],
-            ["relname", String],
-            ["seq_scan", Number],
-            ["seq_tup_read", Number],
-            ["idx_scan", Number],
-            ["idx_tup_fetch", Number],
-            ["n_tup_ins", Number],
-            ["n_tup_upd", Number],
-            ["n_tup_del", Number],
-            ["n_tup_hot_upd", Number],
-            ["n_tup_newpage_upd", Number],
-        ] as const,
-    };
-}
-
-export namespace PgPreparedStatements {
-    export type t = {
-        "name": string;
-        "statement": string;
-        "prepare_time": Date;
-        "parameter_types": string[];
-        "result_types": string[];
-        "from_sql": boolean;
-        "generic_plans": number;
-        "custom_plans": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["name", String],
-            ["statement", String],
-            ["prepare_time", Date],
-            ["parameter_types", { "kind": "array", "spec": String }],
-            ["result_types", { "kind": "array", "spec": String }],
-            ["from_sql", Boolean],
-            ["generic_plans", Number],
-            ["custom_plans", Number],
-        ] as const,
-    };
-}
-
-export namespace PgExtension {
-    export type t = {
-        "oid": string;
-        "extname": string;
-        "extowner": string;
-        "extnamespace": string;
-        "extrelocatable": boolean;
-        "extversion": string;
-        "extconfig": string[];
-        "extcondition": string[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["extname", String],
-            ["extowner", String],
-            ["extnamespace", String],
-            ["extrelocatable", Boolean],
-            ["extversion", String],
-            ["extconfig", { "kind": "array", "spec": String }],
-            ["extcondition", { "kind": "array", "spec": String }],
-        ] as const,
-    };
-}
-
-export namespace PiquedVersion {
-    export type t = {
-        "index_key": number;
-        "version": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["index_key", Number],
-            ["version", Number],
-        ] as const,
-    };
-}
-
-export namespace PgDefaultAcl {
-    export type t = {
-        "oid": string;
-        "defaclrole": string;
-        "defaclnamespace": string;
-        "defaclobjtype": string;
-        "defaclacl": string[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["defaclrole", String],
-            ["defaclnamespace", String],
-            ["defaclobjtype", String],
-            ["defaclacl", { "kind": "array", "spec": String }],
-        ] as const,
-    };
-}
-
-export namespace PracticeItemInventory {
-    export type t = {
-        "practice_uid": string;
-        "pharmacy_item_uid": string;
-        "current_quantity": number;
-        "available_quantity": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["practice_uid", String],
-            ["pharmacy_item_uid", String],
-            ["current_quantity", Number],
-            ["available_quantity", Number],
-        ] as const,
-    };
-}
-
-export namespace PgStatsExt {
-    export type t = {
-        "schemaname": string;
-        "tablename": string;
-        "statistics_schemaname": string;
-        "statistics_name": string;
-        "statistics_owner": string;
-        "attnames": string[];
-        "exprs": string[];
-        "kinds": string[];
-        "inherited": boolean;
-        "n_distinct": string;
-        "dependencies": string;
-        "most_common_vals": string[];
-        "most_common_val_nulls": boolean[];
-        "most_common_freqs": number[];
-        "most_common_base_freqs": number[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["schemaname", String],
-            ["tablename", String],
-            ["statistics_schemaname", String],
-            ["statistics_name", String],
-            ["statistics_owner", String],
-            ["attnames", { "kind": "array", "spec": String }],
-            ["exprs", { "kind": "array", "spec": String }],
-            ["kinds", { "kind": "array", "spec": String }],
-            ["inherited", Boolean],
-            ["n_distinct", String],
-            ["dependencies", String],
-            ["most_common_vals", { "kind": "array", "spec": String }],
-            ["most_common_val_nulls", { "kind": "array", "spec": Boolean }],
-            ["most_common_freqs", { "kind": "array", "spec": Number }],
-            ["most_common_base_freqs", { "kind": "array", "spec": Number }],
-        ] as const,
-    };
-}
-
-export namespace PgRange {
-    export type t = {
-        "rngtypid": string;
-        "rngsubtype": string;
-        "rngmultitypid": string;
-        "rngcollation": string;
-        "rngsubopc": string;
-        "rngcanonical": string;
-        "rngsubdiff": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["rngtypid", String],
-            ["rngsubtype", String],
-            ["rngmultitypid", String],
-            ["rngcollation", String],
-            ["rngsubopc", String],
-            ["rngcanonical", String],
-            ["rngsubdiff", String],
-        ] as const,
-    };
-}
-
-export namespace PgLocks {
-    export type t = {
-        "locktype": string;
-        "database": string;
-        "relation": string;
-        "page": number;
-        "tuple": string;
-        "virtualxid": string;
-        "transactionid": string;
-        "classid": string;
-        "objid": string;
-        "objsubid": string;
-        "virtualtransaction": string;
-        "pid": number;
-        "mode": string;
-        "granted": boolean;
-        "fastpath": boolean;
-        "waitstart": Date;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["locktype", String],
-            ["database", String],
-            ["relation", String],
-            ["page", Number],
-            ["tuple", String],
-            ["virtualxid", String],
-            ["transactionid", String],
-            ["classid", String],
-            ["objid", String],
-            ["objsubid", String],
-            ["virtualtransaction", String],
-            ["pid", Number],
-            ["mode", String],
-            ["granted", Boolean],
-            ["fastpath", Boolean],
-            ["waitstart", Date],
-        ] as const,
-    };
-}
-
-export namespace PracticePersonPatient {
-    export type t = {
-        "practice_uid": string;
-        "person_uid": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["practice_uid", String],
-            ["person_uid", String],
-        ] as const,
-    };
-}
-
-export namespace PgTsDict {
-    export type t = {
-        "oid": string;
-        "dictname": string;
-        "dictnamespace": string;
-        "dictowner": string;
-        "dicttemplate": string;
-        "dictinitoption": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["dictname", String],
-            ["dictnamespace", String],
-            ["dictowner", String],
-            ["dicttemplate", String],
-            ["dictinitoption", String],
-        ] as const,
-    };
-}
-
-export namespace PgStatRecoveryPrefetch {
-    export type t = {
-        "stats_reset": Date;
-        "prefetch": number;
-        "hit": number;
-        "skip_init": number;
-        "skip_new": number;
-        "skip_fpw": number;
-        "skip_rep": number;
-        "wal_distance": number;
-        "block_distance": number;
-        "io_depth": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["stats_reset", Date],
-            ["prefetch", Number],
-            ["hit", Number],
-            ["skip_init", Number],
-            ["skip_new", Number],
-            ["skip_fpw", Number],
-            ["skip_rep", Number],
-            ["wal_distance", Number],
-            ["block_distance", Number],
-            ["io_depth", Number],
-        ] as const,
-    };
-}
-
-export namespace PdsRegistration {
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "pds_system_uid": string;
-        "credentials": string;
-        "protocol": PdsRegistrationProtocol.t;
-        "uri": string;
-        "ingress": boolean;
-        "egress": boolean;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["pds_system_uid", String],
-            ["credentials", String],
-            ["protocol", PdsRegistrationProtocol.spec],
-            ["uri", String],
-            ["ingress", Boolean],
-            ["egress", Boolean],
-        ] as const,
-    };
-}
-
-export namespace PgIndex {
-    export type t = {
-        "indexrelid": string;
-        "indrelid": string;
-        "indnatts": string;
-        "indnkeyatts": string;
-        "indisunique": boolean;
-        "indnullsnotdistinct": boolean;
-        "indisprimary": boolean;
-        "indisexclusion": boolean;
-        "indimmediate": boolean;
-        "indisclustered": boolean;
-        "indisvalid": boolean;
-        "indcheckxmin": boolean;
-        "indisready": boolean;
-        "indislive": boolean;
-        "indisreplident": boolean;
-        "indkey": string;
-        "indcollation": string;
-        "indclass": string;
-        "indoption": string;
-        "indexprs": string;
-        "indpred": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["indexrelid", String],
-            ["indrelid", String],
-            ["indnatts", String],
-            ["indnkeyatts", String],
-            ["indisunique", Boolean],
-            ["indnullsnotdistinct", Boolean],
-            ["indisprimary", Boolean],
-            ["indisexclusion", Boolean],
-            ["indimmediate", Boolean],
-            ["indisclustered", Boolean],
-            ["indisvalid", Boolean],
-            ["indcheckxmin", Boolean],
-            ["indisready", Boolean],
-            ["indislive", Boolean],
-            ["indisreplident", Boolean],
-            ["indkey", String],
-            ["indcollation", String],
-            ["indclass", String],
-            ["indoption", String],
-            ["indexprs", String],
-            ["indpred", String],
-        ] as const,
-    };
-}
-
-export namespace PgStatProgressCluster {
-    export type t = {
-        "pid": number;
-        "datid": string;
-        "datname": string;
-        "relid": string;
-        "command": string;
-        "phase": string;
-        "cluster_index_relid": string;
-        "heap_tuples_scanned": number;
-        "heap_tuples_written": number;
-        "heap_blks_total": number;
-        "heap_blks_scanned": number;
-        "index_rebuild_count": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["pid", Number],
-            ["datid", String],
-            ["datname", String],
-            ["relid", String],
-            ["command", String],
-            ["phase", String],
-            ["cluster_index_relid", String],
-            ["heap_tuples_scanned", Number],
-            ["heap_tuples_written", Number],
-            ["heap_blks_total", Number],
-            ["heap_blks_scanned", Number],
-            ["index_rebuild_count", Number],
-        ] as const,
-    };
-}
-
-export namespace PgStatUserFunctions {
-    export type t = {
-        "funcid": string;
-        "schemaname": string;
-        "funcname": string;
-        "calls": number;
-        "total_time": number;
-        "self_time": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["funcid", String],
-            ["schemaname", String],
-            ["funcname", String],
-            ["calls", Number],
-            ["total_time", Number],
-            ["self_time", Number],
-        ] as const,
-    };
-}
-
-export namespace PgStatWalReceiver {
-    export type t = {
-        "pid": number;
-        "status": string;
-        "receive_start_lsn": string;
-        "receive_start_tli": number;
-        "written_lsn": string;
-        "flushed_lsn": string;
-        "received_tli": number;
-        "last_msg_send_time": Date;
-        "last_msg_receipt_time": Date;
-        "latest_end_lsn": string;
-        "latest_end_time": Date;
-        "slot_name": string;
-        "sender_host": string;
-        "sender_port": number;
-        "conninfo": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["pid", Number],
-            ["status", String],
-            ["receive_start_lsn", String],
-            ["receive_start_tli", Number],
-            ["written_lsn", String],
-            ["flushed_lsn", String],
-            ["received_tli", Number],
-            ["last_msg_send_time", Date],
-            ["last_msg_receipt_time", Date],
-            ["latest_end_lsn", String],
-            ["latest_end_time", Date],
-            ["slot_name", String],
-            ["sender_host", String],
-            ["sender_port", Number],
-            ["conninfo", String],
-        ] as const,
-    };
-}
-
-export namespace PharmacyItem {
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "sku": string;
-        "name": string;
-        "description": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["sku", String],
-            ["name", String],
-            ["description", String],
-        ] as const,
-    };
-}
-
-export namespace ShortLink {
-    export type t = {
-        "slug": string;
-        "domain": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "uri": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["slug", String],
-            ["domain", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["uri", String],
-        ] as const,
-    };
-}
-
-export namespace PgStatXactAllTables {
-    export type t = {
-        "relid": string;
-        "schemaname": string;
-        "relname": string;
-        "seq_scan": number;
-        "seq_tup_read": number;
-        "idx_scan": number;
-        "idx_tup_fetch": number;
-        "n_tup_ins": number;
-        "n_tup_upd": number;
-        "n_tup_del": number;
-        "n_tup_hot_upd": number;
-        "n_tup_newpage_upd": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["relid", String],
-            ["schemaname", String],
-            ["relname", String],
-            ["seq_scan", Number],
-            ["seq_tup_read", Number],
-            ["idx_scan", Number],
-            ["idx_tup_fetch", Number],
-            ["n_tup_ins", Number],
-            ["n_tup_upd", Number],
-            ["n_tup_del", Number],
-            ["n_tup_hot_upd", Number],
-            ["n_tup_newpage_upd", Number],
-        ] as const,
-    };
-}
-
-export namespace ConsentStatus {
-    export type t =
-        | "PENDING"
-        | "ACCEPTED"
-        | "REJECTED"
-        ;
-    
-    export const spec = {
-        kind: "enum" as const,
-        values: [
-            "PENDING",
-            "ACCEPTED",
-            "REJECTED",
-        ] as const,
-    };
-}
-
-
-export namespace PgDatabase {
-    export type t = {
-        "oid": string;
-        "datname": string;
-        "datdba": string;
-        "encoding": number;
-        "datlocprovider": string;
-        "datistemplate": boolean;
-        "datallowconn": boolean;
-        "datconnlimit": number;
-        "datfrozenxid": string;
-        "datminmxid": string;
-        "dattablespace": string;
-        "datcollate": string;
-        "datctype": string;
-        "daticulocale": string;
-        "daticurules": string;
-        "datcollversion": string;
-        "datacl": string[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["datname", String],
-            ["datdba", String],
-            ["encoding", Number],
-            ["datlocprovider", String],
-            ["datistemplate", Boolean],
-            ["datallowconn", Boolean],
-            ["datconnlimit", Number],
-            ["datfrozenxid", String],
-            ["datminmxid", String],
-            ["dattablespace", String],
-            ["datcollate", String],
-            ["datctype", String],
-            ["daticulocale", String],
-            ["daticurules", String],
-            ["datcollversion", String],
-            ["datacl", { "kind": "array", "spec": String }],
-        ] as const,
-    };
-}
-
-export namespace MedicationStatus {
-    export type t =
-        | "ACTIVE"
-        | "PAST"
-        | "UNKNOWN"
-        ;
-    
-    export const spec = {
-        kind: "enum" as const,
-        values: [
-            "ACTIVE",
-            "PAST",
-            "UNKNOWN",
-        ] as const,
-    };
-}
-
-
-export namespace PgAuthid {
-    export type t = {
-        "oid": string;
-        "rolname": string;
-        "rolsuper": boolean;
-        "rolinherit": boolean;
-        "rolcreaterole": boolean;
-        "rolcreatedb": boolean;
-        "rolcanlogin": boolean;
-        "rolreplication": boolean;
-        "rolbypassrls": boolean;
-        "rolconnlimit": number;
-        "rolpassword": string;
-        "rolvaliduntil": Date;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["rolname", String],
-            ["rolsuper", Boolean],
-            ["rolinherit", Boolean],
-            ["rolcreaterole", Boolean],
-            ["rolcreatedb", Boolean],
-            ["rolcanlogin", Boolean],
-            ["rolreplication", Boolean],
-            ["rolbypassrls", Boolean],
-            ["rolconnlimit", Number],
-            ["rolpassword", String],
-            ["rolvaliduntil", Date],
-        ] as const,
-    };
-}
-
-export namespace PgInitPrivs {
-    export type t = {
-        "objoid": string;
-        "classoid": string;
-        "objsubid": number;
-        "privtype": string;
-        "initprivs": string[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["objoid", String],
-            ["classoid", String],
-            ["objsubid", Number],
-            ["privtype", String],
-            ["initprivs", { "kind": "array", "spec": String }],
-        ] as const,
-    };
-}
-
-export namespace ShippingStatus {
-    export type t =
-        | "ORDER_CREATED"
-        | "LABEL_CREATED"
-        | "SHIPPED"
-        | "DELIVERED"
-        | "LOST"
-        ;
-    
-    export const spec = {
-        kind: "enum" as const,
-        values: [
-            "ORDER_CREATED",
-            "LABEL_CREATED",
-            "SHIPPED",
-            "DELIVERED",
-            "LOST",
-        ] as const,
-    };
-}
-
-
-export namespace PgCursors {
-    export type t = {
-        "name": string;
-        "statement": string;
-        "is_holdable": boolean;
-        "is_binary": boolean;
-        "is_scrollable": boolean;
-        "creation_time": Date;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["name", String],
-            ["statement", String],
-            ["is_holdable", Boolean],
-            ["is_binary", Boolean],
-            ["is_scrollable", Boolean],
-            ["creation_time", Date],
-        ] as const,
-    };
-}
-
-export namespace EvalSpec {
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "program_slug": string;
-        "version": number;
-        "spec": any;
-        "pass_ratio": number;
-        "attempts": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["program_slug", String],
-            ["version", Number],
-            ["spec", Object],
-            ["pass_ratio", Number],
-            ["attempts", Number],
-        ] as const,
-    };
-}
-
-export namespace FsmInstance {
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "fsm_uid": string;
-        "patient_uid": string;
-        "current_node_uid": string;
-        "last_event_time": Date;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["fsm_uid", String],
-            ["patient_uid", String],
-            ["current_node_uid", String],
-            ["last_event_time", Date],
-        ] as const,
-    };
-}
-
-export namespace FtvmCache {
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "program_slug": string;
-        "cache_key": string;
-        "cache_value": any;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["program_slug", String],
-            ["cache_key", String],
-            ["cache_value", Object],
-        ] as const,
-    };
-}
-
-export namespace PgStatDatabase {
-    export type t = {
-        "datid": string;
-        "datname": string;
-        "numbackends": number;
-        "xact_commit": number;
-        "xact_rollback": number;
-        "blks_read": number;
-        "blks_hit": number;
-        "tup_returned": number;
-        "tup_fetched": number;
-        "tup_inserted": number;
-        "tup_updated": number;
-        "tup_deleted": number;
-        "conflicts": number;
-        "temp_files": number;
-        "temp_bytes": number;
-        "deadlocks": number;
-        "checksum_failures": number;
-        "checksum_last_failure": Date;
-        "blk_read_time": number;
-        "blk_write_time": number;
-        "session_time": number;
-        "active_time": number;
-        "idle_in_transaction_time": number;
-        "sessions": number;
-        "sessions_abandoned": number;
-        "sessions_fatal": number;
-        "sessions_killed": number;
-        "stats_reset": Date;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["datid", String],
-            ["datname", String],
-            ["numbackends", Number],
-            ["xact_commit", Number],
-            ["xact_rollback", Number],
-            ["blks_read", Number],
-            ["blks_hit", Number],
-            ["tup_returned", Number],
-            ["tup_fetched", Number],
-            ["tup_inserted", Number],
-            ["tup_updated", Number],
-            ["tup_deleted", Number],
-            ["conflicts", Number],
-            ["temp_files", Number],
-            ["temp_bytes", Number],
-            ["deadlocks", Number],
-            ["checksum_failures", Number],
-            ["checksum_last_failure", Date],
-            ["blk_read_time", Number],
-            ["blk_write_time", Number],
-            ["session_time", Number],
-            ["active_time", Number],
-            ["idle_in_transaction_time", Number],
-            ["sessions", Number],
-            ["sessions_abandoned", Number],
-            ["sessions_fatal", Number],
-            ["sessions_killed", Number],
-            ["stats_reset", Date],
-        ] as const,
-    };
-}
-
-export namespace AnalyticsBatchStatus {
-    export type t =
-        | "PENDING"
-        | "COMPLETED"
-        | "FAILED"
-        ;
-    
-    export const spec = {
-        kind: "enum" as const,
-        values: [
-            "PENDING",
-            "COMPLETED",
-            "FAILED",
-        ] as const,
-    };
-}
-
-
-export namespace PgShadow {
-    export type t = {
-        "usename": string;
-        "usesysid": string;
-        "usecreatedb": boolean;
-        "usesuper": boolean;
-        "userepl": boolean;
-        "usebypassrls": boolean;
-        "passwd": string;
-        "valuntil": Date;
-        "useconfig": string[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["usename", String],
-            ["usesysid", String],
-            ["usecreatedb", Boolean],
-            ["usesuper", Boolean],
-            ["userepl", Boolean],
-            ["usebypassrls", Boolean],
-            ["passwd", String],
-            ["valuntil", Date],
-            ["useconfig", { "kind": "array", "spec": String }],
-        ] as const,
-    };
-}
-
-export namespace Fsm {
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "name": string;
-        "description": string;
-        "practice_uid": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["name", String],
-            ["description", String],
-            ["practice_uid", String],
-        ] as const,
-    };
-}
-
-export namespace PgStatAllTables {
-    export type t = {
-        "relid": string;
-        "schemaname": string;
-        "relname": string;
-        "seq_scan": number;
-        "last_seq_scan": Date;
-        "seq_tup_read": number;
-        "idx_scan": number;
-        "last_idx_scan": Date;
-        "idx_tup_fetch": number;
-        "n_tup_ins": number;
-        "n_tup_upd": number;
-        "n_tup_del": number;
-        "n_tup_hot_upd": number;
-        "n_tup_newpage_upd": number;
-        "n_live_tup": number;
-        "n_dead_tup": number;
-        "n_mod_since_analyze": number;
-        "n_ins_since_vacuum": number;
-        "last_vacuum": Date;
-        "last_autovacuum": Date;
-        "last_analyze": Date;
-        "last_autoanalyze": Date;
-        "vacuum_count": number;
-        "autovacuum_count": number;
-        "analyze_count": number;
-        "autoanalyze_count": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["relid", String],
-            ["schemaname", String],
-            ["relname", String],
-            ["seq_scan", Number],
-            ["last_seq_scan", Date],
-            ["seq_tup_read", Number],
-            ["idx_scan", Number],
-            ["last_idx_scan", Date],
-            ["idx_tup_fetch", Number],
-            ["n_tup_ins", Number],
-            ["n_tup_upd", Number],
-            ["n_tup_del", Number],
-            ["n_tup_hot_upd", Number],
-            ["n_tup_newpage_upd", Number],
-            ["n_live_tup", Number],
-            ["n_dead_tup", Number],
-            ["n_mod_since_analyze", Number],
-            ["n_ins_since_vacuum", Number],
-            ["last_vacuum", Date],
-            ["last_autovacuum", Date],
-            ["last_analyze", Date],
-            ["last_autoanalyze", Date],
-            ["vacuum_count", Number],
-            ["autovacuum_count", Number],
-            ["analyze_count", Number],
-            ["autoanalyze_count", Number],
-        ] as const,
-    };
-}
-
-export namespace PgStatXactUserFunctions {
-    export type t = {
-        "funcid": string;
-        "schemaname": string;
-        "funcname": string;
-        "calls": number;
-        "total_time": number;
-        "self_time": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["funcid", String],
-            ["schemaname", String],
-            ["funcname", String],
-            ["calls", Number],
-            ["total_time", Number],
-            ["self_time", Number],
-        ] as const,
-    };
-}
-
-export namespace ChatMessage {
-    export type t = {
-        "sender_uid": string;
-        "receiver_uid": string;
-        "sequence_id": number;
-        "created_at": Date;
-        "expires_at": Date;
-        "message_data_uid": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["sender_uid", String],
-            ["receiver_uid", String],
-            ["sequence_id", Number],
-            ["created_at", Date],
-            ["expires_at", Date],
-            ["message_data_uid", String],
-        ] as const,
-    };
-}
-
-export namespace PatientMedication {
-    export type t = {
-        "patient_uid": string;
-        "pharmacy_item_uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "status": MedicationStatus.t;
-        "dosage": string;
-        "roa": string;
-        "date_last_script": Date;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["patient_uid", String],
-            ["pharmacy_item_uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["status", MedicationStatus.spec],
-            ["dosage", String],
-            ["roa", String],
-            ["date_last_script", Date],
-        ] as const,
-    };
-}
-
-export namespace PgTsParser {
-    export type t = {
-        "oid": string;
-        "prsname": string;
-        "prsnamespace": string;
-        "prsstart": string;
-        "prstoken": string;
-        "prsend": string;
-        "prsheadline": string;
-        "prslextype": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["prsname", String],
-            ["prsnamespace", String],
-            ["prsstart", String],
-            ["prstoken", String],
-            ["prsend", String],
-            ["prsheadline", String],
-            ["prslextype", String],
-        ] as const,
-    };
-}
-
-export namespace PgClass {
-    export type t = {
-        "oid": string;
-        "relname": string;
-        "relnamespace": string;
-        "reltype": string;
-        "reloftype": string;
-        "relowner": string;
-        "relam": string;
-        "relfilenode": string;
-        "reltablespace": string;
-        "relpages": number;
-        "reltuples": number;
-        "relallvisible": number;
-        "reltoastrelid": string;
-        "relhasindex": boolean;
-        "relisshared": boolean;
-        "relpersistence": string;
-        "relkind": string;
-        "relnatts": string;
-        "relchecks": string;
-        "relhasrules": boolean;
-        "relhastriggers": boolean;
-        "relhassubclass": boolean;
-        "relrowsecurity": boolean;
-        "relforcerowsecurity": boolean;
-        "relispopulated": boolean;
-        "relreplident": string;
-        "relispartition": boolean;
-        "relrewrite": string;
-        "relfrozenxid": string;
-        "relminmxid": string;
-        "relacl": string[];
-        "reloptions": string[];
-        "relpartbound": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["relname", String],
-            ["relnamespace", String],
-            ["reltype", String],
-            ["reloftype", String],
-            ["relowner", String],
-            ["relam", String],
-            ["relfilenode", String],
-            ["reltablespace", String],
-            ["relpages", Number],
-            ["reltuples", Number],
-            ["relallvisible", Number],
-            ["reltoastrelid", String],
-            ["relhasindex", Boolean],
-            ["relisshared", Boolean],
-            ["relpersistence", String],
-            ["relkind", String],
-            ["relnatts", String],
-            ["relchecks", String],
-            ["relhasrules", Boolean],
-            ["relhastriggers", Boolean],
-            ["relhassubclass", Boolean],
-            ["relrowsecurity", Boolean],
-            ["relforcerowsecurity", Boolean],
-            ["relispopulated", Boolean],
-            ["relreplident", String],
-            ["relispartition", Boolean],
-            ["relrewrite", String],
-            ["relfrozenxid", String],
-            ["relminmxid", String],
-            ["relacl", { "kind": "array", "spec": String }],
-            ["reloptions", { "kind": "array", "spec": String }],
-            ["relpartbound", String],
-        ] as const,
-    };
-}
-
-export namespace Person {
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "email": string;
-        "phone_number": string;
-        "system_admin_witness": string;
-        "pds_person_uid": string;
-        "first_name": string;
-        "last_name": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["email", String],
-            ["phone_number", String],
-            ["system_admin_witness", String],
-            ["pds_person_uid", String],
-            ["first_name", String],
-            ["last_name", String],
-        ] as const,
-    };
-}
-
-export namespace PgProc {
-    export type t = {
-        "oid": string;
-        "proname": string;
-        "pronamespace": string;
-        "proowner": string;
-        "prolang": string;
-        "procost": number;
-        "prorows": number;
-        "provariadic": string;
-        "prosupport": string;
-        "prokind": string;
-        "prosecdef": boolean;
-        "proleakproof": boolean;
-        "proisstrict": boolean;
-        "proretset": boolean;
-        "provolatile": string;
-        "proparallel": string;
-        "pronargs": string;
-        "pronargdefaults": string;
-        "prorettype": string;
-        "proargtypes": string;
-        "proallargtypes": string[];
-        "proargmodes": string[];
-        "proargnames": string[];
-        "proargdefaults": string;
-        "protrftypes": string[];
-        "prosrc": string;
-        "probin": string;
-        "prosqlbody": string;
-        "proconfig": string[];
-        "proacl": string[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["proname", String],
-            ["pronamespace", String],
-            ["proowner", String],
-            ["prolang", String],
-            ["procost", Number],
-            ["prorows", Number],
-            ["provariadic", String],
-            ["prosupport", String],
-            ["prokind", String],
-            ["prosecdef", Boolean],
-            ["proleakproof", Boolean],
-            ["proisstrict", Boolean],
-            ["proretset", Boolean],
-            ["provolatile", String],
-            ["proparallel", String],
-            ["pronargs", String],
-            ["pronargdefaults", String],
-            ["prorettype", String],
-            ["proargtypes", String],
-            ["proallargtypes", { "kind": "array", "spec": String }],
-            ["proargmodes", { "kind": "array", "spec": String }],
-            ["proargnames", { "kind": "array", "spec": String }],
-            ["proargdefaults", String],
-            ["protrftypes", { "kind": "array", "spec": String }],
-            ["prosrc", String],
-            ["probin", String],
-            ["prosqlbody", String],
-            ["proconfig", { "kind": "array", "spec": String }],
-            ["proacl", { "kind": "array", "spec": String }],
-        ] as const,
-    };
-}
-
-export namespace PgPartitionedTable {
-    export type t = {
-        "partrelid": string;
-        "partstrat": string;
-        "partnatts": string;
-        "partdefid": string;
-        "partattrs": string;
-        "partclass": string;
-        "partcollation": string;
-        "partexprs": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["partrelid", String],
-            ["partstrat", String],
-            ["partnatts", String],
-            ["partdefid", String],
-            ["partattrs", String],
-            ["partclass", String],
-            ["partcollation", String],
-            ["partexprs", String],
-        ] as const,
-    };
-}
-
-export namespace PgRewrite {
-    export type t = {
-        "oid": string;
-        "rulename": string;
-        "ev_class": string;
-        "ev_type": string;
-        "ev_enabled": string;
-        "is_instead": boolean;
-        "ev_qual": string;
-        "ev_action": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["rulename", String],
-            ["ev_class", String],
-            ["ev_type", String],
-            ["ev_enabled", String],
-            ["is_instead", Boolean],
-            ["ev_qual", String],
-            ["ev_action", String],
-        ] as const,
-    };
-}
-
-export namespace PgStatsExtExprs {
-    export type t = {
-        "schemaname": string;
-        "tablename": string;
-        "statistics_schemaname": string;
-        "statistics_name": string;
-        "statistics_owner": string;
-        "expr": string;
-        "inherited": boolean;
-        "null_frac": number;
-        "avg_width": number;
-        "n_distinct": number;
-        "most_common_vals": string;
-        "most_common_freqs": number[];
-        "histogram_bounds": string;
-        "correlation": number;
-        "most_common_elems": string;
-        "most_common_elem_freqs": number[];
-        "elem_count_histogram": number[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["schemaname", String],
-            ["tablename", String],
-            ["statistics_schemaname", String],
-            ["statistics_name", String],
-            ["statistics_owner", String],
-            ["expr", String],
-            ["inherited", Boolean],
-            ["null_frac", Number],
-            ["avg_width", Number],
-            ["n_distinct", Number],
-            ["most_common_vals", String],
-            ["most_common_freqs", { "kind": "array", "spec": Number }],
-            ["histogram_bounds", String],
-            ["correlation", Number],
-            ["most_common_elems", String],
-            ["most_common_elem_freqs", { "kind": "array", "spec": Number }],
-            ["elem_count_histogram", { "kind": "array", "spec": Number }],
-        ] as const,
-    };
-}
-
-export namespace Channel {
-    export type t =
-        | "SMS"
-        | "IN_APP"
-        ;
-    
-    export const spec = {
-        kind: "enum" as const,
-        values: [
-            "SMS",
-            "IN_APP",
-        ] as const,
-    };
-}
-
-
-export namespace PdsRegistrationProtocol {
-    export type t =
-        | "LOCAL_SFTP"
-        | "REMOTE_SFTP"
-        ;
-    
-    export const spec = {
-        kind: "enum" as const,
-        values: [
-            "LOCAL_SFTP",
-            "REMOTE_SFTP",
-        ] as const,
-    };
-}
-
-
-export namespace ChannelKind {
-    export type t =
-        | "PIPE"
-        | "TIMER"
-        ;
-    
-    export const spec = {
-        kind: "enum" as const,
-        values: [
-            "PIPE",
-            "TIMER",
-        ] as const,
-    };
-}
-
-
-export namespace PgDepend {
-    export type t = {
-        "classid": string;
-        "objid": string;
-        "objsubid": number;
-        "refclassid": string;
-        "refobjid": string;
-        "refobjsubid": number;
-        "deptype": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["classid", String],
-            ["objid", String],
-            ["objsubid", Number],
-            ["refclassid", String],
-            ["refobjid", String],
-            ["refobjsubid", Number],
-            ["deptype", String],
-        ] as const,
-    };
-}
-
-export namespace PgOperator {
-    export type t = {
-        "oid": string;
-        "oprname": string;
-        "oprnamespace": string;
-        "oprowner": string;
-        "oprkind": string;
-        "oprcanmerge": boolean;
-        "oprcanhash": boolean;
-        "oprleft": string;
-        "oprright": string;
-        "oprresult": string;
-        "oprcom": string;
-        "oprnegate": string;
-        "oprcode": string;
-        "oprrest": string;
-        "oprjoin": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["oprname", String],
-            ["oprnamespace", String],
-            ["oprowner", String],
-            ["oprkind", String],
-            ["oprcanmerge", Boolean],
-            ["oprcanhash", Boolean],
-            ["oprleft", String],
-            ["oprright", String],
-            ["oprresult", String],
-            ["oprcom", String],
-            ["oprnegate", String],
-            ["oprcode", String],
-            ["oprrest", String],
-            ["oprjoin", String],
-        ] as const,
-    };
-}
-
-export namespace PersonChallenge {
-    export type t = {
-        "person_uid": string;
-        "challenge": string;
-        "expires_at": Date;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["person_uid", String],
-            ["challenge", String],
-            ["expires_at", Date],
-        ] as const,
-    };
-}
-
-export namespace PgReplicationOriginStatus {
-    export type t = {
-        "local_id": string;
-        "external_id": string;
-        "remote_lsn": string;
-        "local_lsn": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["local_id", String],
-            ["external_id", String],
-            ["remote_lsn", String],
-            ["local_lsn", String],
-        ] as const,
-    };
-}
-
-export namespace PgSettings {
-    export type t = {
-        "name": string;
-        "setting": string;
-        "unit": string;
-        "category": string;
-        "short_desc": string;
-        "extra_desc": string;
-        "context": string;
-        "vartype": string;
-        "source": string;
-        "min_val": string;
-        "max_val": string;
-        "enumvals": string[];
-        "boot_val": string;
-        "reset_val": string;
-        "sourcefile": string;
-        "sourceline": number;
-        "pending_restart": boolean;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["name", String],
-            ["setting", String],
-            ["unit", String],
-            ["category", String],
-            ["short_desc", String],
-            ["extra_desc", String],
-            ["context", String],
-            ["vartype", String],
-            ["source", String],
-            ["min_val", String],
-            ["max_val", String],
-            ["enumvals", { "kind": "array", "spec": String }],
-            ["boot_val", String],
-            ["reset_val", String],
-            ["sourcefile", String],
-            ["sourceline", Number],
-            ["pending_restart", Boolean],
-        ] as const,
-    };
-}
-
-export namespace PgTsConfig {
-    export type t = {
-        "oid": string;
-        "cfgname": string;
-        "cfgnamespace": string;
-        "cfgowner": string;
-        "cfgparser": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["cfgname", String],
-            ["cfgnamespace", String],
-            ["cfgowner", String],
-            ["cfgparser", String],
-        ] as const,
-    };
-}
-
-export namespace PgForeignServer {
-    export type t = {
-        "oid": string;
-        "srvname": string;
-        "srvowner": string;
-        "srvfdw": string;
-        "srvtype": string;
-        "srvversion": string;
-        "srvacl": string[];
-        "srvoptions": string[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["srvname", String],
-            ["srvowner", String],
-            ["srvfdw", String],
-            ["srvtype", String],
-            ["srvversion", String],
-            ["srvacl", { "kind": "array", "spec": String }],
-            ["srvoptions", { "kind": "array", "spec": String }],
-        ] as const,
-    };
-}
-
-export namespace PgMatviews {
-    export type t = {
-        "schemaname": string;
-        "matviewname": string;
-        "matviewowner": string;
-        "tablespace": string;
-        "hasindexes": boolean;
-        "ispopulated": boolean;
-        "definition": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["schemaname", String],
-            ["matviewname", String],
-            ["matviewowner", String],
-            ["tablespace", String],
-            ["hasindexes", Boolean],
-            ["ispopulated", Boolean],
-            ["definition", String],
-        ] as const,
-    };
-}
-
-export namespace PgStatDatabaseConflicts {
-    export type t = {
-        "datid": string;
-        "datname": string;
-        "confl_tablespace": number;
-        "confl_lock": number;
-        "confl_snapshot": number;
-        "confl_bufferpin": number;
-        "confl_deadlock": number;
-        "confl_active_logicalslot": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["datid", String],
-            ["datname", String],
-            ["confl_tablespace", Number],
-            ["confl_lock", Number],
-            ["confl_snapshot", Number],
-            ["confl_bufferpin", Number],
-            ["confl_deadlock", Number],
-            ["confl_active_logicalslot", Number],
-        ] as const,
-    };
-}
-
-export namespace PgFileSettings {
-    export type t = {
-        "sourcefile": string;
-        "sourceline": number;
-        "seqno": number;
-        "name": string;
-        "setting": string;
-        "applied": boolean;
-        "error": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["sourcefile", String],
-            ["sourceline", Number],
-            ["seqno", Number],
-            ["name", String],
-            ["setting", String],
-            ["applied", Boolean],
-            ["error", String],
-        ] as const,
-    };
-}
-
-export namespace PatientAdherenceEvent {
-    export type t = {
-        "patient_uid": string;
-        "pharmacy_item_uid": string;
-        "created_at": Date;
-        "event_type": string;
-        "event_data": any;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["patient_uid", String],
-            ["pharmacy_item_uid", String],
-            ["created_at", Date],
-            ["event_type", String],
-            ["event_data", Object],
-        ] as const,
-    };
-}
-
-export namespace PgTimezoneAbbrevs {
-    export type t = {
-        "abbrev": string;
-        "utc_offset": string;
-        "is_dst": boolean;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["abbrev", String],
-            ["utc_offset", String],
-            ["is_dst", Boolean],
-        ] as const,
-    };
-}
-
-export namespace PgStatSsl {
-    export type t = {
-        "pid": number;
-        "ssl": boolean;
-        "version": string;
-        "cipher": string;
-        "bits": number;
-        "client_dn": string;
-        "client_serial": number;
-        "issuer_dn": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["pid", Number],
-            ["ssl", Boolean],
-            ["version", String],
-            ["cipher", String],
-            ["bits", Number],
-            ["client_dn", String],
-            ["client_serial", Number],
-            ["issuer_dn", String],
-        ] as const,
-    };
-}
-
-export namespace PgTransform {
-    export type t = {
-        "oid": string;
-        "trftype": string;
-        "trflang": string;
-        "trffromsql": string;
-        "trftosql": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["trftype", String],
-            ["trflang", String],
-            ["trffromsql", String],
-            ["trftosql", String],
-        ] as const,
-    };
-}
-
-export namespace PgStats {
-    export type t = {
-        "schemaname": string;
-        "tablename": string;
-        "attname": string;
-        "inherited": boolean;
-        "null_frac": number;
-        "avg_width": number;
-        "n_distinct": number;
-        "most_common_vals": string;
-        "most_common_freqs": number[];
-        "histogram_bounds": string;
-        "correlation": number;
-        "most_common_elems": string;
-        "most_common_elem_freqs": number[];
-        "elem_count_histogram": number[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["schemaname", String],
-            ["tablename", String],
-            ["attname", String],
-            ["inherited", Boolean],
-            ["null_frac", Number],
-            ["avg_width", Number],
-            ["n_distinct", Number],
-            ["most_common_vals", String],
-            ["most_common_freqs", { "kind": "array", "spec": Number }],
-            ["histogram_bounds", String],
-            ["correlation", Number],
-            ["most_common_elems", String],
-            ["most_common_elem_freqs", { "kind": "array", "spec": Number }],
-            ["elem_count_histogram", { "kind": "array", "spec": Number }],
-        ] as const,
-    };
-}
-
 export namespace Program {
+    export const name = "program";
+
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -3569,7 +620,7 @@ export namespace Program {
         "mlil": any;
         "prompt": string;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -3588,125 +639,100 @@ export namespace Program {
     };
 }
 
-export namespace PgCollation {
-    export type t = {
-        "oid": string;
-        "collname": string;
-        "collnamespace": string;
-        "collowner": string;
-        "collprovider": string;
-        "collisdeterministic": boolean;
-        "collencoding": number;
-        "collcollate": string;
-        "collctype": string;
-        "colliculocale": string;
-        "collicurules": string;
-        "collversion": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["collname", String],
-            ["collnamespace", String],
-            ["collowner", String],
-            ["collprovider", String],
-            ["collisdeterministic", Boolean],
-            ["collencoding", Number],
-            ["collcollate", String],
-            ["collctype", String],
-            ["colliculocale", String],
-            ["collicurules", String],
-            ["collversion", String],
-        ] as const,
-    };
-}
+export namespace FtState {
+    export const name = "ft_state";
 
-export namespace PgNamespace {
-    export type t = {
-        "oid": string;
-        "nspname": string;
-        "nspowner": string;
-        "nspacl": string[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["nspname", String],
-            ["nspowner", String],
-            ["nspacl", { "kind": "array", "spec": String }],
-        ] as const,
-    };
-}
-
-export namespace AnalyticsCampaignObservation {
     export type t = {
         "uid": string;
         "created_at": Date;
         "updated_at": Date;
-        "analytics_batch_uid": string;
-        "campaign_uid": string;
-        "done": boolean;
-        "results": any;
+        "program_uid": string;
+        "state": any;
+        "selected_fds": number[];
+        "active": boolean;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
             ["uid", String],
             ["created_at", Date],
             ["updated_at", Date],
-            ["analytics_batch_uid", String],
-            ["campaign_uid", String],
-            ["done", Boolean],
-            ["results", Object],
+            ["program_uid", String],
+            ["state", Object],
+            ["selected_fds", { "kind": "array", "spec": Number }],
+            ["active", Boolean],
         ] as const,
     };
 }
 
-export namespace ShippingOrder {
+export namespace ChannelFd {
+    export const name = "channel_fd";
+
     export type t = {
         "uid": string;
         "created_at": Date;
         "updated_at": Date;
-        "status": ShippingStatus.t;
-        "shipping_address_uid": string;
+        "kind": ChannelKind.t;
+        "fd_state_uid": string;
+        "fd": number;
+        "name": string;
+    };
+
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["kind", ChannelKind.spec],
+            ["fd_state_uid", String],
+            ["fd", Number],
+            ["name", String],
+        ] as const,
+    };
+}
+
+export namespace PdsSystem {
+    export const name = "pds_system";
+
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "name": string;
+        "description": string;
         "practice_uid": string;
-        "patient_uid": string;
-        "tracking_number": string;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
             ["uid", String],
             ["created_at", Date],
             ["updated_at", Date],
-            ["status", ShippingStatus.spec],
-            ["shipping_address_uid", String],
+            ["name", String],
+            ["description", String],
             ["practice_uid", String],
-            ["patient_uid", String],
-            ["tracking_number", String],
         ] as const,
     };
 }
 
-export namespace PdsPerson {
+export namespace PdsRegistration {
+    export const name = "pds_registration";
+
     export type t = {
         "uid": string;
         "created_at": Date;
         "updated_at": Date;
         "pds_system_uid": string;
-        "entity_id": string;
-        "first_name": string;
-        "last_name": string;
-        "email": string;
-        "phone": string;
+        "credentials": string;
+        "protocol": PdsRegistrationProtocol.t;
+        "uri": string;
+        "ingress": boolean;
+        "egress": boolean;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -3714,155 +740,74 @@ export namespace PdsPerson {
             ["created_at", Date],
             ["updated_at", Date],
             ["pds_system_uid", String],
-            ["entity_id", String],
-            ["first_name", String],
-            ["last_name", String],
-            ["email", String],
-            ["phone", String],
+            ["credentials", String],
+            ["protocol", PdsRegistrationProtocol.spec],
+            ["uri", String],
+            ["ingress", Boolean],
+            ["egress", Boolean],
         ] as const,
     };
 }
 
-export namespace PgStatioAllIndexes {
+export namespace PdsFile {
+    export const name = "pds_file";
+
     export type t = {
-        "relid": string;
-        "indexrelid": string;
-        "schemaname": string;
-        "relname": string;
-        "indexrelname": string;
-        "idx_blks_read": number;
-        "idx_blks_hit": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["relid", String],
-            ["indexrelid", String],
-            ["schemaname", String],
-            ["relname", String],
-            ["indexrelname", String],
-            ["idx_blks_read", Number],
-            ["idx_blks_hit", Number],
-        ] as const,
-    };
-}
-
-export namespace ConsentSurface {
-    export type t =
-        | "CRXR"
-        ;
-    
-    export const spec = {
-        kind: "enum" as const,
-        values: [
-            "CRXR",
-        ] as const,
-    };
-}
-
-
-export namespace PgPublicationNamespace {
-    export type t = {
-        "oid": string;
-        "pnpubid": string;
-        "pnnspid": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["pnpubid", String],
-            ["pnnspid", String],
-        ] as const,
-    };
-}
-
-export namespace PgStatGssapi {
-    export type t = {
-        "pid": number;
-        "gss_authenticated": boolean;
-        "principal": string;
-        "encrypted": boolean;
-        "credentials_delegated": boolean;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["pid", Number],
-            ["gss_authenticated", Boolean],
-            ["principal", String],
-            ["encrypted", Boolean],
-            ["credentials_delegated", Boolean],
-        ] as const,
-    };
-}
-
-export namespace PgShmemAllocations {
-    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "pds_system_uid": string;
+        "status": PdsFileStatus.t;
         "name": string;
-        "off": number;
-        "size": number;
-        "allocated_size": number;
+        "data": Buffer;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["pds_system_uid", String],
+            ["status", PdsFileStatus.spec],
             ["name", String],
-            ["off", Number],
-            ["size", Number],
-            ["allocated_size", Number],
+            ["data", Buffer],
         ] as const,
     };
 }
 
-export namespace PgStatProgressCreateIndex {
+export namespace PdsFileBatch {
+    export const name = "pds_file_batch";
+
     export type t = {
-        "pid": number;
-        "datid": string;
-        "datname": string;
-        "relid": string;
-        "index_relid": string;
-        "command": string;
-        "phase": string;
-        "lockers_total": number;
-        "lockers_done": number;
-        "current_locker_pid": number;
-        "blocks_total": number;
-        "blocks_done": number;
-        "tuples_total": number;
-        "tuples_done": number;
-        "partitions_total": number;
-        "partitions_done": number;
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "pds_file_uid": string;
+        "sequence_id": number;
+        "status": PdsFileBatchStatus.t;
+        "data": any;
+        "error": any;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
-            ["pid", Number],
-            ["datid", String],
-            ["datname", String],
-            ["relid", String],
-            ["index_relid", String],
-            ["command", String],
-            ["phase", String],
-            ["lockers_total", Number],
-            ["lockers_done", Number],
-            ["current_locker_pid", Number],
-            ["blocks_total", Number],
-            ["blocks_done", Number],
-            ["tuples_total", Number],
-            ["tuples_done", Number],
-            ["partitions_total", Number],
-            ["partitions_done", Number],
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["pds_file_uid", String],
+            ["sequence_id", Number],
+            ["status", PdsFileBatchStatus.spec],
+            ["data", Object],
+            ["error", Object],
         ] as const,
     };
 }
 
 export namespace PdsAddress {
+    export const name = "pds_address";
+
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -3875,7 +820,7 @@ export namespace PdsAddress {
         "state": string;
         "zip": string;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -3893,380 +838,115 @@ export namespace PdsAddress {
     };
 }
 
-export namespace PgConfig {
-    export type t = {
-        "name": string;
-        "setting": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["name", String],
-            ["setting", String],
-        ] as const,
-    };
-}
+export namespace PdsPerson {
+    export const name = "pds_person";
 
-export namespace PgStatActivity {
-    export type t = {
-        "datid": string;
-        "datname": string;
-        "pid": number;
-        "leader_pid": number;
-        "usesysid": string;
-        "usename": string;
-        "application_name": string;
-        "client_addr": string;
-        "client_hostname": string;
-        "client_port": number;
-        "backend_start": Date;
-        "xact_start": Date;
-        "query_start": Date;
-        "state_change": Date;
-        "wait_event_type": string;
-        "wait_event": string;
-        "state": string;
-        "backend_xid": string;
-        "backend_xmin": string;
-        "query_id": number;
-        "query": string;
-        "backend_type": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["datid", String],
-            ["datname", String],
-            ["pid", Number],
-            ["leader_pid", Number],
-            ["usesysid", String],
-            ["usename", String],
-            ["application_name", String],
-            ["client_addr", String],
-            ["client_hostname", String],
-            ["client_port", Number],
-            ["backend_start", Date],
-            ["xact_start", Date],
-            ["query_start", Date],
-            ["state_change", Date],
-            ["wait_event_type", String],
-            ["wait_event", String],
-            ["state", String],
-            ["backend_xid", String],
-            ["backend_xmin", String],
-            ["query_id", Number],
-            ["query", String],
-            ["backend_type", String],
-        ] as const,
-    };
-}
-
-export namespace PipelineSource {
-    export type t =
-        | "PDS_PERSON"
-        ;
-    
-    export const spec = {
-        kind: "enum" as const,
-        values: [
-            "PDS_PERSON",
-        ] as const,
-    };
-}
-
-
-export namespace PgIndexes {
-    export type t = {
-        "schemaname": string;
-        "tablename": string;
-        "indexname": string;
-        "tablespace": string;
-        "indexdef": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["schemaname", String],
-            ["tablename", String],
-            ["indexname", String],
-            ["tablespace", String],
-            ["indexdef", String],
-        ] as const,
-    };
-}
-
-export namespace PgType {
-    export type t = {
-        "oid": string;
-        "typname": string;
-        "typnamespace": string;
-        "typowner": string;
-        "typlen": string;
-        "typbyval": boolean;
-        "typtype": string;
-        "typcategory": string;
-        "typispreferred": boolean;
-        "typisdefined": boolean;
-        "typdelim": string;
-        "typrelid": string;
-        "typsubscript": string;
-        "typelem": string;
-        "typarray": string;
-        "typinput": string;
-        "typoutput": string;
-        "typreceive": string;
-        "typsend": string;
-        "typmodin": string;
-        "typmodout": string;
-        "typanalyze": string;
-        "typalign": string;
-        "typstorage": string;
-        "typnotnull": boolean;
-        "typbasetype": string;
-        "typtypmod": number;
-        "typndims": number;
-        "typcollation": string;
-        "typdefaultbin": string;
-        "typdefault": string;
-        "typacl": string[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["typname", String],
-            ["typnamespace", String],
-            ["typowner", String],
-            ["typlen", String],
-            ["typbyval", Boolean],
-            ["typtype", String],
-            ["typcategory", String],
-            ["typispreferred", Boolean],
-            ["typisdefined", Boolean],
-            ["typdelim", String],
-            ["typrelid", String],
-            ["typsubscript", String],
-            ["typelem", String],
-            ["typarray", String],
-            ["typinput", String],
-            ["typoutput", String],
-            ["typreceive", String],
-            ["typsend", String],
-            ["typmodin", String],
-            ["typmodout", String],
-            ["typanalyze", String],
-            ["typalign", String],
-            ["typstorage", String],
-            ["typnotnull", Boolean],
-            ["typbasetype", String],
-            ["typtypmod", Number],
-            ["typndims", Number],
-            ["typcollation", String],
-            ["typdefaultbin", String],
-            ["typdefault", String],
-            ["typacl", { "kind": "array", "spec": String }],
-        ] as const,
-    };
-}
-
-export namespace PgOpclass {
-    export type t = {
-        "oid": string;
-        "opcmethod": string;
-        "opcname": string;
-        "opcnamespace": string;
-        "opcowner": string;
-        "opcfamily": string;
-        "opcintype": string;
-        "opcdefault": boolean;
-        "opckeytype": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["opcmethod", String],
-            ["opcname", String],
-            ["opcnamespace", String],
-            ["opcowner", String],
-            ["opcfamily", String],
-            ["opcintype", String],
-            ["opcdefault", Boolean],
-            ["opckeytype", String],
-        ] as const,
-    };
-}
-
-export namespace PdsFileBatch {
     export type t = {
         "uid": string;
         "created_at": Date;
         "updated_at": Date;
-        "pds_file_uid": string;
-        "sequence_id": number;
-        "status": PdsFileBatchStatus.t;
-        "data": any;
-        "error": any;
+        "pds_system_uid": string;
+        "entity_id": string;
+        "first_name": string;
+        "last_name": string;
+        "email": string;
+        "phone": string;
+        "has_consent": boolean;
+        "medical_record_number": string;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
             ["uid", String],
             ["created_at", Date],
             ["updated_at", Date],
-            ["pds_file_uid", String],
-            ["sequence_id", Number],
-            ["status", PdsFileBatchStatus.spec],
-            ["data", Object],
-            ["error", Object],
+            ["pds_system_uid", String],
+            ["entity_id", String],
+            ["first_name", String],
+            ["last_name", String],
+            ["email", String],
+            ["phone", String],
+            ["has_consent", Boolean],
+            ["medical_record_number", String],
         ] as const,
     };
 }
 
-export namespace PgSequences {
+export namespace PdsAddressPersonRelationship {
+    export const name = "pds_address_person_relationship";
+
     export type t = {
-        "schemaname": string;
-        "sequencename": string;
-        "sequenceowner": string;
-        "data_type": string;
-        "start_value": number;
-        "min_value": number;
-        "max_value": number;
-        "increment_by": number;
-        "cycle": boolean;
-        "cache_size": number;
-        "last_value": number;
+        "created_at": Date;
+        "updated_at": Date;
+        "pds_address_uid": string;
+        "pds_person_uid": string;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
-            ["schemaname", String],
-            ["sequencename", String],
-            ["sequenceowner", String],
-            ["data_type", String],
-            ["start_value", Number],
-            ["min_value", Number],
-            ["max_value", Number],
-            ["increment_by", Number],
-            ["cycle", Boolean],
-            ["cache_size", Number],
-            ["last_value", Number],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["pds_address_uid", String],
+            ["pds_person_uid", String],
         ] as const,
     };
 }
 
-export namespace PgStatioUserIndexes {
+export namespace PdsMedication {
+    export const name = "pds_medication";
+
     export type t = {
-        "relid": string;
-        "indexrelid": string;
-        "schemaname": string;
-        "relname": string;
-        "indexrelname": string;
-        "idx_blks_read": number;
-        "idx_blks_hit": number;
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "pds_system_uid": string;
+        "entity_id": string;
+        "name": string;
+        "description": string;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
-            ["relid", String],
-            ["indexrelid", String],
-            ["schemaname", String],
-            ["relname", String],
-            ["indexrelname", String],
-            ["idx_blks_read", Number],
-            ["idx_blks_hit", Number],
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["pds_system_uid", String],
+            ["entity_id", String],
+            ["name", String],
+            ["description", String],
         ] as const,
     };
 }
 
-export namespace PgAmproc {
-    export type t = {
-        "oid": string;
-        "amprocfamily": string;
-        "amproclefttype": string;
-        "amprocrighttype": string;
-        "amprocnum": string;
-        "amproc": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["amprocfamily", String],
-            ["amproclefttype", String],
-            ["amprocrighttype", String],
-            ["amprocnum", String],
-            ["amproc", String],
-        ] as const,
-    };
-}
+export namespace PdsPersonMedicationRelationship {
+    export const name = "pds_person_medication_relationship";
 
-export namespace PgPublicationRel {
     export type t = {
-        "oid": string;
-        "prpubid": string;
-        "prrelid": string;
-        "prqual": string;
-        "prattrs": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "pds_person_uid": string;
+        "pds_medication_uid": string;
+        "diagnosis": string;
     };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["prpubid", String],
-            ["prrelid", String],
-            ["prqual", String],
-            ["prattrs", String],
-        ] as const,
-    };
-}
 
-export namespace PgStatXactSysTables {
-    export type t = {
-        "relid": string;
-        "schemaname": string;
-        "relname": string;
-        "seq_scan": number;
-        "seq_tup_read": number;
-        "idx_scan": number;
-        "idx_tup_fetch": number;
-        "n_tup_ins": number;
-        "n_tup_upd": number;
-        "n_tup_del": number;
-        "n_tup_hot_upd": number;
-        "n_tup_newpage_upd": number;
-    };
-    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
-            ["relid", String],
-            ["schemaname", String],
-            ["relname", String],
-            ["seq_scan", Number],
-            ["seq_tup_read", Number],
-            ["idx_scan", Number],
-            ["idx_tup_fetch", Number],
-            ["n_tup_ins", Number],
-            ["n_tup_upd", Number],
-            ["n_tup_del", Number],
-            ["n_tup_hot_upd", Number],
-            ["n_tup_newpage_upd", Number],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["pds_person_uid", String],
+            ["pds_medication_uid", String],
+            ["diagnosis", String],
         ] as const,
     };
 }
 
 export namespace Campaign {
+    export const name = "campaign";
+
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -4275,8 +955,9 @@ export namespace Campaign {
         "ft_state_uid": string;
         "state": CampaignState.t;
         "stored_metadata": any;
+        "practice_uid": string;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -4287,267 +968,14 @@ export namespace Campaign {
             ["ft_state_uid", String],
             ["state", CampaignState.spec],
             ["stored_metadata", Object],
-        ] as const,
-    };
-}
-
-export namespace PgConstraint {
-    export type t = {
-        "oid": string;
-        "conname": string;
-        "connamespace": string;
-        "contype": string;
-        "condeferrable": boolean;
-        "condeferred": boolean;
-        "convalidated": boolean;
-        "conrelid": string;
-        "contypid": string;
-        "conindid": string;
-        "conparentid": string;
-        "confrelid": string;
-        "confupdtype": string;
-        "confdeltype": string;
-        "confmatchtype": string;
-        "conislocal": boolean;
-        "coninhcount": string;
-        "connoinherit": boolean;
-        "conkey": string[];
-        "confkey": string[];
-        "conpfeqop": string[];
-        "conppeqop": string[];
-        "conffeqop": string[];
-        "confdelsetcols": string[];
-        "conexclop": string[];
-        "conbin": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["conname", String],
-            ["connamespace", String],
-            ["contype", String],
-            ["condeferrable", Boolean],
-            ["condeferred", Boolean],
-            ["convalidated", Boolean],
-            ["conrelid", String],
-            ["contypid", String],
-            ["conindid", String],
-            ["conparentid", String],
-            ["confrelid", String],
-            ["confupdtype", String],
-            ["confdeltype", String],
-            ["confmatchtype", String],
-            ["conislocal", Boolean],
-            ["coninhcount", String],
-            ["connoinherit", Boolean],
-            ["conkey", { "kind": "array", "spec": String }],
-            ["confkey", { "kind": "array", "spec": String }],
-            ["conpfeqop", { "kind": "array", "spec": String }],
-            ["conppeqop", { "kind": "array", "spec": String }],
-            ["conffeqop", { "kind": "array", "spec": String }],
-            ["confdelsetcols", { "kind": "array", "spec": String }],
-            ["conexclop", { "kind": "array", "spec": String }],
-            ["conbin", String],
-        ] as const,
-    };
-}
-
-export namespace PgStatioSysTables {
-    export type t = {
-        "relid": string;
-        "schemaname": string;
-        "relname": string;
-        "heap_blks_read": number;
-        "heap_blks_hit": number;
-        "idx_blks_read": number;
-        "idx_blks_hit": number;
-        "toast_blks_read": number;
-        "toast_blks_hit": number;
-        "tidx_blks_read": number;
-        "tidx_blks_hit": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["relid", String],
-            ["schemaname", String],
-            ["relname", String],
-            ["heap_blks_read", Number],
-            ["heap_blks_hit", Number],
-            ["idx_blks_read", Number],
-            ["idx_blks_hit", Number],
-            ["toast_blks_read", Number],
-            ["toast_blks_hit", Number],
-            ["tidx_blks_read", Number],
-            ["tidx_blks_hit", Number],
-        ] as const,
-    };
-}
-
-export namespace MessageMode {
-    export type t =
-        | "OUTGOING"
-        | "INCOMING"
-        ;
-    
-    export const spec = {
-        kind: "enum" as const,
-        values: [
-            "OUTGOING",
-            "INCOMING",
-        ] as const,
-    };
-}
-
-
-export namespace PgStatioAllSequences {
-    export type t = {
-        "relid": string;
-        "schemaname": string;
-        "relname": string;
-        "blks_read": number;
-        "blks_hit": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["relid", String],
-            ["schemaname", String],
-            ["relname", String],
-            ["blks_read", Number],
-            ["blks_hit", Number],
-        ] as const,
-    };
-}
-
-export namespace PgPreparedXacts {
-    export type t = {
-        "transaction": string;
-        "gid": string;
-        "prepared": Date;
-        "owner": string;
-        "database": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["transaction", String],
-            ["gid", String],
-            ["prepared", Date],
-            ["owner", String],
-            ["database", String],
-        ] as const,
-    };
-}
-
-export namespace PgSubscription {
-    export type t = {
-        "oid": string;
-        "subdbid": string;
-        "subskiplsn": string;
-        "subname": string;
-        "subowner": string;
-        "subenabled": boolean;
-        "subbinary": boolean;
-        "substream": string;
-        "subtwophasestate": string;
-        "subdisableonerr": boolean;
-        "subpasswordrequired": boolean;
-        "subrunasowner": boolean;
-        "subconninfo": string;
-        "subslotname": string;
-        "subsynccommit": string;
-        "subpublications": string[];
-        "suborigin": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["subdbid", String],
-            ["subskiplsn", String],
-            ["subname", String],
-            ["subowner", String],
-            ["subenabled", Boolean],
-            ["subbinary", Boolean],
-            ["substream", String],
-            ["subtwophasestate", String],
-            ["subdisableonerr", Boolean],
-            ["subpasswordrequired", Boolean],
-            ["subrunasowner", Boolean],
-            ["subconninfo", String],
-            ["subslotname", String],
-            ["subsynccommit", String],
-            ["subpublications", { "kind": "array", "spec": String }],
-            ["suborigin", String],
-        ] as const,
-    };
-}
-
-export namespace PatientList {
-    export type t = {
-        "person_uid": string;
-        "practice_uid": string;
-        "person": Person.t;
-        "medications": PharmacyItem.t[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["person_uid", String],
             ["practice_uid", String],
-            ["person", Person.spec],
-            ["medications", { "kind": "array", "spec": PharmacyItem.spec }],
-        ] as const,
-    };
-}
-
-export namespace PgLargeobjectMetadata {
-    export type t = {
-        "oid": string;
-        "lomowner": string;
-        "lomacl": string[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["lomowner", String],
-            ["lomacl", { "kind": "array", "spec": String }],
-        ] as const,
-    };
-}
-
-export namespace PgTablespace {
-    export type t = {
-        "oid": string;
-        "spcname": string;
-        "spcowner": string;
-        "spcacl": string[];
-        "spcoptions": string[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["spcname", String],
-            ["spcowner", String],
-            ["spcacl", { "kind": "array", "spec": String }],
-            ["spcoptions", { "kind": "array", "spec": String }],
         ] as const,
     };
 }
 
 export namespace PersonChannelFdMap {
+    export const name = "person_channel_fd_map";
+
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -4555,7 +983,7 @@ export namespace PersonChannelFdMap {
         "person_uid": string;
         "channel_fd_uid": string;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -4568,231 +996,170 @@ export namespace PersonChannelFdMap {
     };
 }
 
-export namespace PgTables {
-    export type t = {
-        "schemaname": string;
-        "tablename": string;
-        "tableowner": string;
-        "tablespace": string;
-        "hasindexes": boolean;
-        "hasrules": boolean;
-        "hastriggers": boolean;
-        "rowsecurity": boolean;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["schemaname", String],
-            ["tablename", String],
-            ["tableowner", String],
-            ["tablespace", String],
-            ["hasindexes", Boolean],
-            ["hasrules", Boolean],
-            ["hastriggers", Boolean],
-            ["rowsecurity", Boolean],
-        ] as const,
-    };
-}
+export namespace FtvmCache {
+    export const name = "ftvm_cache";
 
-export namespace FsmNodeKind {
-    export type t =
-        | "SEND_MESSAGE"
-        | "CONNECT_PATIENT"
-        ;
-    
-    export const spec = {
-        kind: "enum" as const,
-        values: [
-            "SEND_MESSAGE",
-            "CONNECT_PATIENT",
-        ] as const,
-    };
-}
-
-
-export namespace PgPublicationTables {
-    export type t = {
-        "pubname": string;
-        "schemaname": string;
-        "tablename": string;
-        "attnames": string[];
-        "rowfilter": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["pubname", String],
-            ["schemaname", String],
-            ["tablename", String],
-            ["attnames", { "kind": "array", "spec": String }],
-            ["rowfilter", String],
-        ] as const,
-    };
-}
-
-export namespace ShippingOrderItem {
-    export type t = {
-        "shipping_order_uid": string;
-        "pharmacy_item_uid": string;
-        "quantity": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["shipping_order_uid", String],
-            ["pharmacy_item_uid", String],
-            ["quantity", Number],
-        ] as const,
-    };
-}
-
-export namespace FtState {
     export type t = {
         "uid": string;
         "created_at": Date;
         "updated_at": Date;
-        "program_uid": string;
-        "state": any;
-        "selected_fds": number[];
-        "active": boolean;
+        "program_slug": string;
+        "cache_key": string;
+        "cache_value": any;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
             ["uid", String],
             ["created_at", Date],
             ["updated_at", Date],
+            ["program_slug", String],
+            ["cache_key", String],
+            ["cache_value", Object],
+        ] as const,
+    };
+}
+
+export namespace ProgramCacheStatus {
+    export const name = "program_cache_status";
+
+    export type t = {
+        "program_uid": string;
+        "cache_primed": boolean;
+    };
+
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
             ["program_uid", String],
-            ["state", Object],
-            ["selected_fds", { "kind": "array", "spec": Number }],
-            ["active", Boolean],
+            ["cache_primed", Boolean],
         ] as const,
     };
 }
 
-export namespace PgLargeobject {
+export namespace PdsStagedExport {
+    export const name = "pds_staged_export";
+
     export type t = {
-        "loid": string;
-        "pageno": number;
-        "data": Buffer;
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "pds_system_uid": string;
+        "data_row": any;
+        "done": boolean;
+        "file_name": string;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
-            ["loid", String],
-            ["pageno", Number],
-            ["data", Buffer],
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["pds_system_uid", String],
+            ["data_row", Object],
+            ["done", Boolean],
+            ["file_name", String],
         ] as const,
     };
 }
 
-export namespace PgSubscriptionRel {
+export namespace ShortLink {
+    export const name = "short_link";
+
     export type t = {
-        "srsubid": string;
-        "srrelid": string;
-        "srsubstate": string;
-        "srsublsn": string;
+        "slug": string;
+        "domain": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "uri": string;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
-            ["srsubid", String],
-            ["srrelid", String],
-            ["srsubstate", String],
-            ["srsublsn", String],
+            ["slug", String],
+            ["domain", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["uri", String],
         ] as const,
     };
 }
 
-export namespace PgStatUserTables {
+export namespace PersonConsent {
+    export const name = "person_consent";
+
     export type t = {
-        "relid": string;
-        "schemaname": string;
-        "relname": string;
-        "seq_scan": number;
-        "last_seq_scan": Date;
-        "seq_tup_read": number;
-        "idx_scan": number;
-        "last_idx_scan": Date;
-        "idx_tup_fetch": number;
-        "n_tup_ins": number;
-        "n_tup_upd": number;
-        "n_tup_del": number;
-        "n_tup_hot_upd": number;
-        "n_tup_newpage_upd": number;
-        "n_live_tup": number;
-        "n_dead_tup": number;
-        "n_mod_since_analyze": number;
-        "n_ins_since_vacuum": number;
-        "last_vacuum": Date;
-        "last_autovacuum": Date;
-        "last_analyze": Date;
-        "last_autoanalyze": Date;
-        "vacuum_count": number;
-        "autovacuum_count": number;
-        "analyze_count": number;
-        "autoanalyze_count": number;
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "person_uid": string;
+        "status": ConsentStatus.t;
+        "surface": ConsentSurface.t;
+        "consent_text": string;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
-            ["relid", String],
-            ["schemaname", String],
-            ["relname", String],
-            ["seq_scan", Number],
-            ["last_seq_scan", Date],
-            ["seq_tup_read", Number],
-            ["idx_scan", Number],
-            ["last_idx_scan", Date],
-            ["idx_tup_fetch", Number],
-            ["n_tup_ins", Number],
-            ["n_tup_upd", Number],
-            ["n_tup_del", Number],
-            ["n_tup_hot_upd", Number],
-            ["n_tup_newpage_upd", Number],
-            ["n_live_tup", Number],
-            ["n_dead_tup", Number],
-            ["n_mod_since_analyze", Number],
-            ["n_ins_since_vacuum", Number],
-            ["last_vacuum", Date],
-            ["last_autovacuum", Date],
-            ["last_analyze", Date],
-            ["last_autoanalyze", Date],
-            ["vacuum_count", Number],
-            ["autovacuum_count", Number],
-            ["analyze_count", Number],
-            ["autoanalyze_count", Number],
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["person_uid", String],
+            ["status", ConsentStatus.spec],
+            ["surface", ConsentSurface.spec],
+            ["consent_text", String],
         ] as const,
     };
 }
 
-export namespace PgAttrdef {
+export namespace ConsentChannelFdMap {
+    export const name = "consent_channel_fd_map";
+
     export type t = {
-        "oid": string;
-        "adrelid": string;
-        "adnum": string;
-        "adbin": string;
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "person_uid": string;
+        "channel_fd_uid": string;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
-            ["oid", String],
-            ["adrelid", String],
-            ["adnum", String],
-            ["adbin", String],
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["person_uid", String],
+            ["channel_fd_uid", String],
+        ] as const,
+    };
+}
+
+export namespace PipeContent {
+    export const name = "pipe_content";
+
+    export type t = {
+        "channel_fd_uid": string;
+        "created_at": Date;
+        "content": any;
+    };
+
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["channel_fd_uid", String],
+            ["created_at", Date],
+            ["content", Object],
         ] as const,
     };
 }
 
 export namespace CampaignDetail {
+    export const name = "campaign_detail";
+
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -4809,7 +1176,7 @@ export namespace CampaignDetail {
         "message_count": number;
         "practice_uid": string;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -4831,1017 +1198,67 @@ export namespace CampaignDetail {
     };
 }
 
-export namespace PgTsTemplate {
-    export type t = {
-        "oid": string;
-        "tmplname": string;
-        "tmplnamespace": string;
-        "tmplinit": string;
-        "tmpllexize": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["tmplname", String],
-            ["tmplnamespace", String],
-            ["tmplinit", String],
-            ["tmpllexize", String],
-        ] as const,
-    };
-}
+export namespace EvalSpec {
+    export const name = "eval_spec";
 
-export namespace PersonAuthenticator {
-    export type t = {
-        "person_uid": string;
-        "credential_id": string;
-        "credential_public_key": string;
-        "counter": number;
-        "credential_device_type": string;
-        "credential_backed_up": boolean;
-        "transports": string[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["person_uid", String],
-            ["credential_id", String],
-            ["credential_public_key", String],
-            ["counter", Number],
-            ["credential_device_type", String],
-            ["credential_backed_up", Boolean],
-            ["transports", { "kind": "array", "spec": String }],
-        ] as const,
-    };
-}
-
-export namespace PgDbRoleSetting {
-    export type t = {
-        "setdatabase": string;
-        "setrole": string;
-        "setconfig": string[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["setdatabase", String],
-            ["setrole", String],
-            ["setconfig", { "kind": "array", "spec": String }],
-        ] as const,
-    };
-}
-
-export namespace PgViews {
-    export type t = {
-        "schemaname": string;
-        "viewname": string;
-        "viewowner": string;
-        "definition": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["schemaname", String],
-            ["viewname", String],
-            ["viewowner", String],
-            ["definition", String],
-        ] as const,
-    };
-}
-
-export namespace PgRules {
-    export type t = {
-        "schemaname": string;
-        "tablename": string;
-        "rulename": string;
-        "definition": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["schemaname", String],
-            ["tablename", String],
-            ["rulename", String],
-            ["definition", String],
-        ] as const,
-    };
-}
-
-export namespace PgForeignTable {
-    export type t = {
-        "ftrelid": string;
-        "ftserver": string;
-        "ftoptions": string[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["ftrelid", String],
-            ["ftserver", String],
-            ["ftoptions", { "kind": "array", "spec": String }],
-        ] as const,
-    };
-}
-
-export namespace FsmEdgeTrigger {
-    export type t =
-        | "FALLBACK"
-        | "PATIENT_RESPONSE"
-        ;
-    
-    export const spec = {
-        kind: "enum" as const,
-        values: [
-            "FALLBACK",
-            "PATIENT_RESPONSE",
-        ] as const,
-    };
-}
-
-
-export namespace PipeContent {
-    export type t = {
-        "channel_fd_uid": string;
-        "created_at": Date;
-        "content": any;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["channel_fd_uid", String],
-            ["created_at", Date],
-            ["content", Object],
-        ] as const,
-    };
-}
-
-export namespace PgUserMappings {
-    export type t = {
-        "umid": string;
-        "srvid": string;
-        "srvname": string;
-        "umuser": string;
-        "usename": string;
-        "umoptions": string[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["umid", String],
-            ["srvid", String],
-            ["srvname", String],
-            ["umuser", String],
-            ["usename", String],
-            ["umoptions", { "kind": "array", "spec": String }],
-        ] as const,
-    };
-}
-
-export namespace PgStatisticExtData {
-    export type t = {
-        "stxoid": string;
-        "stxdinherit": boolean;
-        "stxdndistinct": string;
-        "stxddependencies": string;
-        "stxdmcv": string;
-        "stxdexpr": PgStatistic.t[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["stxoid", String],
-            ["stxdinherit", Boolean],
-            ["stxdndistinct", String],
-            ["stxddependencies", String],
-            ["stxdmcv", String],
-            ["stxdexpr", { "kind": "array", "spec": PgStatistic.spec }],
-        ] as const,
-    };
-}
-
-export namespace PgTsConfigMap {
-    export type t = {
-        "mapcfg": string;
-        "maptokentype": number;
-        "mapseqno": number;
-        "mapdict": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["mapcfg", String],
-            ["maptokentype", Number],
-            ["mapseqno", Number],
-            ["mapdict", String],
-        ] as const,
-    };
-}
-
-export namespace FsmEdge {
     export type t = {
         "uid": string;
         "created_at": Date;
         "updated_at": Date;
-        "start_node_uid": string;
-        "end_node_uid": string;
-        "trigger": FsmEdgeTrigger.t;
-        "description": string;
-        "options": any;
+        "program_slug": string;
+        "version": number;
+        "spec": any;
+        "pass_ratio": number;
+        "attempts": number;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
             ["uid", String],
             ["created_at", Date],
             ["updated_at", Date],
-            ["start_node_uid", String],
-            ["end_node_uid", String],
-            ["trigger", FsmEdgeTrigger.spec],
-            ["description", String],
-            ["options", Object],
+            ["program_slug", String],
+            ["version", Number],
+            ["spec", Object],
+            ["pass_ratio", Number],
+            ["attempts", Number],
         ] as const,
     };
 }
 
-export namespace ShippingAddress {
+export namespace EvalResult {
+    export const name = "eval_result";
+
     export type t = {
         "uid": string;
         "created_at": Date;
         "updated_at": Date;
-        "person_uid": string;
-        "street": string;
-        "street2": string;
-        "street3": string;
-        "city": string;
-        "state": string;
-        "postal_code": string;
-        "country": string;
+        "eval_spec_uid": string;
+        "program_uid": string;
+        "status": EvalResultStatus.t;
+        "success_rate": number;
+        "result": any;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
             ["uid", String],
             ["created_at", Date],
             ["updated_at", Date],
-            ["person_uid", String],
-            ["street", String],
-            ["street2", String],
-            ["street3", String],
-            ["city", String],
-            ["state", String],
-            ["postal_code", String],
-            ["country", String],
-        ] as const,
-    };
-}
-
-export namespace PgShseclabel {
-    export type t = {
-        "objoid": string;
-        "classoid": string;
-        "provider": string;
-        "label": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["objoid", String],
-            ["classoid", String],
-            ["provider", String],
-            ["label", String],
-        ] as const,
-    };
-}
-
-export namespace PgStatAllIndexes {
-    export type t = {
-        "relid": string;
-        "indexrelid": string;
-        "schemaname": string;
-        "relname": string;
-        "indexrelname": string;
-        "idx_scan": number;
-        "last_idx_scan": Date;
-        "idx_tup_read": number;
-        "idx_tup_fetch": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["relid", String],
-            ["indexrelid", String],
-            ["schemaname", String],
-            ["relname", String],
-            ["indexrelname", String],
-            ["idx_scan", Number],
-            ["last_idx_scan", Date],
-            ["idx_tup_read", Number],
-            ["idx_tup_fetch", Number],
-        ] as const,
-    };
-}
-
-export namespace PgShdepend {
-    export type t = {
-        "dbid": string;
-        "classid": string;
-        "objid": string;
-        "objsubid": number;
-        "refclassid": string;
-        "refobjid": string;
-        "deptype": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["dbid", String],
-            ["classid", String],
-            ["objid", String],
-            ["objsubid", Number],
-            ["refclassid", String],
-            ["refobjid", String],
-            ["deptype", String],
-        ] as const,
-    };
-}
-
-export namespace ConsentChannelFdMap {
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "person_uid": string;
-        "channel_fd_uid": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["person_uid", String],
-            ["channel_fd_uid", String],
-        ] as const,
-    };
-}
-
-export namespace PgTimezoneNames {
-    export type t = {
-        "name": string;
-        "abbrev": string;
-        "utc_offset": string;
-        "is_dst": boolean;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["name", String],
-            ["abbrev", String],
-            ["utc_offset", String],
-            ["is_dst", Boolean],
-        ] as const,
-    };
-}
-
-export namespace PgTrigger {
-    export type t = {
-        "oid": string;
-        "tgrelid": string;
-        "tgparentid": string;
-        "tgname": string;
-        "tgfoid": string;
-        "tgtype": string;
-        "tgenabled": string;
-        "tgisinternal": boolean;
-        "tgconstrrelid": string;
-        "tgconstrindid": string;
-        "tgconstraint": string;
-        "tgdeferrable": boolean;
-        "tginitdeferred": boolean;
-        "tgnargs": string;
-        "tgattr": string;
-        "tgargs": Buffer;
-        "tgqual": string;
-        "tgoldtable": string;
-        "tgnewtable": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["tgrelid", String],
-            ["tgparentid", String],
-            ["tgname", String],
-            ["tgfoid", String],
-            ["tgtype", String],
-            ["tgenabled", String],
-            ["tgisinternal", Boolean],
-            ["tgconstrrelid", String],
-            ["tgconstrindid", String],
-            ["tgconstraint", String],
-            ["tgdeferrable", Boolean],
-            ["tginitdeferred", Boolean],
-            ["tgnargs", String],
-            ["tgattr", String],
-            ["tgargs", Buffer],
-            ["tgqual", String],
-            ["tgoldtable", String],
-            ["tgnewtable", String],
-        ] as const,
-    };
-}
-
-export namespace PgEnum {
-    export type t = {
-        "oid": string;
-        "enumtypid": string;
-        "enumsortorder": number;
-        "enumlabel": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["enumtypid", String],
-            ["enumsortorder", Number],
-            ["enumlabel", String],
-        ] as const,
-    };
-}
-
-export namespace PdsMedication {
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "pds_system_uid": string;
-        "entity_id": string;
-        "name": string;
-        "description": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["pds_system_uid", String],
-            ["entity_id", String],
-            ["name", String],
-            ["description", String],
-        ] as const,
-    };
-}
-
-export namespace PgStatioAllTables {
-    export type t = {
-        "relid": string;
-        "schemaname": string;
-        "relname": string;
-        "heap_blks_read": number;
-        "heap_blks_hit": number;
-        "idx_blks_read": number;
-        "idx_blks_hit": number;
-        "toast_blks_read": number;
-        "toast_blks_hit": number;
-        "tidx_blks_read": number;
-        "tidx_blks_hit": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["relid", String],
-            ["schemaname", String],
-            ["relname", String],
-            ["heap_blks_read", Number],
-            ["heap_blks_hit", Number],
-            ["idx_blks_read", Number],
-            ["idx_blks_hit", Number],
-            ["toast_blks_read", Number],
-            ["toast_blks_hit", Number],
-            ["tidx_blks_read", Number],
-            ["tidx_blks_hit", Number],
-        ] as const,
-    };
-}
-
-export namespace PdsPersonMedicationRelationship {
-    export type t = {
-        "created_at": Date;
-        "updated_at": Date;
-        "pds_person_uid": string;
-        "pds_medication_uid": string;
-        "diagnosis": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["pds_person_uid", String],
-            ["pds_medication_uid", String],
-            ["diagnosis", String],
-        ] as const,
-    };
-}
-
-export namespace PgAmop {
-    export type t = {
-        "oid": string;
-        "amopfamily": string;
-        "amoplefttype": string;
-        "amoprighttype": string;
-        "amopstrategy": string;
-        "amoppurpose": string;
-        "amopopr": string;
-        "amopmethod": string;
-        "amopsortfamily": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["amopfamily", String],
-            ["amoplefttype", String],
-            ["amoprighttype", String],
-            ["amopstrategy", String],
-            ["amoppurpose", String],
-            ["amopopr", String],
-            ["amopmethod", String],
-            ["amopsortfamily", String],
-        ] as const,
-    };
-}
-
-export namespace PgForeignDataWrapper {
-    export type t = {
-        "oid": string;
-        "fdwname": string;
-        "fdwowner": string;
-        "fdwhandler": string;
-        "fdwvalidator": string;
-        "fdwacl": string[];
-        "fdwoptions": string[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["fdwname", String],
-            ["fdwowner", String],
-            ["fdwhandler", String],
-            ["fdwvalidator", String],
-            ["fdwacl", { "kind": "array", "spec": String }],
-            ["fdwoptions", { "kind": "array", "spec": String }],
-        ] as const,
-    };
-}
-
-export namespace PgDescription {
-    export type t = {
-        "objoid": string;
-        "classoid": string;
-        "objsubid": number;
-        "description": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["objoid", String],
-            ["classoid", String],
-            ["objsubid", Number],
-            ["description", String],
-        ] as const,
-    };
-}
-
-export namespace PdsAddressPersonRelationship {
-    export type t = {
-        "created_at": Date;
-        "updated_at": Date;
-        "pds_address_uid": string;
-        "pds_person_uid": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["pds_address_uid", String],
-            ["pds_person_uid", String],
-        ] as const,
-    };
-}
-
-export namespace PipelineBatchCache {
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "pipeline_definition_uid": string;
-        "rows": Buffer;
-        "current_step": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["pipeline_definition_uid", String],
-            ["rows", Buffer],
-            ["current_step", Number],
-        ] as const,
-    };
-}
-
-export namespace PgStatioUserSequences {
-    export type t = {
-        "relid": string;
-        "schemaname": string;
-        "relname": string;
-        "blks_read": number;
-        "blks_hit": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["relid", String],
-            ["schemaname", String],
-            ["relname", String],
-            ["blks_read", Number],
-            ["blks_hit", Number],
-        ] as const,
-    };
-}
-
-export namespace PgStatistic {
-    export type t = {
-        "starelid": string;
-        "staattnum": string;
-        "stainherit": boolean;
-        "stanullfrac": number;
-        "stawidth": number;
-        "stadistinct": number;
-        "stakind1": string;
-        "stakind2": string;
-        "stakind3": string;
-        "stakind4": string;
-        "stakind5": string;
-        "staop1": string;
-        "staop2": string;
-        "staop3": string;
-        "staop4": string;
-        "staop5": string;
-        "stacoll1": string;
-        "stacoll2": string;
-        "stacoll3": string;
-        "stacoll4": string;
-        "stacoll5": string;
-        "stanumbers1": number[];
-        "stanumbers2": number[];
-        "stanumbers3": number[];
-        "stanumbers4": number[];
-        "stanumbers5": number[];
-        "stavalues1": string;
-        "stavalues2": string;
-        "stavalues3": string;
-        "stavalues4": string;
-        "stavalues5": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["starelid", String],
-            ["staattnum", String],
-            ["stainherit", Boolean],
-            ["stanullfrac", Number],
-            ["stawidth", Number],
-            ["stadistinct", Number],
-            ["stakind1", String],
-            ["stakind2", String],
-            ["stakind3", String],
-            ["stakind4", String],
-            ["stakind5", String],
-            ["staop1", String],
-            ["staop2", String],
-            ["staop3", String],
-            ["staop4", String],
-            ["staop5", String],
-            ["stacoll1", String],
-            ["stacoll2", String],
-            ["stacoll3", String],
-            ["stacoll4", String],
-            ["stacoll5", String],
-            ["stanumbers1", { "kind": "array", "spec": Number }],
-            ["stanumbers2", { "kind": "array", "spec": Number }],
-            ["stanumbers3", { "kind": "array", "spec": Number }],
-            ["stanumbers4", { "kind": "array", "spec": Number }],
-            ["stanumbers5", { "kind": "array", "spec": Number }],
-            ["stavalues1", String],
-            ["stavalues2", String],
-            ["stavalues3", String],
-            ["stavalues4", String],
-            ["stavalues5", String],
-        ] as const,
-    };
-}
-
-export namespace PdsSystem {
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "name": string;
-        "description": string;
-        "practice_uid": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["name", String],
-            ["description", String],
-            ["practice_uid", String],
-        ] as const,
-    };
-}
-
-export namespace PgOpfamily {
-    export type t = {
-        "oid": string;
-        "opfmethod": string;
-        "opfname": string;
-        "opfnamespace": string;
-        "opfowner": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["opfmethod", String],
-            ["opfname", String],
-            ["opfnamespace", String],
-            ["opfowner", String],
-        ] as const,
-    };
-}
-
-export namespace PdsFileBatchStatus {
-    export type t =
-        | "INGESTED"
-        | "PROCESSED"
-        ;
-    
-    export const spec = {
-        kind: "enum" as const,
-        values: [
-            "INGESTED",
-            "PROCESSED",
-        ] as const,
-    };
-}
-
-
-export namespace EvalResultStatus {
-    export type t =
-        | "PENDING"
-        | "SUCCESS"
-        | "FAILURE"
-        | "ERROR"
-        ;
-    
-    export const spec = {
-        kind: "enum" as const,
-        values: [
-            "PENDING",
-            "SUCCESS",
-            "FAILURE",
-            "ERROR",
-        ] as const,
-    };
-}
-
-
-export namespace CampaignState {
-    export type t =
-        | "CREATED"
-        | "ACTIVE"
-        | "PAUSED"
-        | "COMPLETED"
-        ;
-    
-    export const spec = {
-        kind: "enum" as const,
-        values: [
-            "CREATED",
-            "ACTIVE",
-            "PAUSED",
-            "COMPLETED",
-        ] as const,
-    };
-}
-
-
-export namespace PgStatSysTables {
-    export type t = {
-        "relid": string;
-        "schemaname": string;
-        "relname": string;
-        "seq_scan": number;
-        "last_seq_scan": Date;
-        "seq_tup_read": number;
-        "idx_scan": number;
-        "last_idx_scan": Date;
-        "idx_tup_fetch": number;
-        "n_tup_ins": number;
-        "n_tup_upd": number;
-        "n_tup_del": number;
-        "n_tup_hot_upd": number;
-        "n_tup_newpage_upd": number;
-        "n_live_tup": number;
-        "n_dead_tup": number;
-        "n_mod_since_analyze": number;
-        "n_ins_since_vacuum": number;
-        "last_vacuum": Date;
-        "last_autovacuum": Date;
-        "last_analyze": Date;
-        "last_autoanalyze": Date;
-        "vacuum_count": number;
-        "autovacuum_count": number;
-        "analyze_count": number;
-        "autoanalyze_count": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["relid", String],
-            ["schemaname", String],
-            ["relname", String],
-            ["seq_scan", Number],
-            ["last_seq_scan", Date],
-            ["seq_tup_read", Number],
-            ["idx_scan", Number],
-            ["last_idx_scan", Date],
-            ["idx_tup_fetch", Number],
-            ["n_tup_ins", Number],
-            ["n_tup_upd", Number],
-            ["n_tup_del", Number],
-            ["n_tup_hot_upd", Number],
-            ["n_tup_newpage_upd", Number],
-            ["n_live_tup", Number],
-            ["n_dead_tup", Number],
-            ["n_mod_since_analyze", Number],
-            ["n_ins_since_vacuum", Number],
-            ["last_vacuum", Date],
-            ["last_autovacuum", Date],
-            ["last_analyze", Date],
-            ["last_autoanalyze", Date],
-            ["vacuum_count", Number],
-            ["autovacuum_count", Number],
-            ["analyze_count", Number],
-            ["autoanalyze_count", Number],
-        ] as const,
-    };
-}
-
-export namespace PgSeclabels {
-    export type t = {
-        "objoid": string;
-        "classoid": string;
-        "objsubid": number;
-        "objtype": string;
-        "objnamespace": string;
-        "objname": string;
-        "provider": string;
-        "label": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["objoid", String],
-            ["classoid", String],
-            ["objsubid", Number],
-            ["objtype", String],
-            ["objnamespace", String],
-            ["objname", String],
-            ["provider", String],
-            ["label", String],
-        ] as const,
-    };
-}
-
-export namespace PgStatWal {
-    export type t = {
-        "wal_records": number;
-        "wal_fpi": number;
-        "wal_bytes": number;
-        "wal_buffers_full": number;
-        "wal_write": number;
-        "wal_sync": number;
-        "wal_write_time": number;
-        "wal_sync_time": number;
-        "stats_reset": Date;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["wal_records", Number],
-            ["wal_fpi", Number],
-            ["wal_bytes", Number],
-            ["wal_buffers_full", Number],
-            ["wal_write", Number],
-            ["wal_sync", Number],
-            ["wal_write_time", Number],
-            ["wal_sync_time", Number],
-            ["stats_reset", Date],
-        ] as const,
-    };
-}
-
-export namespace PgStatioSysSequences {
-    export type t = {
-        "relid": string;
-        "schemaname": string;
-        "relname": string;
-        "blks_read": number;
-        "blks_hit": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["relid", String],
-            ["schemaname", String],
-            ["relname", String],
-            ["blks_read", Number],
-            ["blks_hit", Number],
-        ] as const,
-    };
-}
-
-export namespace PgEventTrigger {
-    export type t = {
-        "oid": string;
-        "evtname": string;
-        "evtevent": string;
-        "evtowner": string;
-        "evtfoid": string;
-        "evtenabled": string;
-        "evttags": string[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["oid", String],
-            ["evtname", String],
-            ["evtevent", String],
-            ["evtowner", String],
-            ["evtfoid", String],
-            ["evtenabled", String],
-            ["evttags", { "kind": "array", "spec": String }],
+            ["eval_spec_uid", String],
+            ["program_uid", String],
+            ["status", EvalResultStatus.spec],
+            ["success_rate", Number],
+            ["result", Object],
         ] as const,
     };
 }
 
 export namespace AnalyticsBatch {
+    export const name = "analytics_batch";
+
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -5851,7 +1268,7 @@ export namespace AnalyticsBatch {
         "search_query": any;
         "selected_analytics": any;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -5865,4 +1282,559 @@ export namespace AnalyticsBatch {
         ] as const,
     };
 }
+
+export namespace AnalyticsCampaignObservation {
+    export const name = "analytics_campaign_observation";
+
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "analytics_batch_uid": string;
+        "campaign_uid": string;
+        "done": boolean;
+        "results": any;
+    };
+
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["analytics_batch_uid", String],
+            ["campaign_uid", String],
+            ["done", Boolean],
+            ["results", Object],
+        ] as const,
+    };
+}
+
+export namespace PdsSftpLocalEgressFile {
+    export const name = "pds_sftp_local_egress_file";
+
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "pds_registration_uid": string;
+        "export_timestamp": Date;
+        "file_name": string;
+        "body": Buffer;
+        "is_deleted": boolean;
+    };
+
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["pds_registration_uid", String],
+            ["export_timestamp", Date],
+            ["file_name", String],
+            ["body", Buffer],
+            ["is_deleted", Boolean],
+        ] as const,
+    };
+}
+
+export namespace Pipeline {
+    export const name = "pipeline";
+
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "name": string;
+        "description": string;
+        "last_indexed_record": Date;
+        "practice_uid": string;
+        "source": PipelineSource.t;
+        "active": boolean;
+    };
+
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["name", String],
+            ["description", String],
+            ["last_indexed_record", Date],
+            ["practice_uid", String],
+            ["source", PipelineSource.spec],
+            ["active", Boolean],
+        ] as const,
+    };
+}
+
+export namespace PipelineDefinition {
+    export const name = "pipeline_definition";
+
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "pipeline_uid": string;
+        "version": number;
+        "definition": any;
+    };
+
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["pipeline_uid", String],
+            ["version", Number],
+            ["definition", Object],
+        ] as const,
+    };
+}
+
+export namespace PipelineBatchCache {
+    export const name = "pipeline_batch_cache";
+
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "pipeline_definition_uid": string;
+        "rows": Buffer;
+        "current_step": number;
+    };
+
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["pipeline_definition_uid", String],
+            ["rows", Buffer],
+            ["current_step", Number],
+        ] as const,
+    };
+}
+
+export namespace SystemEvent {
+    export const name = "system_event";
+
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "kind": SystemEventKind.t;
+        "data": any;
+        "practice_uid": string;
+        "person_uid": string;
+    };
+
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["kind", SystemEventKind.spec],
+            ["data", Object],
+            ["practice_uid", String],
+            ["person_uid", String],
+        ] as const,
+    };
+}
+
+export namespace TimerContent {
+    export const name = "timer_content";
+
+    export type t = {
+        "channel_fd_uid": string;
+        "created_at": Date;
+        "fire_time": Date;
+    };
+
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["channel_fd_uid", String],
+            ["created_at", Date],
+            ["fire_time", Date],
+        ] as const,
+    };
+}
+
+export namespace ShippingStatus {
+    export const name = "shipping_status";
+
+    export type t =
+        | "ORDER_CREATED"
+        | "LABEL_CREATED"
+        | "SHIPPED"
+        | "DELIVERED"
+        | "LOST"
+        ;
+
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "ORDER_CREATED",
+            "LABEL_CREATED",
+            "SHIPPED",
+            "DELIVERED",
+            "LOST",
+        ] as const,
+    };
+}
+
+
+export namespace MedicationStatus {
+    export const name = "medication_status";
+
+    export type t =
+        | "ACTIVE"
+        | "PAST"
+        | "UNKNOWN"
+        ;
+
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "ACTIVE",
+            "PAST",
+            "UNKNOWN",
+        ] as const,
+    };
+}
+
+
+export namespace PatientAdherenceType {
+    export const name = "patient_adherence_type";
+
+    export type t =
+        | "ACTIVE"
+        | "INACTIVE"
+        ;
+
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "ACTIVE",
+            "INACTIVE",
+        ] as const,
+    };
+}
+
+
+export namespace FsmNodeKind {
+    export const name = "fsm_node_kind";
+
+    export type t =
+        | "SEND_MESSAGE"
+        | "CONNECT_PATIENT"
+        ;
+
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "SEND_MESSAGE",
+            "CONNECT_PATIENT",
+        ] as const,
+    };
+}
+
+
+export namespace FsmEdgeTrigger {
+    export const name = "fsm_edge_trigger";
+
+    export type t =
+        | "FALLBACK"
+        | "PATIENT_RESPONSE"
+        ;
+
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "FALLBACK",
+            "PATIENT_RESPONSE",
+        ] as const,
+    };
+}
+
+
+export namespace Channel {
+    export const name = "channel";
+
+    export type t =
+        | "SMS"
+        | "IN_APP"
+        ;
+
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "SMS",
+            "IN_APP",
+        ] as const,
+    };
+}
+
+
+export namespace MessageStatus {
+    export const name = "message_status";
+
+    export type t =
+        | "PENDING"
+        | "SENT"
+        | "DELIVERED"
+        | "READ"
+        | "FAILED"
+        ;
+
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "PENDING",
+            "SENT",
+            "DELIVERED",
+            "READ",
+            "FAILED",
+        ] as const,
+    };
+}
+
+
+export namespace MessageMode {
+    export const name = "message_mode";
+
+    export type t =
+        | "OUTGOING"
+        | "INCOMING"
+        ;
+
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "OUTGOING",
+            "INCOMING",
+        ] as const,
+    };
+}
+
+
+export namespace ChannelKind {
+    export const name = "channel_kind";
+
+    export type t =
+        | "PIPE"
+        | "TIMER"
+        ;
+
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "PIPE",
+            "TIMER",
+        ] as const,
+    };
+}
+
+
+export namespace PdsFileStatus {
+    export const name = "pds_file_status";
+
+    export type t =
+        | "PENDING"
+        | "INGESTED"
+        | "PROCESSED"
+        ;
+
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "PENDING",
+            "INGESTED",
+            "PROCESSED",
+        ] as const,
+    };
+}
+
+
+export namespace PdsFileBatchStatus {
+    export const name = "pds_file_batch_status";
+
+    export type t =
+        | "INGESTED"
+        | "PROCESSED"
+        ;
+
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "INGESTED",
+            "PROCESSED",
+        ] as const,
+    };
+}
+
+
+export namespace CampaignState {
+    export const name = "campaign_state";
+
+    export type t =
+        | "CREATED"
+        | "ACTIVE"
+        | "PAUSED"
+        | "COMPLETED"
+        | "ENGAGED"
+        | "STALE"
+        ;
+
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "CREATED",
+            "ACTIVE",
+            "PAUSED",
+            "COMPLETED",
+            "ENGAGED",
+            "STALE",
+        ] as const,
+    };
+}
+
+
+export namespace PdsRegistrationProtocol {
+    export const name = "pds_registration_protocol";
+
+    export type t =
+        | "LOCAL_SFTP"
+        | "REMOTE_SFTP"
+        ;
+
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "LOCAL_SFTP",
+            "REMOTE_SFTP",
+        ] as const,
+    };
+}
+
+
+export namespace ConsentSurface {
+    export const name = "consent_surface";
+
+    export type t =
+        | "CRXR"
+        | "PROVIDER"
+        ;
+
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "CRXR",
+            "PROVIDER",
+        ] as const,
+    };
+}
+
+
+export namespace ConsentStatus {
+    export const name = "consent_status";
+
+    export type t =
+        | "PENDING"
+        | "ACCEPTED"
+        | "REJECTED"
+        ;
+
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "PENDING",
+            "ACCEPTED",
+            "REJECTED",
+        ] as const,
+    };
+}
+
+
+export namespace EvalResultStatus {
+    export const name = "eval_result_status";
+
+    export type t =
+        | "PENDING"
+        | "SUCCESS"
+        | "FAILURE"
+        | "ERROR"
+        ;
+
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "PENDING",
+            "SUCCESS",
+            "FAILURE",
+            "ERROR",
+        ] as const,
+    };
+}
+
+
+export namespace AnalyticsBatchStatus {
+    export const name = "analytics_batch_status";
+
+    export type t =
+        | "PENDING"
+        | "COMPLETED"
+        | "FAILED"
+        ;
+
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "PENDING",
+            "COMPLETED",
+            "FAILED",
+        ] as const,
+    };
+}
+
+
+export namespace PipelineSource {
+    export const name = "pipeline_source";
+
+    export type t =
+        | "PDS_PERSON"
+        | "SYSTEM_EVENT"
+        ;
+
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "PDS_PERSON",
+            "SYSTEM_EVENT",
+        ] as const,
+    };
+}
+
+
+export namespace SystemEventKind {
+    export const name = "system_event_kind";
+
+    export type t =
+        | "CAMPAIGN_STATE_CHANGE"
+        ;
+
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "CAMPAIGN_STATE_CHANGE",
+        ] as const,
+    };
+}
+
 

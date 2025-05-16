@@ -2,6 +2,8 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { PoolClient, QueryArrayResult, QueryResult, QueryResultRow } from "pg";
 import { default as Cursor } from "pg-cursor";
 
+import { ColumnOrderCache } from "./order-managment";
+
 (Symbol as any).dispose ??= Symbol("Symbol.dispose");
 (Symbol as any).asyncDispose ??= Symbol("Symbol.asyncDispose");
 
@@ -10,6 +12,7 @@ const CurrentTransaction = new AsyncLocalStorage<SmartClient>();
 export interface ClientOptions {
     txDepth?: number;
     rootClient?: SmartClient;
+    columnOrderCache?: ColumnOrderCache;
 }
 
 export interface Disposable {
@@ -35,11 +38,14 @@ export class SmartClient {
 
     protected events: Map<Event, Set<EventCallback<[SmartClient]>>> = new Map();
 
-    constructor(client: PoolClient, { txDepth = 0, rootClient }: ClientOptions = {}) {
+    public columnOrderCache: ColumnOrderCache;
+
+    constructor(client: PoolClient, { txDepth = 0, rootClient, columnOrderCache }: ClientOptions = {}) {
         this.client = client;
         this.txDepth = txDepth;
         this.active = true;
         this.rootClient = rootClient ?? this;
+        this.columnOrderCache = columnOrderCache ?? new WeakMap();
     }
 
     protected async trigger(event: Event) {
@@ -175,7 +181,11 @@ export class SmartClient {
     }
 
     public async tx<T>(fn: (client: SmartClient) => T) {
-        const newClient = new SmartClient(this.client, { txDepth: this.txDepth + 1, rootClient: this.rootClient });
+        const newClient = new SmartClient(this.client, {
+            txDepth: this.txDepth + 1,
+            rootClient: this.rootClient,
+            columnOrderCache: this.columnOrderCache,
+        });
 
         try {
             if (this.txDepth === 0) {

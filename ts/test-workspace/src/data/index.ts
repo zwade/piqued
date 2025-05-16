@@ -1,6 +1,7 @@
 import { Pool } from "pg";
 import simpleQueries from "./simple-queries";
-import { tuple } from "@piqued/client";
+import { buildColumnOrderCache, tuple } from "@piqued/client";
+import * as ns from "../types";
 
 const pool = new Pool({
     user: "postgres",
@@ -12,12 +13,11 @@ const pool = new Pool({
 const SimpleQueries = simpleQueries(pool);
 
 const main = async () => {
+    await buildColumnOrderCache(ns, pool);
     // const result = await SimpleQueries.test({ force: false }, { uids: tuple(["866d3f55-a306-424e-a184-dbeec936dd1f"]) }).many();
     // console.log(result);
-    const stream = await SimpleQueries.several({}).stream(undefined);
-    for await (const row of stream) {
-        console.log(row);
-    }
+    const result = await SimpleQueries.getPractices({}).one();
+    console.log(result.array_agg);
 
     await pool.end();
 }

@@ -1,5 +1,6 @@
 import { Pool } from "pg";
 
+import { acquireColumnOrderCache } from "./order-managment";
 import { parseArray, parseObject } from "./parser";
 import { Expression, serializeExpression } from "./query-builder/expression-builder";
 import { MutableSerializationState } from "./query-builder/serialize";
@@ -9,6 +10,7 @@ export type CustomParseSpec =
     | { kind: "composite"; fields: () => readonly (readonly [name: string, spec: ParseSpec])[] }
     | { kind: "array"; spec: ParseSpec }
     | { kind: "enum"; values: readonly string[] };
+
 export type ParseSpec =
     | NumberConstructor
     | BooleanConstructor
@@ -93,7 +95,7 @@ export const QueryExecutor =
                 }
 
                 const freshClient = await pool.connect();
-                using smartClient = new SmartClient(freshClient);
+                using smartClient = new SmartClient(freshClient, { columnOrderCache: acquireColumnOrderCache(pool) });
 
                 return await fn(smartClient, ...args);
             };
@@ -105,7 +107,7 @@ export const QueryExecutor =
                     return undefined;
                 }
 
-                return parseArray<OO, OA>(query.spec, result.rows[0]);
+                return parseArray<OO, OA>(query.spec, result.rows[0], client.columnOrderCache);
             }),
 
             oneTuple: q(async (client) => {
@@ -114,12 +116,12 @@ export const QueryExecutor =
                     throw new Error("No results");
                 }
 
-                return parseArray<OO, OA>(query.spec, result.rows[0]);
+                return parseArray<OO, OA>(query.spec, result.rows[0], client.columnOrderCache);
             }),
 
             manyTuples: q(async (client) => {
                 const result = await client.queryArray(formattedQuery, argsAsArray);
-                return result.rows.map((row) => parseArray<OO, OA>(query.spec, row));
+                return result.rows.map((row) => parseArray<OO, OA>(query.spec, row, client.columnOrderCache));
             }),
 
             opt: q(async (client) => {
@@ -128,7 +130,7 @@ export const QueryExecutor =
                     return undefined;
                 }
 
-                return parseObject<OO>(query.spec, result.rows[0]);
+                return parseObject<OO>(query.spec, result.rows[0], client.columnOrderCache);
             }),
 
             one: q(async (client) => {
@@ -137,17 +139,17 @@ export const QueryExecutor =
                     throw new Error("No results");
                 }
 
-                return parseObject<OO>(query.spec, result.rows[0]);
+                return parseObject<OO>(query.spec, result.rows[0], client.columnOrderCache);
             }),
 
             many: q(async (client) => {
                 const result = await client.query(formattedQuery, argsAsArray);
-                return result.rows.map((row) => parseObject<OO>(query.spec, row));
+                return result.rows.map((row) => parseObject<OO>(query.spec, row, client.columnOrderCache));
             }),
 
             stream: q(async (client, options?: StreamOptions) => {
                 const stream = client.queryStream<OO, StreamOptions>(formattedQuery, argsAsArray, options, (row) =>
-                    parseObject<OO>(query.spec, row),
+                    parseObject<OO>(query.spec, row, client.columnOrderCache),
                 );
 
                 return stream as AsyncIterableIterator<any>; // Too hard to get the overload right
