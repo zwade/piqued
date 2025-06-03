@@ -1,3 +1,5 @@
+use std::{rc::Rc, sync::Arc};
+
 use crate::utils::result::{PiquedError, Result};
 use pg_query::{
     protobuf::{self, ParseResult, RawStmt, ScanToken, Token},
@@ -46,8 +48,8 @@ pub fn parse_single_query<'a>(
 ) -> Result<(RawStmt, String)> {
     let mut in_prepare = false;
 
-    let mut strings_with_variables: Vec<&str> = vec![];
-    let mut strings_with_examples: Vec<&str> = vec![];
+    let mut strings_with_variables: Vec<String> = vec![];
+    let mut strings_with_examples: Vec<String> = vec![];
     let mut last_end = None;
     let mut i = 0;
 
@@ -60,30 +62,39 @@ pub fn parse_single_query<'a>(
 
         match token.token() {
             Token::WhitespaceP | Token::CComment | Token::SqlComment => {}
-            Token::Ascii58
-                if (!in_prepare
-                    && i + 1 < tokens.len()
-                    && tokens[i + 1].token() == Token::Ident) =>
-            {
+            Token::Ascii58 if (!in_prepare && i + 1 < tokens.len()) => {
                 let start = tokens[i + 1].start as usize - offset;
                 let end = tokens[i + 1].end as usize - offset;
                 let name = &query[start..end];
 
-                let template_example = details.templates.iter().find(|templ| templ.name == name);
+                strings_with_examples.push(" ".to_string());
+                strings_with_variables.push(" ".to_string());
 
-                strings_with_examples.push(" ");
-                strings_with_variables.push(" ");
+                let param_idx = details
+                    .params
+                    .as_ref()
+                    .iter()
+                    .flat_map(|param| param.iter())
+                    .position(|param| param == name);
 
-                if let Some(tmpl) = template_example {
-                    strings_with_examples.push(&tmpl.example);
+                if let Some(idx) = param_idx {
+                    strings_with_examples.push(format!("${}", idx + 1));
+                    strings_with_variables.push(format!("${}", idx + 1));
                 } else {
-                    strings_with_examples.push(":");
-                    strings_with_examples.push(name);
-                }
+                    let template_example =
+                        details.templates.iter().find(|templ| templ.name == name);
 
-                strings_with_variables.push(":");
-                strings_with_variables.push("__tmpl_");
-                strings_with_variables.push(name);
+                    if let Some(tmpl) = template_example {
+                        strings_with_examples.push(tmpl.example.clone());
+                    } else {
+                        strings_with_examples.push(":".to_string());
+                        strings_with_examples.push(name.to_string());
+                    }
+
+                    strings_with_variables.push(":".to_string());
+                    strings_with_variables.push("__tmpl_".to_string());
+                    strings_with_variables.push(name.to_string());
+                }
 
                 last_end = Some(end);
                 i += 1;
@@ -98,18 +109,18 @@ pub fn parse_single_query<'a>(
 
                 if let Some(val) = last_end {
                     if start > val {
-                        strings_with_examples.push(" ");
+                        strings_with_examples.push(" ".to_string());
 
                         if !in_prepare {
-                            strings_with_variables.push(" ");
+                            strings_with_variables.push(" ".to_string());
                         }
                     }
                 }
 
-                strings_with_examples.push(&query[start..end]);
+                strings_with_examples.push(query[start..end].to_string());
 
                 if !in_prepare {
-                    strings_with_variables.push(&query[start..end]);
+                    strings_with_variables.push(query[start..end].to_string());
                 }
 
                 last_end = Some(end);
@@ -118,7 +129,6 @@ pub fn parse_single_query<'a>(
                     in_prepare = false;
                 }
             }
-            _ => {}
         }
 
         i += 1;
@@ -269,33 +279,27 @@ where
             .trim_start_matches("* ")
             .trim_end();
 
-        if trimmed_comment.starts_with("@name") {
-            name = trimmed_comment
-                .split(" ")
-                .nth(1)
-                .map(|s| s.trim().to_string());
-        } else if trimmed_comment.starts_with("@params") {
-            let mut param_iter = trimmed_comment.split(" ").into_iter();
+        let components = trimmed_comment.split_whitespace().collect::<Vec<_>>();
 
-            param_iter.next();
-            params = Some(param_iter.map(|val| val.trim().to_string()).collect());
-        } else if trimmed_comment.starts_with("@xtemplate") {
-            let mut template_iter = trimmed_comment.split(" ").into_iter();
+        match components.get(0) {
+            Some(&"@name") if components.len() > 1 => {
+                name = Some(components[1].to_string());
+            }
+            Some(&"@params") => {
+                params = Some(components[1..].iter().map(|&s| s.to_string()).collect());
+            }
+            Some(&"@xtemplate") if components.len() > 2 => {
+                let name = components[1].to_string();
+                let example = components[2..].join(" ");
 
-            template_iter.next();
-            match (template_iter.next(), template_iter.next()) {
-                (Some(name), Some(example)) => {
-                    templates.push(Template {
-                        name: name.to_string(),
-                        example: example.to_string(),
-                    });
-                }
-                _ => {
+                templates.push(Template { name, example });
+            }
+            _ => {
+                // If it doesn't match any special tag, just add the line to the comment
+                if !trimmed_comment.is_empty() {
                     comment_lines.push(trimmed_comment.to_string());
                 }
             }
-        } else {
-            comment_lines.push(trimmed_comment.to_string());
         }
     }
 

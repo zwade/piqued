@@ -13,7 +13,7 @@ PREPARE test AS
     SELECT first_name FROM person
     WHERE
         uid IN :uids OR
-        $1;
+        :force;
 
 PREPARE several AS
     SELECT unnest('{1,2,3,4,5,6,7,8,9}'::int[]) as num;

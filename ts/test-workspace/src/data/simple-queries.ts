@@ -165,6 +165,7 @@ export const GetPractices: Query<GetPractices.InputArray, GetPractices.InputObje
     _brand: undefined as any,
 };
 
+/** test */
 export namespace GetPractices {
     export type InputArray = [
 ];

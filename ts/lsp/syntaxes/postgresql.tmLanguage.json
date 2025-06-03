@@ -67,7 +67,7 @@
     },
 
     "comment-operator": {
-      "match": "(@)(name|option|params)((\\s+\\w+)*)",
+      "match": "(@)(name|option|params|xtemplate)(.*)",
       "captures": {
         "1": { "name": "keyword.operator.comment.sql" },
         "2": { "name": "keyword.operator.comment.sql" },
