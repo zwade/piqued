@@ -66,7 +66,7 @@ class GraphPaintBuffer {
 
             const distance = Math.abs(start - end);
             for (let i = 0; i < neededHeight; i++) {
-                if (i > distance * 4 - 1) {
+                if (i > distance - 1) {
                     this.buffer.setAscii({ y: this.currentRow + i, x: end }, "|");
                 } else if (start < end) {
                     this.buffer.setAscii({ y: this.currentRow + i, x: start + i + 1 }, "\\");

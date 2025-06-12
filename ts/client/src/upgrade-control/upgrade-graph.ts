@@ -205,23 +205,61 @@ export class PiquedUpgradeGraph {
         }
 
         const columns = new Map<string, number>();
-        let maxColumn = 0;
-        for (const [_rank, nodes] of byRank.entries()) {
+        const asSorted = [...byRank.entries()].sort((a, b) => a[0] - b[0]);
+
+        // Bidirectional mapping of node id to column
+        const blockedColumns = new Map<string, Set<number>>();
+        const columnBlockers = new Map<number, Set<string>>();
+
+        for (const [_rank, nodes] of asSorted) {
             const asSorted = nodes.slice().sort((a, b) => {
                 const colA = preferredColumn.get(a) ?? 0;
                 const colB = preferredColumn.get(b) ?? 0;
                 return colA - colB;
             });
 
-            const end = asSorted.reduce((lastColumn, nodeId) => {
-                const preferred = preferredColumn.get(nodeId) ?? lastColumn;
-                const column = Math.max(preferred, lastColumn);
-                columns.set(nodeId, column);
+            let lastColumn = 0;
+            let nodeIdx = 0;
 
-                return column + 1;
-            }, 0);
+            for (const nodeId of nodes) {
+                // Once we visit, we immediately unblock our column
+                const blockingSet = blockedColumns.get(nodeId);
+                for (const blocking of blockingSet ?? []) {
+                    columnBlockers.get(blocking)?.delete(nodeId);
+                    blockedColumns.delete(nodeId);
 
-            maxColumn = Math.max(maxColumn, end);
+                    if (columnBlockers.get(blocking)?.size === 0) {
+                        columnBlockers.delete(blocking);
+                    }
+                }
+            }
+
+            while (true) {
+                if (nodeIdx >= asSorted.length) {
+                    break;
+                }
+
+                const nodeId = asSorted[nodeIdx];
+                const node = this.get(nodeId)!;
+
+                if (columnBlockers.has(lastColumn)) {
+                    lastColumn++;
+                    continue;
+                }
+
+                columns.set(nodeId, lastColumn);
+                if (node.parents.length > 0) {
+                    columnBlockers.set(lastColumn, new Set(node.parents));
+                    for (const parent of node.parents) {
+                        const blockedSet = blockedColumns.get(parent) ?? new Set();
+                        blockedSet.add(lastColumn);
+                        blockedColumns.set(parent, blockedSet);
+                    }
+                }
+
+                nodeIdx++;
+                lastColumn++;
+            }
         }
 
         const result = new Map<string, { rank: number; column: number; node: PiquedUpgradeInstance }>();
