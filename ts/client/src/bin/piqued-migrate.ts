@@ -1,3 +1,4 @@
+import { dispatchLog } from "./pq-log";
 import { dispatchLegacyUpgrade } from "./pq-migration";
 import { dispatchNew } from "./pq-new";
 
@@ -6,6 +7,7 @@ const help = () => {
 Commands:
     help              Show this help message
     new               Generate a new migration
+    log               Show the history of migrations
     legacy-upgrade    Upgrade a set of migrations from the legacy format
 `);
 };
@@ -27,6 +29,9 @@ const main = async () => {
             break;
         case "legacy-upgrade":
             await dispatchLegacyUpgrade(process.argv.slice(3));
+            break;
+        case "log":
+            await dispatchLog(process.argv.slice(3));
             break;
         default:
             help();

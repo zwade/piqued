@@ -169,6 +169,73 @@ export class PiquedUpgradeGraph {
         return { upgrades, downgrades: [], target: targetNode };
     }
 
+    public get planarGraph() {
+        const heads = this.heads;
+        const ranks = new Map<string, number>();
+        const preferredColumn = new Map<string, number>();
+
+        // Step one, assign ranks to each node
+        const findRanks = (nodeId: string, rank: number, column: number) => {
+            const currentRank = ranks.get(nodeId);
+            if (currentRank !== undefined && currentRank >= rank) {
+                return;
+            }
+
+            ranks.set(nodeId, rank);
+            preferredColumn.set(nodeId, column);
+
+            const node = this.get(nodeId)!;
+
+            for (let i = 0; i < node.parents.length; i++) {
+                const parent = node.parents[i];
+                findRanks(parent, rank + 1, column + i);
+            }
+        };
+
+        for (let i = 0; i < heads.length; i++) {
+            findRanks(heads[i], 0, i);
+        }
+
+        // Step two, try to sort nodes at the same rank by their preferred column
+        const byRank = new Map<number, string[]>();
+        for (const [nodeId, rank] of ranks.entries()) {
+            const nodesAtRank = byRank.get(rank) ?? [];
+            nodesAtRank.push(nodeId);
+            byRank.set(rank, nodesAtRank);
+        }
+
+        const columns = new Map<string, number>();
+        let maxColumn = 0;
+        for (const [_rank, nodes] of byRank.entries()) {
+            const asSorted = nodes.slice().sort((a, b) => {
+                const colA = preferredColumn.get(a) ?? 0;
+                const colB = preferredColumn.get(b) ?? 0;
+                return colA - colB;
+            });
+
+            const end = asSorted.reduce((lastColumn, nodeId) => {
+                const preferred = preferredColumn.get(nodeId) ?? lastColumn;
+                const column = Math.max(preferred, lastColumn);
+                columns.set(nodeId, column);
+
+                return column + 1;
+            }, 0);
+
+            maxColumn = Math.max(maxColumn, end);
+        }
+
+        const result = new Map<string, { rank: number; column: number; node: PiquedUpgradeInstance }>();
+        for (const [nodeId, rank] of ranks.entries()) {
+            const column = columns.get(nodeId) ?? 0;
+            const node = this.get(nodeId);
+            if (node) {
+                result.set(nodeId, { rank, column, node });
+            }
+        }
+
+        return result;
+    }
+
     public get(node: string) {
         return this.#nodes.get(node);
     }

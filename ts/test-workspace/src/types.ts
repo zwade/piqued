@@ -6,12 +6,12 @@
 
 export namespace PiquedVersion {
     export const name = "_piqued_version";
-
+    
     export type t = {
         "index_key": number;
         "version": number;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -23,7 +23,7 @@ export namespace PiquedVersion {
 
 export namespace Person {
     export const name = "person";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -35,7 +35,7 @@ export namespace Person {
         "first_name": string;
         "last_name": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -54,7 +54,7 @@ export namespace Person {
 
 export namespace UserAuth {
     export const name = "user_auth";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -63,7 +63,7 @@ export namespace UserAuth {
         "password_hash": string;
         "person_uid": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -79,14 +79,14 @@ export namespace UserAuth {
 
 export namespace AuthToken {
     export const name = "auth_token";
-
+    
     export type t = {
         "token": string;
         "user_auth_uid": string;
         "expires_at": Date;
         "active_practice_uid": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -100,70 +100,38 @@ export namespace AuthToken {
 
 export namespace Practice {
     export const name = "practice";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
         "updated_at": Date;
         "name": string;
         "domain": string;
+        "requires_two_factor": boolean;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
             ["uid", String],
-            ["name", String],
-            ["domain", String],
             ["created_at", Date],
             ["updated_at", Date],
-        ] as const,
-    };
-}
-
-export namespace PracticePersonStaff {
-    export const name = "practice_person_staff";
-
-    export type t = {
-        "practice_uid": string;
-        "person_uid": string;
-    };
-
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["practice_uid", String],
-            ["person_uid", String],
-        ] as const,
-    };
-}
-
-export namespace PracticePersonPatient {
-    export const name = "practice_person_patient";
-
-    export type t = {
-        "practice_uid": string;
-        "person_uid": string;
-    };
-
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["practice_uid", String],
-            ["person_uid", String],
+            ["name", String],
+            ["domain", String],
+            ["requires_two_factor", Boolean],
         ] as const,
     };
 }
 
 export namespace ChatMessageData {
     export const name = "chat_message_data";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
         "content": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -176,7 +144,7 @@ export namespace ChatMessageData {
 
 export namespace ChatMessage {
     export const name = "chat_message";
-
+    
     export type t = {
         "sender_uid": string;
         "receiver_uid": string;
@@ -185,7 +153,7 @@ export namespace ChatMessage {
         "expires_at": Date;
         "message_data_uid": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -201,13 +169,13 @@ export namespace ChatMessage {
 
 export namespace PersonChallenge {
     export const name = "person_challenge";
-
+    
     export type t = {
         "person_uid": string;
         "challenge": string;
         "expires_at": Date;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -220,7 +188,7 @@ export namespace PersonChallenge {
 
 export namespace PersonAuthenticator {
     export const name = "person_authenticator";
-
+    
     export type t = {
         "person_uid": string;
         "credential_id": string;
@@ -233,7 +201,7 @@ export namespace PersonAuthenticator {
         "created_at": Date;
         "last_used": Date;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -253,7 +221,7 @@ export namespace PersonAuthenticator {
 
 export namespace PharmacyItem {
     export const name = "pharmacy_item";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -262,7 +230,7 @@ export namespace PharmacyItem {
         "name": string;
         "description": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -278,14 +246,14 @@ export namespace PharmacyItem {
 
 export namespace PracticeItemInventory {
     export const name = "practice_item_inventory";
-
+    
     export type t = {
         "practice_uid": string;
         "pharmacy_item_uid": string;
         "current_quantity": number;
         "available_quantity": number;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -299,7 +267,7 @@ export namespace PracticeItemInventory {
 
 export namespace ShippingAddress {
     export const name = "shipping_address";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -313,7 +281,7 @@ export namespace ShippingAddress {
         "postal_code": string;
         "country": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -334,7 +302,7 @@ export namespace ShippingAddress {
 
 export namespace ShippingOrder {
     export const name = "shipping_order";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -345,7 +313,7 @@ export namespace ShippingOrder {
         "patient_uid": string;
         "tracking_number": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -363,13 +331,13 @@ export namespace ShippingOrder {
 
 export namespace ShippingOrderItem {
     export const name = "shipping_order_item";
-
+    
     export type t = {
         "shipping_order_uid": string;
         "pharmacy_item_uid": string;
         "quantity": number;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -382,7 +350,7 @@ export namespace ShippingOrderItem {
 
 export namespace PatientMedication {
     export const name = "patient_medication";
-
+    
     export type t = {
         "patient_uid": string;
         "pharmacy_item_uid": string;
@@ -393,7 +361,7 @@ export namespace PatientMedication {
         "roa": string;
         "date_last_script": Date;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -411,7 +379,7 @@ export namespace PatientMedication {
 
 export namespace PatientAdherenceEvent {
     export const name = "patient_adherence_event";
-
+    
     export type t = {
         "patient_uid": string;
         "pharmacy_item_uid": string;
@@ -419,7 +387,7 @@ export namespace PatientAdherenceEvent {
         "event_type": string;
         "event_data": any;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -432,30 +400,9 @@ export namespace PatientAdherenceEvent {
     };
 }
 
-export namespace PatientList {
-    export const name = "patient_list";
-
-    export type t = {
-        "person_uid": string;
-        "practice_uid": string;
-        "person": Person.t;
-        "medications": PharmacyItem.t[];
-    };
-
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["person_uid", String],
-            ["practice_uid", String],
-            ["person", Person.spec],
-            ["medications", { "kind": "array", "spec": PharmacyItem.spec }],
-        ] as const,
-    };
-}
-
 export namespace Fsm {
     export const name = "fsm";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -464,7 +411,7 @@ export namespace Fsm {
         "description": string;
         "practice_uid": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -480,7 +427,7 @@ export namespace Fsm {
 
 export namespace FsmNode {
     export const name = "fsm_node";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -492,7 +439,7 @@ export namespace FsmNode {
         "fsm_uid": string;
         "is_start": boolean;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -511,7 +458,7 @@ export namespace FsmNode {
 
 export namespace FsmEdge {
     export const name = "fsm_edge";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -522,7 +469,7 @@ export namespace FsmEdge {
         "description": string;
         "options": any;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -540,7 +487,7 @@ export namespace FsmEdge {
 
 export namespace FsmInstance {
     export const name = "fsm_instance";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -550,7 +497,7 @@ export namespace FsmInstance {
         "current_node_uid": string;
         "last_event_time": Date;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -567,7 +514,7 @@ export namespace FsmInstance {
 
 export namespace Message {
     export const name = "message";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -582,8 +529,9 @@ export namespace Message {
         "mode": MessageMode.t;
         "processed": boolean;
         "campaign_uid": string;
+        "subject": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -600,13 +548,14 @@ export namespace Message {
             ["mode", MessageMode.spec],
             ["processed", Boolean],
             ["campaign_uid", String],
+            ["subject", String],
         ] as const,
     };
 }
 
 export namespace Program {
     export const name = "program";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -620,7 +569,7 @@ export namespace Program {
         "mlil": any;
         "prompt": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -641,7 +590,7 @@ export namespace Program {
 
 export namespace FtState {
     export const name = "ft_state";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -651,7 +600,7 @@ export namespace FtState {
         "selected_fds": number[];
         "active": boolean;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -668,7 +617,7 @@ export namespace FtState {
 
 export namespace ChannelFd {
     export const name = "channel_fd";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -678,7 +627,7 @@ export namespace ChannelFd {
         "fd": number;
         "name": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -695,7 +644,7 @@ export namespace ChannelFd {
 
 export namespace PdsSystem {
     export const name = "pds_system";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -704,7 +653,7 @@ export namespace PdsSystem {
         "description": string;
         "practice_uid": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -720,7 +669,7 @@ export namespace PdsSystem {
 
 export namespace PdsRegistration {
     export const name = "pds_registration";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -732,7 +681,7 @@ export namespace PdsRegistration {
         "ingress": boolean;
         "egress": boolean;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -751,7 +700,7 @@ export namespace PdsRegistration {
 
 export namespace PdsFile {
     export const name = "pds_file";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -761,7 +710,7 @@ export namespace PdsFile {
         "name": string;
         "data": Buffer;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -778,7 +727,7 @@ export namespace PdsFile {
 
 export namespace PdsFileBatch {
     export const name = "pds_file_batch";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -789,7 +738,7 @@ export namespace PdsFileBatch {
         "data": any;
         "error": any;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -807,7 +756,7 @@ export namespace PdsFileBatch {
 
 export namespace PdsAddress {
     export const name = "pds_address";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -820,7 +769,7 @@ export namespace PdsAddress {
         "state": string;
         "zip": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -840,7 +789,7 @@ export namespace PdsAddress {
 
 export namespace PdsPerson {
     export const name = "pds_person";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -854,7 +803,7 @@ export namespace PdsPerson {
         "has_consent": boolean;
         "medical_record_number": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -875,14 +824,14 @@ export namespace PdsPerson {
 
 export namespace PdsAddressPersonRelationship {
     export const name = "pds_address_person_relationship";
-
+    
     export type t = {
         "created_at": Date;
         "updated_at": Date;
         "pds_address_uid": string;
         "pds_person_uid": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -896,7 +845,7 @@ export namespace PdsAddressPersonRelationship {
 
 export namespace PdsMedication {
     export const name = "pds_medication";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -906,7 +855,7 @@ export namespace PdsMedication {
         "name": string;
         "description": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -923,7 +872,7 @@ export namespace PdsMedication {
 
 export namespace PdsPersonMedicationRelationship {
     export const name = "pds_person_medication_relationship";
-
+    
     export type t = {
         "created_at": Date;
         "updated_at": Date;
@@ -931,7 +880,7 @@ export namespace PdsPersonMedicationRelationship {
         "pds_medication_uid": string;
         "diagnosis": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -946,7 +895,7 @@ export namespace PdsPersonMedicationRelationship {
 
 export namespace Campaign {
     export const name = "campaign";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -957,7 +906,7 @@ export namespace Campaign {
         "stored_metadata": any;
         "practice_uid": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -975,7 +924,7 @@ export namespace Campaign {
 
 export namespace PersonChannelFdMap {
     export const name = "person_channel_fd_map";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -983,7 +932,7 @@ export namespace PersonChannelFdMap {
         "person_uid": string;
         "channel_fd_uid": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -998,7 +947,7 @@ export namespace PersonChannelFdMap {
 
 export namespace FtvmCache {
     export const name = "ftvm_cache";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -1007,7 +956,7 @@ export namespace FtvmCache {
         "cache_key": string;
         "cache_value": any;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -1023,12 +972,12 @@ export namespace FtvmCache {
 
 export namespace ProgramCacheStatus {
     export const name = "program_cache_status";
-
+    
     export type t = {
         "program_uid": string;
         "cache_primed": boolean;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -1040,7 +989,7 @@ export namespace ProgramCacheStatus {
 
 export namespace PdsStagedExport {
     export const name = "pds_staged_export";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -1050,7 +999,7 @@ export namespace PdsStagedExport {
         "done": boolean;
         "file_name": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -1067,7 +1016,7 @@ export namespace PdsStagedExport {
 
 export namespace ShortLink {
     export const name = "short_link";
-
+    
     export type t = {
         "slug": string;
         "domain": string;
@@ -1075,7 +1024,7 @@ export namespace ShortLink {
         "updated_at": Date;
         "uri": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -1090,7 +1039,7 @@ export namespace ShortLink {
 
 export namespace PersonConsent {
     export const name = "person_consent";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -1100,7 +1049,7 @@ export namespace PersonConsent {
         "surface": ConsentSurface.t;
         "consent_text": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -1117,7 +1066,7 @@ export namespace PersonConsent {
 
 export namespace ConsentChannelFdMap {
     export const name = "consent_channel_fd_map";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -1125,7 +1074,7 @@ export namespace ConsentChannelFdMap {
         "person_uid": string;
         "channel_fd_uid": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -1140,13 +1089,13 @@ export namespace ConsentChannelFdMap {
 
 export namespace PipeContent {
     export const name = "pipe_content";
-
+    
     export type t = {
         "channel_fd_uid": string;
         "created_at": Date;
         "content": any;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -1157,9 +1106,393 @@ export namespace PipeContent {
     };
 }
 
+export namespace EvalSpec {
+    export const name = "eval_spec";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "program_slug": string;
+        "version": number;
+        "spec": any;
+        "pass_ratio": number;
+        "attempts": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["program_slug", String],
+            ["version", Number],
+            ["spec", Object],
+            ["pass_ratio", Number],
+            ["attempts", Number],
+        ] as const,
+    };
+}
+
+export namespace EvalResult {
+    export const name = "eval_result";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "eval_spec_uid": string;
+        "program_uid": string;
+        "status": EvalResultStatus.t;
+        "success_rate": number;
+        "result": any;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["eval_spec_uid", String],
+            ["program_uid", String],
+            ["status", EvalResultStatus.spec],
+            ["success_rate", Number],
+            ["result", Object],
+        ] as const,
+    };
+}
+
+export namespace AnalyticsBatch {
+    export const name = "analytics_batch";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "status": AnalyticsBatchStatus.t;
+        "description": string;
+        "search_query": any;
+        "selected_analytics": any;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["status", AnalyticsBatchStatus.spec],
+            ["description", String],
+            ["search_query", Object],
+            ["selected_analytics", Object],
+        ] as const,
+    };
+}
+
+export namespace AnalyticsCampaignObservation {
+    export const name = "analytics_campaign_observation";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "analytics_batch_uid": string;
+        "campaign_uid": string;
+        "done": boolean;
+        "results": any;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["analytics_batch_uid", String],
+            ["campaign_uid", String],
+            ["done", Boolean],
+            ["results", Object],
+        ] as const,
+    };
+}
+
+export namespace PdsSftpLocalEgressFile {
+    export const name = "pds_sftp_local_egress_file";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "pds_registration_uid": string;
+        "export_timestamp": Date;
+        "file_name": string;
+        "body": Buffer;
+        "is_deleted": boolean;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["pds_registration_uid", String],
+            ["export_timestamp", Date],
+            ["file_name", String],
+            ["body", Buffer],
+            ["is_deleted", Boolean],
+        ] as const,
+    };
+}
+
+export namespace Pipeline {
+    export const name = "pipeline";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "name": string;
+        "description": string;
+        "last_indexed_record": Date;
+        "practice_uid": string;
+        "source": PipelineSource.t;
+        "active": boolean;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["name", String],
+            ["description", String],
+            ["last_indexed_record", Date],
+            ["practice_uid", String],
+            ["source", PipelineSource.spec],
+            ["active", Boolean],
+        ] as const,
+    };
+}
+
+export namespace PipelineDefinition {
+    export const name = "pipeline_definition";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "pipeline_uid": string;
+        "version": number;
+        "definition": any;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["pipeline_uid", String],
+            ["version", Number],
+            ["definition", Object],
+        ] as const,
+    };
+}
+
+export namespace PipelineBatchCache {
+    export const name = "pipeline_batch_cache";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "pipeline_definition_uid": string;
+        "rows": Buffer;
+        "current_step": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["pipeline_definition_uid", String],
+            ["rows", Buffer],
+            ["current_step", Number],
+        ] as const,
+    };
+}
+
+export namespace SystemEvent {
+    export const name = "system_event";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "kind": SystemEventKind.t;
+        "data": any;
+        "practice_uid": string;
+        "person_uid": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["kind", SystemEventKind.spec],
+            ["data", Object],
+            ["practice_uid", String],
+            ["person_uid", String],
+        ] as const,
+    };
+}
+
+export namespace TimerContent {
+    export const name = "timer_content";
+    
+    export type t = {
+        "channel_fd_uid": string;
+        "created_at": Date;
+        "fire_time": Date;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["channel_fd_uid", String],
+            ["created_at", Date],
+            ["fire_time", Date],
+        ] as const,
+    };
+}
+
+export namespace EmailVerificationToken {
+    export const name = "email_verification_token";
+    
+    export type t = {
+        "token": string;
+        "email": string;
+        "user_auth_uid": string;
+        "created_at": Date;
+        "expires_at": Date;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["token", String],
+            ["email", String],
+            ["user_auth_uid", String],
+            ["created_at", Date],
+            ["expires_at", Date],
+        ] as const,
+    };
+}
+
+export namespace VerifiedEmail {
+    export const name = "verified_email";
+    
+    export type t = {
+        "uid": string;
+        "user_auth_uid": string;
+        "email": string;
+        "created_at": Date;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["user_auth_uid", String],
+            ["email", String],
+            ["created_at", Date],
+        ] as const,
+    };
+}
+
+export namespace PiquedHead {
+    export const name = "_piqued_head";
+    
+    export type t = {
+        "index_key": number;
+        "head": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["index_key", Number],
+            ["head", String],
+        ] as const,
+    };
+}
+
+export namespace PracticePersonStaffOld {
+    export const name = "_practice_person_staff_old";
+    
+    export type t = {
+        "practice_uid": string;
+        "person_uid": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["practice_uid", String],
+            ["person_uid", String],
+        ] as const,
+    };
+}
+
+export namespace PracticePersonPatientOld {
+    export const name = "_practice_person_patient_old";
+    
+    export type t = {
+        "practice_uid": string;
+        "person_uid": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["practice_uid", String],
+            ["person_uid", String],
+        ] as const,
+    };
+}
+
+export namespace PatientList {
+    export const name = "patient_list";
+    
+    export type t = {
+        "person_uid": string;
+        "practice_uid": string;
+        "person": Person.t;
+        "medications": PharmacyItem.t[];
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["person_uid", String],
+            ["practice_uid", String],
+            ["person", Person.spec],
+            ["medications", { "kind": "array", "spec": PharmacyItem.spec }],
+        ] as const,
+    };
+}
+
 export namespace CampaignDetail {
     export const name = "campaign_detail";
-
+    
     export type t = {
         "uid": string;
         "created_at": Date;
@@ -1176,7 +1509,7 @@ export namespace CampaignDetail {
         "message_count": number;
         "practice_uid": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
@@ -1198,277 +1531,146 @@ export namespace CampaignDetail {
     };
 }
 
-export namespace EvalSpec {
-    export const name = "eval_spec";
-
+export namespace PracticePerson {
+    export const name = "practice_person";
+    
     export type t = {
         "uid": string;
         "created_at": Date;
         "updated_at": Date;
-        "program_slug": string;
-        "version": number;
-        "spec": any;
-        "pass_ratio": number;
-        "attempts": number;
-    };
-
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["program_slug", String],
-            ["version", Number],
-            ["spec", Object],
-            ["pass_ratio", Number],
-            ["attempts", Number],
-        ] as const,
-    };
-}
-
-export namespace EvalResult {
-    export const name = "eval_result";
-
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "eval_spec_uid": string;
-        "program_uid": string;
-        "status": EvalResultStatus.t;
-        "success_rate": number;
-        "result": any;
-    };
-
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["eval_spec_uid", String],
-            ["program_uid", String],
-            ["status", EvalResultStatus.spec],
-            ["success_rate", Number],
-            ["result", Object],
-        ] as const,
-    };
-}
-
-export namespace AnalyticsBatch {
-    export const name = "analytics_batch";
-
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "status": AnalyticsBatchStatus.t;
-        "description": string;
-        "search_query": any;
-        "selected_analytics": any;
-    };
-
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["status", AnalyticsBatchStatus.spec],
-            ["description", String],
-            ["search_query", Object],
-            ["selected_analytics", Object],
-        ] as const,
-    };
-}
-
-export namespace AnalyticsCampaignObservation {
-    export const name = "analytics_campaign_observation";
-
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "analytics_batch_uid": string;
-        "campaign_uid": string;
-        "done": boolean;
-        "results": any;
-    };
-
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["analytics_batch_uid", String],
-            ["campaign_uid", String],
-            ["done", Boolean],
-            ["results", Object],
-        ] as const,
-    };
-}
-
-export namespace PdsSftpLocalEgressFile {
-    export const name = "pds_sftp_local_egress_file";
-
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "pds_registration_uid": string;
-        "export_timestamp": Date;
-        "file_name": string;
-        "body": Buffer;
-        "is_deleted": boolean;
-    };
-
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["pds_registration_uid", String],
-            ["export_timestamp", Date],
-            ["file_name", String],
-            ["body", Buffer],
-            ["is_deleted", Boolean],
-        ] as const,
-    };
-}
-
-export namespace Pipeline {
-    export const name = "pipeline";
-
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "name": string;
-        "description": string;
-        "last_indexed_record": Date;
-        "practice_uid": string;
-        "source": PipelineSource.t;
-        "active": boolean;
-    };
-
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["name", String],
-            ["description", String],
-            ["last_indexed_record", Date],
-            ["practice_uid", String],
-            ["source", PipelineSource.spec],
-            ["active", Boolean],
-        ] as const,
-    };
-}
-
-export namespace PipelineDefinition {
-    export const name = "pipeline_definition";
-
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "pipeline_uid": string;
-        "version": number;
-        "definition": any;
-    };
-
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["pipeline_uid", String],
-            ["version", Number],
-            ["definition", Object],
-        ] as const,
-    };
-}
-
-export namespace PipelineBatchCache {
-    export const name = "pipeline_batch_cache";
-
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "pipeline_definition_uid": string;
-        "rows": Buffer;
-        "current_step": number;
-    };
-
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["pipeline_definition_uid", String],
-            ["rows", Buffer],
-            ["current_step", Number],
-        ] as const,
-    };
-}
-
-export namespace SystemEvent {
-    export const name = "system_event";
-
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "kind": SystemEventKind.t;
-        "data": any;
         "practice_uid": string;
         "person_uid": string;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
             ["uid", String],
             ["created_at", Date],
             ["updated_at", Date],
-            ["kind", SystemEventKind.spec],
-            ["data", Object],
             ["practice_uid", String],
             ["person_uid", String],
         ] as const,
     };
 }
 
-export namespace TimerContent {
-    export const name = "timer_content";
-
+export namespace PracticePersonRole {
+    export const name = "practice_person_role";
+    
     export type t = {
-        "channel_fd_uid": string;
+        "uid": string;
         "created_at": Date;
-        "fire_time": Date;
+        "updated_at": Date;
+        "practice_person_uid": string;
+        "role": PersonRole.t;
     };
-
+    
     export const spec = {
         kind: "composite" as const,
         fields: () => [
-            ["channel_fd_uid", String],
+            ["uid", String],
             ["created_at", Date],
-            ["fire_time", Date],
+            ["updated_at", Date],
+            ["practice_person_uid", String],
+            ["role", PersonRole.spec],
+        ] as const,
+    };
+}
+
+export namespace PracticePersonDetail {
+    export const name = "practice_person_detail";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "person_uid": string;
+        "first_name": string;
+        "last_name": string;
+        "email": string;
+        "phone_number": string;
+        "practice_uid": string;
+        "practice_name": string;
+        "roles": PersonRole.t[];
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["person_uid", String],
+            ["first_name", String],
+            ["last_name", String],
+            ["email", String],
+            ["phone_number", String],
+            ["practice_uid", String],
+            ["practice_name", String],
+            ["roles", { "kind": "array", "spec": PersonRole.spec }],
+        ] as const,
+    };
+}
+
+export namespace Outreach {
+    export const name = "outreach";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "source": OutreachSource.t;
+        "practice_uid": string;
+        "target_uid": string;
+        "assigned_staff_uid": string;
+        "status": OutreachStatus.t;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["source", OutreachSource.spec],
+            ["practice_uid", String],
+            ["target_uid", String],
+            ["assigned_staff_uid", String],
+            ["status", OutreachStatus.spec],
+        ] as const,
+    };
+}
+
+export namespace OutreachEvent {
+    export const name = "outreach_event";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "outreach_uid": string;
+        "type": OutreachEventType.t;
+        "note": string;
+        "author_uid": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["outreach_uid", String],
+            ["type", OutreachEventType.spec],
+            ["note", String],
+            ["author_uid", String],
         ] as const,
     };
 }
 
 export namespace ShippingStatus {
     export const name = "shipping_status";
-
+    
     export type t =
         | "ORDER_CREATED"
         | "LABEL_CREATED"
@@ -1476,7 +1678,7 @@ export namespace ShippingStatus {
         | "DELIVERED"
         | "LOST"
         ;
-
+    
     export const spec = {
         kind: "enum" as const,
         values: [
@@ -1492,13 +1694,13 @@ export namespace ShippingStatus {
 
 export namespace MedicationStatus {
     export const name = "medication_status";
-
+    
     export type t =
         | "ACTIVE"
         | "PAST"
         | "UNKNOWN"
         ;
-
+    
     export const spec = {
         kind: "enum" as const,
         values: [
@@ -1512,12 +1714,12 @@ export namespace MedicationStatus {
 
 export namespace PatientAdherenceType {
     export const name = "patient_adherence_type";
-
+    
     export type t =
         | "ACTIVE"
         | "INACTIVE"
         ;
-
+    
     export const spec = {
         kind: "enum" as const,
         values: [
@@ -1530,12 +1732,12 @@ export namespace PatientAdherenceType {
 
 export namespace FsmNodeKind {
     export const name = "fsm_node_kind";
-
+    
     export type t =
         | "SEND_MESSAGE"
         | "CONNECT_PATIENT"
         ;
-
+    
     export const spec = {
         kind: "enum" as const,
         values: [
@@ -1548,12 +1750,12 @@ export namespace FsmNodeKind {
 
 export namespace FsmEdgeTrigger {
     export const name = "fsm_edge_trigger";
-
+    
     export type t =
         | "FALLBACK"
         | "PATIENT_RESPONSE"
         ;
-
+    
     export const spec = {
         kind: "enum" as const,
         values: [
@@ -1566,17 +1768,19 @@ export namespace FsmEdgeTrigger {
 
 export namespace Channel {
     export const name = "channel";
-
+    
     export type t =
         | "SMS"
         | "IN_APP"
+        | "EMAIL"
         ;
-
+    
     export const spec = {
         kind: "enum" as const,
         values: [
             "SMS",
             "IN_APP",
+            "EMAIL",
         ] as const,
     };
 }
@@ -1584,7 +1788,7 @@ export namespace Channel {
 
 export namespace MessageStatus {
     export const name = "message_status";
-
+    
     export type t =
         | "PENDING"
         | "SENT"
@@ -1592,7 +1796,7 @@ export namespace MessageStatus {
         | "READ"
         | "FAILED"
         ;
-
+    
     export const spec = {
         kind: "enum" as const,
         values: [
@@ -1608,12 +1812,12 @@ export namespace MessageStatus {
 
 export namespace MessageMode {
     export const name = "message_mode";
-
+    
     export type t =
         | "OUTGOING"
         | "INCOMING"
         ;
-
+    
     export const spec = {
         kind: "enum" as const,
         values: [
@@ -1626,12 +1830,12 @@ export namespace MessageMode {
 
 export namespace ChannelKind {
     export const name = "channel_kind";
-
+    
     export type t =
         | "PIPE"
         | "TIMER"
         ;
-
+    
     export const spec = {
         kind: "enum" as const,
         values: [
@@ -1644,13 +1848,13 @@ export namespace ChannelKind {
 
 export namespace PdsFileStatus {
     export const name = "pds_file_status";
-
+    
     export type t =
         | "PENDING"
         | "INGESTED"
         | "PROCESSED"
         ;
-
+    
     export const spec = {
         kind: "enum" as const,
         values: [
@@ -1664,12 +1868,12 @@ export namespace PdsFileStatus {
 
 export namespace PdsFileBatchStatus {
     export const name = "pds_file_batch_status";
-
+    
     export type t =
         | "INGESTED"
         | "PROCESSED"
         ;
-
+    
     export const spec = {
         kind: "enum" as const,
         values: [
@@ -1682,7 +1886,7 @@ export namespace PdsFileBatchStatus {
 
 export namespace CampaignState {
     export const name = "campaign_state";
-
+    
     export type t =
         | "CREATED"
         | "ACTIVE"
@@ -1691,7 +1895,7 @@ export namespace CampaignState {
         | "ENGAGED"
         | "STALE"
         ;
-
+    
     export const spec = {
         kind: "enum" as const,
         values: [
@@ -1708,12 +1912,12 @@ export namespace CampaignState {
 
 export namespace PdsRegistrationProtocol {
     export const name = "pds_registration_protocol";
-
+    
     export type t =
         | "LOCAL_SFTP"
         | "REMOTE_SFTP"
         ;
-
+    
     export const spec = {
         kind: "enum" as const,
         values: [
@@ -1726,12 +1930,12 @@ export namespace PdsRegistrationProtocol {
 
 export namespace ConsentSurface {
     export const name = "consent_surface";
-
+    
     export type t =
         | "CRXR"
         | "PROVIDER"
         ;
-
+    
     export const spec = {
         kind: "enum" as const,
         values: [
@@ -1744,13 +1948,13 @@ export namespace ConsentSurface {
 
 export namespace ConsentStatus {
     export const name = "consent_status";
-
+    
     export type t =
         | "PENDING"
         | "ACCEPTED"
         | "REJECTED"
         ;
-
+    
     export const spec = {
         kind: "enum" as const,
         values: [
@@ -1764,14 +1968,14 @@ export namespace ConsentStatus {
 
 export namespace EvalResultStatus {
     export const name = "eval_result_status";
-
+    
     export type t =
         | "PENDING"
         | "SUCCESS"
         | "FAILURE"
         | "ERROR"
         ;
-
+    
     export const spec = {
         kind: "enum" as const,
         values: [
@@ -1786,13 +1990,13 @@ export namespace EvalResultStatus {
 
 export namespace AnalyticsBatchStatus {
     export const name = "analytics_batch_status";
-
+    
     export type t =
         | "PENDING"
         | "COMPLETED"
         | "FAILED"
         ;
-
+    
     export const spec = {
         kind: "enum" as const,
         values: [
@@ -1806,12 +2010,12 @@ export namespace AnalyticsBatchStatus {
 
 export namespace PipelineSource {
     export const name = "pipeline_source";
-
+    
     export type t =
         | "PDS_PERSON"
         | "SYSTEM_EVENT"
         ;
-
+    
     export const spec = {
         kind: "enum" as const,
         values: [
@@ -1824,15 +2028,101 @@ export namespace PipelineSource {
 
 export namespace SystemEventKind {
     export const name = "system_event_kind";
-
+    
     export type t =
         | "CAMPAIGN_STATE_CHANGE"
         ;
-
+    
     export const spec = {
         kind: "enum" as const,
         values: [
             "CAMPAIGN_STATE_CHANGE",
+        ] as const,
+    };
+}
+
+
+export namespace PersonRole {
+    export const name = "person_role";
+    
+    export type t =
+        | "STAFF"
+        | "PATIENT"
+        | "ADMIN"
+        | "OPERATIONS"
+        | "OPERATIONS_MANAGER"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "STAFF",
+            "PATIENT",
+            "ADMIN",
+            "OPERATIONS",
+            "OPERATIONS_MANAGER",
+        ] as const,
+    };
+}
+
+
+export namespace OutreachSource {
+    export const name = "outreach_source";
+    
+    export type t =
+        | "CAMPAIGN"
+        | "MANUAL"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "CAMPAIGN",
+            "MANUAL",
+        ] as const,
+    };
+}
+
+
+export namespace OutreachStatus {
+    export const name = "outreach_status";
+    
+    export type t =
+        | "IN_PROGRESS"
+        | "SUCCESS"
+        | "FAILED"
+        | "UNREACHABLE"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "IN_PROGRESS",
+            "SUCCESS",
+            "FAILED",
+            "UNREACHABLE",
+        ] as const,
+    };
+}
+
+
+export namespace OutreachEventType {
+    export const name = "outreach_event_type";
+    
+    export type t =
+        | "CREATED"
+        | "COMMENT"
+        | "STATUS_CHANGE"
+        | "MISSED"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "CREATED",
+            "COMMENT",
+            "STATUS_CHANGE",
+            "MISSED",
         ] as const,
     };
 }

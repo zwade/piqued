@@ -165,7 +165,6 @@ export const GetPractices: Query<GetPractices.InputArray, GetPractices.InputObje
     _brand: undefined as any,
 };
 
-/** test */
 export namespace GetPractices {
     export type InputArray = [
 ];
@@ -181,6 +180,36 @@ export namespace GetPractices {
 }
 
 
+export const SelectArray: Query<SelectArray.InputArray, SelectArray.InputObject, SelectArray.TemplateInputObject, SelectArray.OutputArray, SelectArray.OutputObject> = {
+    name: "select_array",
+    query: ` SELECT unnest($1::int[]) AS num;`,
+    params: [
+        "$0",
+    ],
+    templateParams: [],
+    spec: [
+        ["num", undefined],
+    ],
+    _brand: undefined as any,
+};
+
+export namespace SelectArray {
+    export type InputArray = [
+    $0: number[],
+];
+    export type InputObject = {
+    "$0": number[],
+};
+    export type TemplateInputObject = {};
+    export type OutputArray = [
+    num: number,
+];
+    export type OutputObject = {
+    "num": number,
+};
+}
+
+
 export default EntityQueries({
     "reflect": Reflect,
     "reflect2": Reflect2,
@@ -188,5 +217,6 @@ export default EntityQueries({
     "test": Test,
     "several": Several,
     "getPractices": GetPractices,
+    "selectArray": SelectArray,
 })
 

@@ -21,3 +21,6 @@ PREPARE several AS
 PREPARE get_practices AS
     SELECT array_agg(practice)
     FROM practice;
+
+PREPARE select_array AS
+    SELECT unnest($1::int[]) AS num;
