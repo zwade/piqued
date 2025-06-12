@@ -2,6 +2,8 @@
 
 import * as cp from "node:child_process";
 import * as fs from "node:fs/promises";
+import * as os from "node:os";
+import path from "node:path";
 import { parseArgs } from "node:util";
 
 import { PiquedUpgradeControl } from "../upgrade-control/control";
@@ -32,6 +34,17 @@ class GraphPaintBuffer {
         this.buffer = new RleMatrix(0, 0, undefined, {});
     }
 
+    public drawActiveThreads(height: number) {
+        for (const { columns } of this.activeThreads.values()) {
+            for (const column of columns) {
+                this.buffer.copyIn(
+                    { y: this.currentRow, x: column * 4 },
+                    RleMatrix.fromAscii("|".repeat(height), { width: 1 }),
+                );
+            }
+        }
+    }
+
     public drawEdges(destinations: CellData[]) {
         const edges = destinations.flatMap(({ node, column: endColumn }) =>
             [...(this.activeThreads.get(node.version)?.columns ?? [])].map((startColumn) => ({
@@ -46,7 +59,6 @@ class GraphPaintBuffer {
         }, 0);
 
         const neededHeight = Math.max(largestCrossing * 4 - 1, 1);
-        this.buffer.extendHeight(neededHeight);
 
         for (const { startColumn, endColumn, node } of edges) {
             const start = startColumn * 4;
@@ -66,22 +78,15 @@ class GraphPaintBuffer {
             this.activeThreads.delete(node.version);
         }
 
-        for (const { columns } of this.activeThreads.values()) {
-            for (const column of columns) {
-                this.buffer.copyIn(
-                    { y: this.currentRow, x: column * 4 },
-                    RleMatrix.fromAscii("|".repeat(neededHeight), { width: 1 }),
-                );
-            }
-        }
-
+        this.drawActiveThreads(neededHeight);
         // end
         this.currentRow += neededHeight;
     }
 
     public drawRankData(data: CellData[], isFirst: boolean = false) {
         const asSorted = data.slice().sort((a, b) => a.column - b.column);
-        this.buffer.extendHeight(asSorted.length);
+
+        this.drawActiveThreads(asSorted.length);
 
         // First draw the connections
         for (let i = 0; i < asSorted.length; i++) {
@@ -200,7 +205,8 @@ export const dispatchLog = async (argv: string[]) => {
 
     const result = new GraphPaintBuffer();
 
-    for (const [rank, ids] of byRank.entries()) {
+    const sortedEntries = [...byRank.entries()].sort((a, b) => a[0] - b[0]);
+    for (const [rank, ids] of sortedEntries) {
         const data = ids.map((id) => graph.get(id)!);
         result.addRank(data, rank);
     }
@@ -211,7 +217,7 @@ export const dispatchLog = async (argv: string[]) => {
 
         return;
     } else {
-        const tmpDir = await fs.mkdtemp("pq-log-");
+        const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "pq-log-"));
         const tmpFile = `${tmpDir}/log.txt`;
 
         try {
