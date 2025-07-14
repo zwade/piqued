@@ -11,7 +11,7 @@ Piqued is not even remotely stable. I'm building the boat as I set sail so that 
 You can install the binaries by running
 
 ```bash
-https://raw.githubusercontent.com/zwade/piqued/refs/heads/master/rust/piqued/scripts/install.sh | bash
+curl https://raw.githubusercontent.com/zwade/piqued/refs/heads/master/rust/piqued/scripts/install.sh | bash
 ```
 
 And you can add the client by installing
