@@ -110,7 +110,7 @@ export class SmartClient {
         values: any[] = [],
         options: StreamOptions = {},
         mapperFn?: (row: unknown) => T,
-    ): AsyncIterableIterator<StreamShape<T, O>> {
+    ): StreamShape<T, O> {
         if (this.active === false) {
             throw new Error("This client is in a transaction. Please do not use it until the transaction completes.");
         }
@@ -147,7 +147,7 @@ export class SmartClient {
                     }
                 };
 
-                return generator() as AsyncIterableIterator<StreamShape<T, O>>;
+                return generator() as StreamShape<T, O>;
             }
         } catch (e) {
             console.error(`Query failed`);

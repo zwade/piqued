@@ -2,7 +2,7 @@ import { QueryResultRow } from "pg";
 
 import { ColumnOrderCache } from "../order-managment";
 import { parse } from "../parser";
-import { SmartClient } from "../smart-client";
+import { SmartClient, StreamOptions, StreamShape } from "../smart-client";
 import { ParseSpec } from "../types";
 import {
     ColumnExpression,
@@ -60,6 +60,19 @@ export abstract class ExecutableQuery<T extends ResultState> {
         const { data, values } = this.serialize();
         const result = await client.query(data, values);
         return result.rows.map((row) => this.postProcessRow(row, client.columnOrderCache));
+    }
+
+    public stream<Options extends StreamOptions>(
+        client: SmartClient,
+        options?: Options,
+    ): StreamShape<T["results"], Options> {
+        const { data, values } = this.serialize();
+
+        const stream = client.queryStream<T["results"], Options>(data, values, options, (row) =>
+            this.postProcessRow(row as QueryResultRow, client.columnOrderCache),
+        );
+
+        return stream as StreamShape<T["results"], Options>;
     }
 
     private postProcessRow(row: QueryResultRow, columnOrderCache: ColumnOrderCache): T["results"] {

@@ -87,8 +87,8 @@ impl TSGenerator {
         }
 
         let native_type = match type_ {
-            "int4" | "int8" | "float4" | "float8" | "numeric" => "number",
-            "text" | "varchar" | "char" | "uuid" => "string",
+            "int4" | "int8" | "float4" | "float8" => "number",
+            "text" | "varchar" | "char" | "uuid" | "numeric" => "string",
             "bytea" => "Buffer",
             "bool" => "boolean",
             "date" | "timestamp" | "time" | "timestamptz" => "Date",
