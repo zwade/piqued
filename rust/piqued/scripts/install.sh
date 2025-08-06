@@ -26,19 +26,27 @@ function get_file() {
     FILE_NAME="${BASE_NAME}.${ARCH}-${OS}"
 
     SCRIPT=$(cat <<EOF
-import sys, json
-assets = [asset for asset in json.load(sys.stdin)['assets'] if asset['name'] == '${FILE_NAME}']
-if len(assets) == 0:
-    sys.exit(1);
-print(assets[0]['url'])
+const fs = require("fs");
+
+const FILE_NAME = "${FILE_NAME}";
+const input = JSON.parse(fs.readFileSync(0, "utf8"));
+
+for (const asset of input.assets) {
+    if (asset.name === FILE_NAME) {
+        console.log(asset.url);
+        process.exit(0);
+    }
+}
+
+process.exit(1);
 EOF
-    )
+)
 
     ASSET_URL=$(curl --request GET \
         --url https://api.github.com/repos/zwade/piqued/releases/latest \
         -Ss \
         --header 'Accept: application/vnd.github+json' \
-        | python -c "$SCRIPT"
+        | node -e "$SCRIPT"
     )
 
     if [[ $? -ne 0 ]]; then
@@ -61,7 +69,7 @@ EOF
 
     echo "Installing to /usr/local/bin/${BASE_NAME}"
 
-    sudo mv "${TMPFILE}" /usr/local/bin/${BASE_NAME}
+    mv "${TMPFILE}" /usr/local/bin/${BASE_NAME} 2>/dev/null || sudo mv "${TMPFILE}" /usr/local/bin/${BASE_NAME}
 }
 
 get_file piqued
