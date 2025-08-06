@@ -3,9 +3,12 @@ use std::{collections::HashMap, path::PathBuf, sync::Arc};
 use tower_lsp::lsp_types::{Diagnostic, DiagnosticSeverity, Position, Range};
 
 use crate::{
-    codegen::{codegen::CodeGenerationContext, ts::schema::TSGenerator},
+    codegen::{
+        codegen::{CodeGenerationContext, CodeGenerationOptions},
+        ts::schema::TSGenerator,
+    },
     config::config::Config,
-    parser::parser::{self, ParsedFile, RelocatedStmt},
+    parser::parser::{self, RelocatedStmt},
     query::query::Query,
     utils::result::{PiquedError, Result},
 };
@@ -113,21 +116,27 @@ impl Workspace {
         Ok(diagnostics)
     }
 
-    pub async fn gen_code(&self) -> Result<()> {
+    pub async fn gen_code(&self, options: &CodeGenerationOptions) -> Result<()> {
         let query = match &self.query {
             Err(e) => return Err(e.clone()),
             Ok(q) => q,
         };
 
         let codegen = CodeGenerationContext::new(self.config.clone(), query);
-
         let ts_generator = TSGenerator::new();
+        let mut success = true;
 
-        codegen.generate_system_types(&ts_generator).await;
-        codegen.generate_table_file(&ts_generator).await;
-        codegen.generate_queries(&ts_generator).await;
+        success &= codegen.generate_system_types(&ts_generator, &options).await;
+        success &= codegen.generate_table_file(&ts_generator, &options).await;
+        success &= codegen.generate_queries(&ts_generator, &options).await;
 
-        Ok(())
+        if !success {
+            Err(PiquedError::OtherError(
+                "Code generation failed".to_string(),
+            ))
+        } else {
+            Ok(())
+        }
     }
 
     pub async fn is_compile_target(&self, path: &PathBuf) -> bool {

@@ -34,6 +34,6 @@ pub mod workspace {
     pub mod workspace;
 }
 
-mod utils {
+pub mod utils {
     pub mod result;
 }

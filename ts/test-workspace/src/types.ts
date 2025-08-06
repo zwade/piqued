@@ -707,10 +707,11 @@ export namespace PdsFile {
         "uid": string;
         "created_at": Date;
         "updated_at": Date;
-        "pds_system_uid": string;
         "status": PdsFileStatus.t;
         "name": string;
         "data": Buffer;
+        "pds_registration_uid": string;
+        "last_ingested_at": Date;
     };
     
     export const spec = {
@@ -719,10 +720,11 @@ export namespace PdsFile {
             ["uid", String],
             ["created_at", Date],
             ["updated_at", Date],
-            ["pds_system_uid", String],
             ["status", PdsFileStatus.spec],
             ["name", String],
             ["data", Buffer],
+            ["pds_registration_uid", String],
+            ["last_ingested_at", Date],
         ] as const,
     };
 }
@@ -805,6 +807,8 @@ export namespace PdsPerson {
         "has_consent": boolean;
         "medical_record_number": string;
         "date_of_birth": Date;
+        "race": string;
+        "gender": string;
     };
     
     export const spec = {
@@ -822,6 +826,8 @@ export namespace PdsPerson {
             ["has_consent", Boolean],
             ["medical_record_number", String],
             ["date_of_birth", Date],
+            ["race", String],
+            ["gender", String],
         ] as const,
     };
 }
@@ -857,6 +863,7 @@ export namespace PdsMedication {
         "pds_system_uid": string;
         "entity_id": string;
         "name": string;
+        "ndc": string;
     };
     
     export const spec = {
@@ -868,6 +875,7 @@ export namespace PdsMedication {
             ["pds_system_uid", String],
             ["entity_id", String],
             ["name", String],
+            ["ndc", String],
         ] as const,
     };
 }
@@ -1760,21 +1768,6 @@ export namespace ExperimentSplit {
     };
 }
 
-export namespace Foo {
-    export const name = "foo";
-    
-    export type t = {
-        "data": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["data", String],
-        ] as const,
-    };
-}
-
 export namespace PracticeAnalytics {
     export const name = "practice_analytics";
     
@@ -1941,6 +1934,8 @@ export namespace PdsPrescription {
         "pds_insurance_uid": string;
         "description": string;
         "written_at": Date;
+        "refills": number;
+        "site": string;
     };
     
     export const spec = {
@@ -1956,6 +1951,8 @@ export namespace PdsPrescription {
             ["pds_insurance_uid", String],
             ["description", String],
             ["written_at", Date],
+            ["refills", Number],
+            ["site", String],
         ] as const,
     };
 }
@@ -2142,6 +2139,83 @@ export namespace PdsMedicationPricing {
             ["description", String],
             ["price_wac", String],
             ["price_340b", String],
+        ] as const,
+    };
+}
+
+export namespace AnalyticsPharmacyObservation {
+    export const name = "analytics_pharmacy_observation";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "analytics_batch_uid": string;
+        "pds_pharmacy_uid": string;
+        "done": boolean;
+        "results": any;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["analytics_batch_uid", String],
+            ["pds_pharmacy_uid", String],
+            ["done", Boolean],
+            ["results", Object],
+        ] as const,
+    };
+}
+
+export namespace LatestPharmacyObservation {
+    export const name = "latest_pharmacy_observation";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "analytics_batch_uid": string;
+        "pds_pharmacy_uid": string;
+        "done": boolean;
+        "results": any;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["analytics_batch_uid", String],
+            ["pds_pharmacy_uid", String],
+            ["done", Boolean],
+            ["results", Object],
+        ] as const,
+    };
+}
+
+export namespace AggregationCache {
+    export const name = "aggregation_cache";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "last_triggered_at": Date;
+        "cache_key": string;
+        "cache_value": any;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["last_triggered_at", Date],
+            ["cache_key", String],
+            ["cache_value", Object],
         ] as const,
     };
 }
@@ -2574,6 +2648,7 @@ export namespace OutreachStatus {
         | "SUCCESS"
         | "DECLINED"
         | "UNREACHABLE"
+        | "PAYOR_LOCKOUT"
         ;
     
     export const spec = {
@@ -2583,6 +2658,7 @@ export namespace OutreachStatus {
             "SUCCESS",
             "DECLINED",
             "UNREACHABLE",
+            "PAYOR_LOCKOUT",
         ] as const,
     };
 }

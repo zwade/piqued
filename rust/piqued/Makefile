@@ -9,8 +9,13 @@ all := $(foreach arch,$(ARCHITECTURES), \
 
 .PHONY: $(all)
 
-$(all):
+$(foreach arch,$(ARCHITECTURES),$(arch)-apple-darwin):
 	cross build --target $@ --release
+	cp target/$@/release/piqued builds/piqued.$@
+	cp target/$@/release/piqued_lsp builds/piqued_lsp.$@
+
+$(foreach arch,$(ARCHITECTURES),$(arch)-unknown-linux-gnu):
+	DOCKER_DEFAULT_PLATFORM=linux/amd64 cross build --target $@ --release
 	cp target/$@/release/piqued builds/piqued.$@
 	cp target/$@/release/piqued_lsp builds/piqued_lsp.$@
 

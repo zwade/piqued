@@ -2,6 +2,8 @@
 
 use clap::{value_parser, Arg, ArgAction, Command};
 use notify::{DebouncedEvent, RecursiveMode, Watcher};
+use piqued::codegen::codegen::CodeGenerationOptions;
+use piqued::utils::result::Result;
 use piqued::workspace::workspace::Workspace;
 use std::sync::mpsc::channel;
 use std::time::Duration;
@@ -16,6 +18,7 @@ struct CliOptions {
     pub watch: bool,
     pub no_emit: bool,
     pub verbose: bool,
+    pub comparison_only: bool,
 }
 
 fn get_args() -> CliOptions {
@@ -45,6 +48,13 @@ fn get_args() -> CliOptions {
                 .action(ArgAction::SetTrue),
         )
         .arg(
+            Arg::new("comparison-only")
+                .short('C')
+                .long("comparison-only")
+                .required(false)
+                .action(ArgAction::SetTrue),
+        )
+        .arg(
             Arg::new("verbose")
                 .short('v')
                 .long("verbose")
@@ -57,31 +67,37 @@ fn get_args() -> CliOptions {
     let watch = matches.get_one::<bool>("watch").unwrap_or(&false);
     let no_emit = matches.get_one::<bool>("no-emit").unwrap_or(&false);
     let verbose = matches.get_one::<bool>("verbose").unwrap_or(&false);
+    let comparison_only = matches.get_one::<bool>("comparison-only").unwrap_or(&false);
 
     CliOptions {
         config_path,
         watch: watch.clone(),
         no_emit: no_emit.clone(),
         verbose: verbose.clone(),
+        comparison_only: comparison_only.clone(),
     }
 }
 
-async fn compile_one(workspace: &Workspace, options: &CliOptions) {
+async fn compile_one(workspace: &Workspace, options: &CliOptions) -> Result<()> {
     if options.no_emit {
         if options.verbose {
             println!("Not emitting code");
             println!("Typecheck-only-mode not currently supported");
         }
 
-        return;
+        return Ok(());
     }
 
-    let result = workspace.gen_code().await;
+    let options: CodeGenerationOptions = CodeGenerationOptions {
+        comparison_only: options.comparison_only,
+    };
+
+    let result = workspace.gen_code(&options).await;
     if let Err(e) = result {
-        eprintln!("Error generating code: {:?}", e);
+        return Err(e);
     }
 
-    return;
+    return Ok(());
 }
 
 async fn compile_on_change(workspace: &mut Workspace, options: &CliOptions) {
@@ -109,7 +125,7 @@ async fn compile_on_change(workspace: &mut Workspace, options: &CliOptions) {
             ) => {
                 if workspace.is_compile_target(&p).await {
                     println!("Change detected, recompiling...");
-                    compile_one(workspace, options).await;
+                    let _ = compile_one(workspace, options).await;
                 }
             }
             Ok(e) => {
@@ -126,7 +142,7 @@ async fn compile_on_change(workspace: &mut Workspace, options: &CliOptions) {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     let args = get_args();
 
     let working_dir = fs::canonicalize(env::current_dir().unwrap()).await.unwrap();
@@ -154,8 +170,9 @@ async fn main() {
 
     if args.watch {
         compile_on_change(&mut workspace, &args).await;
+        Ok(())
     } else {
         println!("Compiling...");
-        compile_one(&workspace, &args).await;
+        return compile_one(&workspace, &args).await;
     }
 }

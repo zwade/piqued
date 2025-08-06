@@ -99,6 +99,10 @@ pub struct CodeGenerationContext<'a> {
     pub query: &'a Query,
 }
 
+pub struct CodeGenerationOptions {
+    pub comparison_only: bool,
+}
+
 impl<'a> CodeGenerationContext<'a> {
     pub fn new(config: Arc<Config>, query: &'a Query) -> CodeGenerationContext<'a> {
         let working_dir = config.workspace.root.as_ref().unwrap().clone();
@@ -110,7 +114,11 @@ impl<'a> CodeGenerationContext<'a> {
         }
     }
 
-    pub async fn generate_system_types(&self, generator: &dyn CodeGenerator) -> () {
+    pub async fn generate_system_types(
+        &self,
+        generator: &dyn CodeGenerator,
+        options: &CodeGenerationOptions,
+    ) -> bool {
         let mut b = Builder::default();
         let mut imports: Vec<String> = vec![];
 
@@ -146,13 +154,32 @@ impl<'a> CodeGenerationContext<'a> {
         let base_path = self.get_root_path();
         let source_path = generator.resolve_file_path(self, &base_path);
 
-        fs::write(source_path, b.string().unwrap()).await.unwrap();
+        let produced_file = b.string().unwrap();
+        let existing = fs::read_to_string(source_path.clone())
+            .await
+            .unwrap_or_default();
+
+        if produced_file != existing {
+            if options.comparison_only {
+                println!("Changes detected to system types.");
+
+                return false;
+            } else {
+                fs::write(source_path.clone(), produced_file).await.unwrap();
+            }
+        }
+
+        true
     }
 
-    pub async fn generate_table_file(&self, generator: &dyn CodeGenerator) -> () {
+    pub async fn generate_table_file(
+        &self,
+        generator: &dyn CodeGenerator,
+        options: &CodeGenerationOptions,
+    ) -> bool {
         let table_file = match &self.config.emit.table_file {
             Some(table_file) => table_file,
-            None => return,
+            None => return true,
         };
 
         let mut code_segments: Vec<String> = vec![];
@@ -190,19 +217,46 @@ impl<'a> CodeGenerationContext<'a> {
             b.append(chunk);
         }
 
-        fs::write(source_path, b.string().unwrap()).await.unwrap();
+        let produced_file = b.string().unwrap();
+        let existing = fs::read_to_string(source_path.clone())
+            .await
+            .unwrap_or_default();
+
+        if produced_file != existing {
+            if options.comparison_only {
+                println!("Changes detected to table file.");
+
+                return false;
+            } else {
+                fs::write(source_path, produced_file).await.unwrap();
+            }
+        }
+
+        true
     }
 
-    pub async fn generate_queries(&self, generator: &dyn CodeGenerator) -> () {
+    pub async fn generate_queries(
+        &self,
+        generator: &dyn CodeGenerator,
+        options: &CodeGenerationOptions,
+    ) -> bool {
         let query_files = self.locate_query_files().await;
+        let mut overall_success = true;
 
         for query_file in query_files {
             let mut dst_file = query_file.clone();
             dst_file.set_extension("ts");
 
-            self.generate_query_file(generator, &query_file, &dst_file)
+            let success = self
+                .generate_query_file(generator, &query_file, &dst_file, options)
                 .await;
+
+            if !success {
+                overall_success = false;
+            }
         }
+
+        overall_success
     }
 
     async fn locate_query_files(&self) -> Vec<PathBuf> {
@@ -243,7 +297,8 @@ impl<'a> CodeGenerationContext<'a> {
         generator: &dyn CodeGenerator,
         src_file: &PathBuf,
         dst_file: &PathBuf,
-    ) {
+        options: &CodeGenerationOptions,
+    ) -> bool {
         let contents = fs::read_to_string(src_file).await.unwrap();
         let data = parser::load_file(&contents);
 
@@ -264,7 +319,7 @@ impl<'a> CodeGenerationContext<'a> {
 
             Err(e) => {
                 println!("Error: {:#?}", e);
-                return;
+                return false;
             }
         };
 
@@ -291,7 +346,21 @@ impl<'a> CodeGenerationContext<'a> {
             b.append("\n\n");
         }
 
-        fs::write(dst_file, b.string().unwrap()).await.unwrap();
+        let produced_file = b.string().unwrap();
+        let existing = fs::read_to_string(dst_file.clone())
+            .await
+            .unwrap_or_default();
+
+        if produced_file != existing {
+            if options.comparison_only {
+                println!("Changes detected to query file: {}", src_file.display());
+                return false;
+            } else {
+                fs::write(dst_file, produced_file).await.unwrap();
+            }
+        }
+
+        true
     }
 
     fn generate_import_statements(
