@@ -12,7 +12,7 @@ export class ColumnExpression<_Result, Name extends string> {
 export class TableExpression<_Result, Name extends string> {
     constructor(
         public name: Name,
-        public parser: ParseSpec,
+        public parser: CustomParseSpec & { kind: "composite" },
     ) {}
 }
 

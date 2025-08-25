@@ -32,7 +32,7 @@ fn get_args() -> CliOptions {
                 .required(false)
                 .num_args(1)
                 .action(ArgAction::Set)
-                .value_parser(value_parser!(PathBuf)),
+                .value_parser(value_parser!(String)),
         )
         .arg(
             Arg::new("watch")

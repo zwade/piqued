@@ -20,10 +20,49 @@ export type ResultState = {
     results: Record<string, unknown>;
 };
 
+export type ParserKind =
+    | {
+          kind: "single";
+          spec: ParseSpec | null;
+      }
+    | { kind: "mangled"; spec: ParseSpec | null; parentObjectName: string; parentColumnName: string };
+
 export abstract class ExecutableQuery<T extends ResultState> {
-    #parserMap: Record<string, ParseSpec | null> | null = null;
+    #parserMap: Record<string, ParserKind> | null = null;
 
     protected abstract selections: (Expression | Label)[];
+    protected experimentalMangle: boolean = false;
+
+    protected buildSelectionList(state: MutableSerializationState) {
+        if (!this.experimentalMangle) {
+            return this.selections.map((e) => serializeExpression(e, state)).join(", ");
+        } else {
+            const accumulator: string[] = [];
+            for (const e of this.selections) {
+                if (e instanceof TableExpression) {
+                    for (const [colName, colParser] of e.parser.fields()) {
+                        accumulator.push(
+                            serializeExpression(
+                                new Label(new ColumnExpression(e.name, colName, colParser), `_${e.name}__${colName}`),
+                                state,
+                            ),
+                        );
+                    }
+                } else {
+                    // TODO: Special handling of labeled table expressions
+                    accumulator.push(serializeExpression(e, state));
+                }
+            }
+
+            return accumulator.join(", ");
+        }
+    }
+
+    public enableExperimentalMangle<TS extends ExecutableQuery<any>>(this: TS): TS {
+        this.experimentalMangle = true;
+
+        return this;
+    }
 
     public abstract serialize(): { data: string; values: any[] };
 
@@ -76,14 +115,30 @@ export abstract class ExecutableQuery<T extends ResultState> {
     }
 
     private postProcessRow(row: QueryResultRow, columnOrderCache: ColumnOrderCache): T["results"] {
-        const result = {} as Record<string, any>;
+        const result = Object.create(null) as Record<string, any>;
 
         for (const [key, value] of Object.entries(row)) {
             const parser = this.parserMap[key];
-            if (parser) {
-                result[key] = parse(parser, value, columnOrderCache);
-            } else {
-                result[key] = value;
+            switch (parser.kind) {
+                case "single": {
+                    if (parser.spec === null) {
+                        result[key] = value;
+                    } else {
+                        result[key] = parse(parser.spec, value, columnOrderCache);
+                    }
+                    break;
+                }
+                case "mangled": {
+                    const parentObject = (result[parser.parentObjectName] ??= Object.create(null));
+                    result[parser.parentObjectName] = parentObject;
+
+                    if (parser.spec === null) {
+                        parentObject[parser.parentColumnName] = value;
+                    } else {
+                        parentObject[parser.parentColumnName] = parse(parser.spec, value, columnOrderCache);
+                    }
+                    break;
+                }
             }
         }
 
@@ -92,7 +147,7 @@ export abstract class ExecutableQuery<T extends ResultState> {
 
     private get parserMap() {
         if (this.#parserMap === null) {
-            const parserMap = Object.create(null) as Record<string, ParseSpec | null>;
+            const parserMap = Object.create(null) as Record<string, ParserKind>;
 
             const needsParse = (
                 parser: ParseSpec | null,
@@ -100,35 +155,53 @@ export abstract class ExecutableQuery<T extends ResultState> {
                 return parser !== null && typeof parser === "object";
             };
 
-            const getParser = (e: Expression | Label): [string, ParseSpec] | null => {
+            const getParser = (e: Expression | Label): [string, ParserKind][] => {
                 if (e instanceof Label) {
                     const parser = getParser(e.e);
 
-                    if (parser === null) {
-                        return null;
+                    if (parser.length < 1) {
+                        return [];
                     }
 
-                    return [e.name, parser[1]];
+                    if (parser.length > 1) {
+                        console.error("Unable to get parser for labeled expression with multiple parsers");
+                        return [];
+                    }
+
+                    return [[e.name, parser[0][1]]];
                 }
 
-                if (e instanceof TableExpression && needsParse(e.parser)) {
-                    return [e.name, e.parser];
+                if (e instanceof TableExpression && needsParse(e.parser) && !this.experimentalMangle) {
+                    return [[e.name, { kind: "single", spec: e.parser }]];
+                }
+
+                if (e instanceof TableExpression && needsParse(e.parser) && this.experimentalMangle) {
+                    const results: [string, ParserKind][] = [];
+
+                    for (const [colName, colParser] of e.parser.fields()) {
+                        results.push([
+                            `_${e.name}__${colName}`,
+                            { kind: "mangled", spec: colParser, parentObjectName: e.name, parentColumnName: colName },
+                        ]);
+                    }
+
+                    return results;
                 }
 
                 if (e instanceof ColumnExpression && needsParse(e.parser)) {
-                    return [e.tableName, e.parser];
+                    return [[e.tableName, { kind: "single", spec: e.parser }]];
                 }
 
                 if (e instanceof FunctionOperation && needsParse(e.parser)) {
-                    return [e.name, e.parser];
+                    return [[e.name, { kind: "single", spec: e.parser }]];
                 }
 
-                return null;
+                return [];
             };
 
             for (const e of this.selections) {
-                const parser = getParser(e);
-                if (parser) {
+                const parsers = getParser(e);
+                for (const parser of parsers) {
                     parserMap[parser[0]] = parser[1];
                 }
             }
@@ -223,8 +296,7 @@ export class QueryState<T extends ResultState> extends ExecutableQuery<T> {
             paramValues: [],
         };
 
-        let accumulator =
-            "select " + this.#state.selections.map((e) => serializeExpression(e, state)).join(", ") + "\n";
+        let accumulator = "select " + this.buildSelectionList(state) + "\n";
         accumulator += `from "${this.#state.fromTable.name}"\n`;
 
         for (const [kind, table, exp] of this.#state.joins) {
@@ -350,7 +422,7 @@ export class InsertState<ColumnState, T extends ResultState = { results: {} }> e
         }
 
         if (this.#state.returning !== null) {
-            accumulator += `returning ${this.#state.returning.map((e) => serializeExpression(e, state)).join(", ")}`;
+            accumulator += `returning ${this.buildSelectionList(state)}\n`;
         }
 
         return {
@@ -422,7 +494,7 @@ export class UpdateState<ColumnState, T extends ResultState = { results: {} }> e
         }
 
         if (this.#state.returning !== null) {
-            accumulator += `returning ${this.#state.returning.map((e) => serializeExpression(e, state)).join(", ")}`;
+            accumulator += `returning ${this.buildSelectionList(state)}`;
         }
 
         return {
@@ -476,7 +548,7 @@ export class DeleteState<T extends ResultState = { results: {} }> extends Execut
         }
 
         if (this.#state.returning !== null) {
-            accumulator += `returning ${this.#state.returning.map((e) => serializeExpression(e, state)).join(", ")}`;
+            accumulator += `returning ${this.buildSelectionList(state)}\n`;
         }
 
         return {

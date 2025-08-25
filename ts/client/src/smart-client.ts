@@ -13,6 +13,7 @@ export interface ClientOptions {
     txDepth?: number;
     rootClient?: SmartClient;
     columnOrderCache?: ColumnOrderCache;
+    queryLogger?: (query: string, values?: any[]) => void;
 }
 
 export interface Disposable {
@@ -35,16 +36,18 @@ export class SmartClient {
     protected txDepth;
     protected active;
     protected rootClient: SmartClient;
+    protected queryLogger?: (query: string, values?: any[]) => void;
 
     protected events: Map<Event, Set<EventCallback<[SmartClient]>>> = new Map();
 
     public columnOrderCache: ColumnOrderCache;
 
-    constructor(client: PoolClient, { txDepth = 0, rootClient, columnOrderCache }: ClientOptions = {}) {
+    constructor(client: PoolClient, { txDepth = 0, rootClient, columnOrderCache, queryLogger }: ClientOptions = {}) {
         this.client = client;
         this.txDepth = txDepth;
         this.active = true;
         this.rootClient = rootClient ?? this;
+        this.queryLogger = queryLogger;
         this.columnOrderCache = columnOrderCache ?? new WeakMap();
     }
 
@@ -83,6 +86,7 @@ export class SmartClient {
         }
 
         try {
+            this.queryLogger?.(query, values);
             return this.client.query<T>(query, values);
         } catch (e) {
             console.error(`Query failed`);
@@ -97,6 +101,7 @@ export class SmartClient {
         }
 
         try {
+            this.queryLogger?.(query, values);
             return this.client.query<T>({ text: query, values, rowMode: "array" });
         } catch (e) {
             console.error(`Query failed`);
@@ -116,6 +121,7 @@ export class SmartClient {
         }
 
         try {
+            this.queryLogger?.(query, values);
             const cursor = this.client.query(new Cursor(query, values));
             const batchSize = options.batchSize;
             if (batchSize === undefined) {

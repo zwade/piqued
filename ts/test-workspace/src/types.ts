@@ -4,23 +4,6 @@
 // Or file a bug report on our definitely-extant github
 
 
-export namespace PiquedVersion {
-    export const name = "_piqued_version";
-    
-    export type t = {
-        "index_key": number;
-        "version": number;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["index_key", Number],
-            ["version", Number],
-        ] as const,
-    };
-}
-
 export namespace Person {
     export const name = "person";
     
