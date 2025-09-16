@@ -78,4 +78,7 @@ export const pqNew = async (directory: string, newUpgrade: string) => {
     await fs.writeFile(pathMod.join(baseDir, "upgrade.sql"), upgradeSql, { encoding: "utf8" });
     await fs.writeFile(pathMod.join(baseDir, "downgrade.sql"), downgradeSql, { encoding: "utf8" });
     await fs.writeFile(pathMod.join(baseDir, "migration.toml"), optionsToml, { encoding: "utf8" });
+
+    process.stdout.write(baseDir);
+    process.stdout.write("\n");
 };

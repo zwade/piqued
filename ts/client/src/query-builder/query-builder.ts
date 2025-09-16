@@ -33,6 +33,10 @@ export abstract class ExecutableQuery<T extends ResultState> {
     protected abstract selections: (Expression | Label)[];
     protected experimentalMangle: boolean = false;
 
+    /**
+     * Used with the new `experimentalMangle` feature to rewrite selection lists
+     * (e.g. `SELECT ... FROM table`) to expand table selections into individual columns.
+     */
     protected buildSelectionList(state: MutableSerializationState) {
         if (!this.experimentalMangle) {
             return this.selections.map((e) => serializeExpression(e, state)).join(", ");
@@ -58,6 +62,9 @@ export abstract class ExecutableQuery<T extends ResultState> {
         }
     }
 
+    /**
+     * Turns on experimental mangling of nested objects for the query
+     */
     public enableExperimentalMangle<TS extends ExecutableQuery<any>>(this: TS): TS {
         this.experimentalMangle = true;
 
@@ -119,6 +126,11 @@ export abstract class ExecutableQuery<T extends ResultState> {
 
         for (const [key, value] of Object.entries(row)) {
             const parser = this.parserMap[key];
+            if (!parser) {
+                result[key] = value;
+                continue;
+            }
+
             switch (parser.kind) {
                 case "single": {
                     if (parser.spec === null) {
@@ -179,9 +191,11 @@ export abstract class ExecutableQuery<T extends ResultState> {
                     const results: [string, ParserKind][] = [];
 
                     for (const [colName, colParser] of e.parser.fields()) {
+                        const spec = needsParse(colParser) ? colParser : null;
+
                         results.push([
                             `_${e.name}__${colName}`,
-                            { kind: "mangled", spec: colParser, parentObjectName: e.name, parentColumnName: colName },
+                            { kind: "mangled", spec, parentObjectName: e.name, parentColumnName: colName },
                         ]);
                     }
 

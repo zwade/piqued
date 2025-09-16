@@ -76,8 +76,10 @@ export const QueryExecutor =
         }
 
         const state: MutableSerializationState = { paramCount: 0, paramValues: [] };
-        const formattedQuery = query.query.replace(/:__tmpl_([\w\d_]+)/g, (_, name) => {
-            return serializeExpression(resolvedTemplateArgs[name as keyof TIO] as Expression, state, {
+        const formattedQuery = query.query.replace(/:__tmpl_([\w\d_]+)/g, (_, name: string) => {
+            const camelCased = name.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+
+            return serializeExpression(resolvedTemplateArgs[camelCased as keyof TIO] as Expression, state, {
                 inlineOnly: true,
             });
         });
