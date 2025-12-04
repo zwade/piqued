@@ -90,7 +90,6 @@ class PgParser {
 
         const fields = spec.fields();
         if (results.length !== fields.length) {
-            console.log(results, fields);
             throw new Error("Mismatched fields");
         }
 
@@ -179,6 +178,21 @@ export const parse = (
     if (customSpec.kind === "enum") {
         return value;
     }
+};
+
+export const parseTopLevel = (rawParseSpec: ParseSpec, value: any, columnOrderCache: ColumnOrderCache) => {
+    // Checks that we're either a top-level array or composite
+    if (typeof rawParseSpec !== "object" || rawParseSpec === null || rawParseSpec.kind === "enum" || value === null) {
+        return value;
+    }
+
+    // We're dancing around node-pg's best-attempt at parsing here.
+    // If it can parse _all_ of it, then it will, otherwise it will give us a string
+    if (typeof value === "string") {
+        return parse(rawParseSpec, value, columnOrderCache);
+    }
+
+    return value;
 };
 
 export const parseBuffer = (value: string): Buffer => {

@@ -2,7 +2,7 @@ import { Pool } from "pg";
 import simpleQueries from "./simple-queries";
 import { acquireColumnOrderCache, buildColumnOrderCache, Op, Select, SmartClient, tuple } from "@piqued/client";
 import * as ns from "../types";
-import { PersonTable, UserAuthTable } from "../orm";
+import { FtStateTable, PersonTable, Test2Table, UserAuthTable } from "../orm";
 
 const pool = new Pool({
     user: "postgres",
@@ -25,15 +25,16 @@ const main = async () => {
     // console.log(result.array_agg);
     // console.log(await SimpleQueries.selectArray({ $0: [1, 2, 3] }).many())
 
-    const result =
-        await Select(UserAuthTable.table, PersonTable.table)
-        .from(UserAuthTable)
-        .innerJoin(PersonTable, Op.eq(PersonTable.c.uid, UserAuthTable.c.person_uid))
-        .where(Op.eq(PersonTable.c.email, 'zach@compassrx.com'))
-        .enableExperimentalMangle()
-        .many(client);
+    const resultRaw = await pool.query("SELECT * FROM test_2");
+    console.log(">>>", resultRaw.rows);
 
-    console.log(result);
+    const result =
+        await Select(Test2Table.table)
+        .from(Test2Table)
+        .enableExperimentalMangle()
+        .one(client);
+
+    console.log(result.test_2.array_agg);
 
     await pool.end();
 }

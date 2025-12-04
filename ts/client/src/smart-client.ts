@@ -31,10 +31,13 @@ export type StreamShape<T, O extends StreamOptions> = O extends { batchSize: num
 export type Event = "commit" | "rollback";
 export type EventCallback<Args extends unknown[] = []> = (...args: Args) => void | Promise<void>;
 
+const transactionEvents = new Set<Event>(["commit", "rollback"]);
+
 export class SmartClient {
     protected client;
     protected txDepth;
     protected active;
+    protected inTx;
     protected rootClient: SmartClient;
     protected queryLogger?: (query: string, values?: any[]) => void;
 
@@ -46,6 +49,7 @@ export class SmartClient {
         this.client = client;
         this.txDepth = txDepth;
         this.active = true;
+        this.inTx = false;
         this.rootClient = rootClient ?? this;
         this.queryLogger = queryLogger;
         this.columnOrderCache = columnOrderCache ?? new WeakMap();
@@ -194,6 +198,8 @@ export class SmartClient {
         });
 
         try {
+            this.inTx = true;
+
             if (this.txDepth === 0) {
                 await this.client.query("BEGIN;");
             } else {
@@ -240,15 +246,48 @@ export class SmartClient {
             // TODO(zwade): Is this assumption true?
             this.active = true;
             newClient.active = false;
+            this.inTx = false;
+        }
+    }
+
+    private checkTxEvents(event: Event) {
+        if (transactionEvents.has(event) && !(this.inTx || this.txDepth > 0)) {
+            console.trace(`Cannot listen for ${event} on a non-transactional client. This event will never fire`);
         }
     }
 
     public on(event: Event, fn: EventCallback<[]>): Disposable {
+        this.checkTxEvents(event);
+
         return this.addEvent(event, fn);
     }
 
     public onRoot(event: Event, fn: EventCallback<[client: SmartClient]>): Disposable {
+        this.checkTxEvents(event);
+
         return this.rootClient.addEvent(event, fn);
+    }
+
+    public once(event: Event, fn: EventCallback<[]>): Disposable {
+        this.checkTxEvents(event);
+
+        const disposable = this.addEvent(event, () => {
+            disposable();
+            return fn();
+        });
+
+        return disposable;
+    }
+
+    public onceRoot(event: Event, fn: EventCallback<[client: SmartClient]>): Disposable {
+        this.checkTxEvents(event);
+
+        const disposable = this.rootClient.addEvent(event, (client) => {
+            disposable();
+            return fn(client);
+        });
+
+        return disposable;
     }
 
     [Symbol.dispose]() {

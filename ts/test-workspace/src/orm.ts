@@ -1,4 +1,4 @@
-import { AggregationCache, AnalyticsBatch, AnalyticsCampaignObservation, AnalyticsPharmacyObservation, AuthToken, Campaign, CampaignDetail, ChannelFd, ChatMessage, ChatMessageData, ConsentChannelFdMap, EmailVerificationToken, EvalResult, EvalSpec, Experiment, ExperimentSplit, Fsm, FsmEdge, FsmInstance, FsmNode, FtState, FtvmCache, LatestCampaignObservation, LatestPharmacyObservation, Message, OneTimePassword, Outreach, OutreachEvent, PatientAdherenceEvent, PatientList, PatientMedication, PdsAddress, PdsAddressPersonRelationship, PdsFile, PdsFileBatch, PdsFileParserMap, PdsInsurance, PdsMedication, PdsMedicationPricing, PdsPerson, PdsPersonDetail, PdsPersonInsuranceRelationship, PdsPersonMedicationRelationship, PdsPersonPrescriberRelationship, PdsPharmacy, PdsPrescriber, PdsPrescription, PdsPrescriptionDetail, PdsRegistration, PdsSftpLocalEgressFile, PdsStagedExport, PdsSystem, Person, PersonAuthenticator, PersonChallenge, PersonChannelFdMap, PersonConsent, PharmacyItem, PipeContent, Pipeline, PipelineBatchCache, PipelineDefinition, PiquedHead, Practice, PracticeAnalytics, PracticeItemInventory, PracticePerson, PracticePersonDetail, PracticePersonPatientOld, PracticePersonRole, PracticePersonStaffOld, Program, ProgramCacheStatus, ShippingAddress, ShippingOrder, ShippingOrderItem, ShortLink, SystemEvent, TimerContent, UserAuth, VerifiedEmail } from "./types";
+import { AggregationCache, AnalyticsBatch, AnalyticsCampaignObservation, AnalyticsPharmacyObservation, AuthToken, Campaign, CampaignClass, CampaignDetail, ChannelFd, ChatMessage, ChatMessageData, ConsentChannelFdMap, EmailVerificationToken, EvalResult, EvalSpec, Experiment, ExperimentSplit, Fsm, FsmEdge, FsmInstance, FsmNode, FtCronTask, FtState, FtvmCache, LatestCampaignObservation, LatestPharmacyObservation, Message, OneTimePassword, Outreach, OutreachEvent, PatientAdherenceEvent, PatientList, PatientMedication, PdsAddress, PdsAddressPersonRelationship, PdsFile, PdsFileBatch, PdsFileParserMap, PdsInsurance, PdsMedication, PdsMedicationPricing, PdsPerson, PdsPersonDetail, PdsPersonInsuranceRelationship, PdsPersonMedicationRelationship, PdsPersonPrescriberRelationship, PdsPharmacy, PdsPrescriber, PdsPrescription, PdsPrescriptionDetail, PdsRegistration, PdsSftpLocalEgressFile, PdsStagedExport, PdsSystem, Person, PersonAuthenticator, PersonChallenge, PersonChannelFdMap, PersonConsent, PharmacyItem, PipeContent, Pipeline, PipelineBatchCache, PipelineDefinition, PiquedHead, Practice, PracticeAnalytics, PracticeItemInventory, PracticePerson, PracticePersonDetail, PracticePersonPatientOld, PracticePersonRole, PracticePersonStaffOld, PracticePhone, Program, ProgramCacheStatus, ShippingAddress, ShippingOrder, ShippingOrderItem, ShortLink, SyntheticMessageLog, SystemEvent, Test, Test2, TimerContent, UserAuth, VerifiedEmail } from "./types";
 
 import { TableBuilder } from "@piqued/client";
 export const PiquedHeadTable = new TableBuilder<typeof PiquedHead.spec, PiquedHead.t, "_piqued_head">("_piqued_head", PiquedHead.spec);
@@ -10,6 +10,7 @@ export const AnalyticsCampaignObservationTable = new TableBuilder<typeof Analyti
 export const AnalyticsPharmacyObservationTable = new TableBuilder<typeof AnalyticsPharmacyObservation.spec, AnalyticsPharmacyObservation.t, "analytics_pharmacy_observation">("analytics_pharmacy_observation", AnalyticsPharmacyObservation.spec);
 export const AuthTokenTable = new TableBuilder<typeof AuthToken.spec, AuthToken.t, "auth_token">("auth_token", AuthToken.spec);
 export const CampaignTable = new TableBuilder<typeof Campaign.spec, Campaign.t, "campaign">("campaign", Campaign.spec);
+export const CampaignClassTable = new TableBuilder<typeof CampaignClass.spec, CampaignClass.t, "campaign_class">("campaign_class", CampaignClass.spec);
 export const CampaignDetailTable = new TableBuilder<typeof CampaignDetail.spec, CampaignDetail.t, "campaign_detail">("campaign_detail", CampaignDetail.spec);
 export const ChannelFdTable = new TableBuilder<typeof ChannelFd.spec, ChannelFd.t, "channel_fd">("channel_fd", ChannelFd.spec);
 export const ChatMessageTable = new TableBuilder<typeof ChatMessage.spec, ChatMessage.t, "chat_message">("chat_message", ChatMessage.spec);
@@ -24,6 +25,7 @@ export const FsmTable = new TableBuilder<typeof Fsm.spec, Fsm.t, "fsm">("fsm", F
 export const FsmEdgeTable = new TableBuilder<typeof FsmEdge.spec, FsmEdge.t, "fsm_edge">("fsm_edge", FsmEdge.spec);
 export const FsmInstanceTable = new TableBuilder<typeof FsmInstance.spec, FsmInstance.t, "fsm_instance">("fsm_instance", FsmInstance.spec);
 export const FsmNodeTable = new TableBuilder<typeof FsmNode.spec, FsmNode.t, "fsm_node">("fsm_node", FsmNode.spec);
+export const FtCronTaskTable = new TableBuilder<typeof FtCronTask.spec, FtCronTask.t, "ft_cron_task">("ft_cron_task", FtCronTask.spec);
 export const FtStateTable = new TableBuilder<typeof FtState.spec, FtState.t, "ft_state">("ft_state", FtState.spec);
 export const FtvmCacheTable = new TableBuilder<typeof FtvmCache.spec, FtvmCache.t, "ftvm_cache">("ftvm_cache", FtvmCache.spec);
 export const LatestCampaignObservationTable = new TableBuilder<typeof LatestCampaignObservation.spec, LatestCampaignObservation.t, "latest_campaign_observation">("latest_campaign_observation", LatestCampaignObservation.spec);
@@ -72,13 +74,17 @@ export const PracticeItemInventoryTable = new TableBuilder<typeof PracticeItemIn
 export const PracticePersonTable = new TableBuilder<typeof PracticePerson.spec, PracticePerson.t, "practice_person">("practice_person", PracticePerson.spec);
 export const PracticePersonDetailTable = new TableBuilder<typeof PracticePersonDetail.spec, PracticePersonDetail.t, "practice_person_detail">("practice_person_detail", PracticePersonDetail.spec);
 export const PracticePersonRoleTable = new TableBuilder<typeof PracticePersonRole.spec, PracticePersonRole.t, "practice_person_role">("practice_person_role", PracticePersonRole.spec);
+export const PracticePhoneTable = new TableBuilder<typeof PracticePhone.spec, PracticePhone.t, "practice_phone">("practice_phone", PracticePhone.spec);
 export const ProgramTable = new TableBuilder<typeof Program.spec, Program.t, "program">("program", Program.spec);
 export const ProgramCacheStatusTable = new TableBuilder<typeof ProgramCacheStatus.spec, ProgramCacheStatus.t, "program_cache_status">("program_cache_status", ProgramCacheStatus.spec);
 export const ShippingAddressTable = new TableBuilder<typeof ShippingAddress.spec, ShippingAddress.t, "shipping_address">("shipping_address", ShippingAddress.spec);
 export const ShippingOrderTable = new TableBuilder<typeof ShippingOrder.spec, ShippingOrder.t, "shipping_order">("shipping_order", ShippingOrder.spec);
 export const ShippingOrderItemTable = new TableBuilder<typeof ShippingOrderItem.spec, ShippingOrderItem.t, "shipping_order_item">("shipping_order_item", ShippingOrderItem.spec);
 export const ShortLinkTable = new TableBuilder<typeof ShortLink.spec, ShortLink.t, "short_link">("short_link", ShortLink.spec);
+export const SyntheticMessageLogTable = new TableBuilder<typeof SyntheticMessageLog.spec, SyntheticMessageLog.t, "synthetic_message_log">("synthetic_message_log", SyntheticMessageLog.spec);
 export const SystemEventTable = new TableBuilder<typeof SystemEvent.spec, SystemEvent.t, "system_event">("system_event", SystemEvent.spec);
+export const TestTable = new TableBuilder<typeof Test.spec, Test.t, "test">("test", Test.spec);
+export const Test2Table = new TableBuilder<typeof Test2.spec, Test2.t, "test_2">("test_2", Test2.spec);
 export const TimerContentTable = new TableBuilder<typeof TimerContent.spec, TimerContent.t, "timer_content">("timer_content", TimerContent.spec);
 export const UserAuthTable = new TableBuilder<typeof UserAuth.spec, UserAuth.t, "user_auth">("user_auth", UserAuth.spec);
 export const VerifiedEmailTable = new TableBuilder<typeof VerifiedEmail.spec, VerifiedEmail.t, "verified_email">("verified_email", VerifiedEmail.spec);

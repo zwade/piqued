@@ -24,3 +24,8 @@ PREPARE get_practices AS
 
 PREPARE select_array AS
     SELECT unnest($1::int[]) AS num;
+
+PREPARE get_array AS
+    SELECT selected_fds
+    FROM ft_state
+    WHERE uid = $1;

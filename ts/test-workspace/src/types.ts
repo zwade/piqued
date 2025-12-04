@@ -513,6 +513,7 @@ export namespace Message {
         "processed": boolean;
         "campaign_uid": string;
         "subject": string;
+        "practice_phone_uid": string;
     };
     
     export const spec = {
@@ -532,6 +533,7 @@ export namespace Message {
             ["processed", Boolean],
             ["campaign_uid", String],
             ["subject", String],
+            ["practice_phone_uid", String],
         ] as const,
     };
 }
@@ -664,6 +666,7 @@ export namespace PdsRegistration {
         "ingress": boolean;
         "egress": boolean;
         "delimiter": string;
+        "format": PdsRegistrationFormat.t;
     };
     
     export const spec = {
@@ -679,6 +682,7 @@ export namespace PdsRegistration {
             ["ingress", Boolean],
             ["egress", Boolean],
             ["delimiter", String],
+            ["format", PdsRegistrationFormat.spec],
         ] as const,
     };
 }
@@ -901,6 +905,8 @@ export namespace Campaign {
         "experiment_uid": string;
         "experiment_split_uid": string;
         "flags": any;
+        "practice_phone_uid": string;
+        "campaign_class_uid": string;
     };
     
     export const spec = {
@@ -917,6 +923,8 @@ export namespace Campaign {
             ["experiment_uid", String],
             ["experiment_split_uid", String],
             ["flags", Object],
+            ["practice_phone_uid", String],
+            ["campaign_class_uid", String],
         ] as const,
     };
 }
@@ -1314,6 +1322,7 @@ export namespace PipelineBatchCache {
         "pipeline_definition_uid": string;
         "rows": Buffer;
         "current_step": number;
+        "stage": number;
     };
     
     export const spec = {
@@ -1325,6 +1334,7 @@ export namespace PipelineBatchCache {
             ["pipeline_definition_uid", String],
             ["rows", Buffer],
             ["current_step", Number],
+            ["stage", Number],
         ] as const,
     };
 }
@@ -1340,6 +1350,7 @@ export namespace SystemEvent {
         "data": any;
         "practice_uid": string;
         "person_uid": string;
+        "campaign_uid": string;
     };
     
     export const spec = {
@@ -1352,6 +1363,7 @@ export namespace SystemEvent {
             ["data", Object],
             ["practice_uid", String],
             ["person_uid", String],
+            ["campaign_uid", String],
         ] as const,
     };
 }
@@ -1628,49 +1640,6 @@ export namespace OutreachEvent {
             ["note", String],
             ["author_uid", String],
             ["hidden", Boolean],
-        ] as const,
-    };
-}
-
-export namespace CampaignDetail {
-    export const name = "campaign_detail";
-    
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "person_uid": string;
-        "first_name": string;
-        "last_name": string;
-        "program_uid": string;
-        "program_name": string;
-        "program_version": number;
-        "ft_state_uid": string;
-        "stored_metadata": any;
-        "state": CampaignState.t;
-        "message_count": number;
-        "practice_uid": string;
-        "medical_record_number": string;
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["person_uid", String],
-            ["first_name", String],
-            ["last_name", String],
-            ["program_uid", String],
-            ["program_name", String],
-            ["program_version", Number],
-            ["ft_state_uid", String],
-            ["stored_metadata", Object],
-            ["state", CampaignState.spec],
-            ["message_count", Number],
-            ["practice_uid", String],
-            ["medical_record_number", String],
         ] as const,
     };
 }
@@ -1979,51 +1948,6 @@ export namespace PdsPrescriptionDetail {
     };
 }
 
-export namespace PdsPersonDetail {
-    export const name = "pds_person_detail";
-    
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "pds_system_uid": string;
-        "entity_id": string;
-        "first_name": string;
-        "last_name": string;
-        "email": string;
-        "phone": string;
-        "has_consent": boolean;
-        "medical_record_number": string;
-        "date_of_birth": Date;
-        "prescribers": PdsPrescriber.t[];
-        "insurances": PdsInsurance.t[];
-        "pharmacies": PdsPharmacy.t[];
-        "medications": PdsMedication.t[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["pds_system_uid", String],
-            ["entity_id", String],
-            ["first_name", String],
-            ["last_name", String],
-            ["email", String],
-            ["phone", String],
-            ["has_consent", Boolean],
-            ["medical_record_number", String],
-            ["date_of_birth", Date],
-            ["prescribers", { "kind": "array", "spec": PdsPrescriber.spec }],
-            ["insurances", { "kind": "array", "spec": PdsInsurance.spec }],
-            ["pharmacies", { "kind": "array", "spec": PdsPharmacy.spec }],
-            ["medications", { "kind": "array", "spec": PdsMedication.spec }],
-        ] as const,
-    };
-}
-
 export namespace LatestCampaignObservation {
     export const name = "latest_campaign_observation";
     
@@ -2199,6 +2123,236 @@ export namespace AggregationCache {
             ["last_triggered_at", Date],
             ["cache_key", String],
             ["cache_value", Object],
+        ] as const,
+    };
+}
+
+export namespace PracticePhone {
+    export const name = "practice_phone";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "practice_uid": string;
+        "phone_number": string;
+        "label": string;
+        "kind": PhoneKind.t;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["practice_uid", String],
+            ["phone_number", String],
+            ["label", String],
+            ["kind", PhoneKind.spec],
+        ] as const,
+    };
+}
+
+export namespace PdsPersonDetail {
+    export const name = "pds_person_detail";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "pds_system_uid": string;
+        "entity_id": string;
+        "first_name": string;
+        "last_name": string;
+        "email": string;
+        "phone": string;
+        "has_consent": boolean;
+        "medical_record_number": string;
+        "date_of_birth": Date;
+        "prescribers": PdsPrescriber.t[];
+        "insurances": PdsInsurance.t[];
+        "pharmacies": PdsPharmacy.t[];
+        "medications": PdsMedication.t[];
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["pds_system_uid", String],
+            ["entity_id", String],
+            ["first_name", String],
+            ["last_name", String],
+            ["email", String],
+            ["phone", String],
+            ["has_consent", Boolean],
+            ["medical_record_number", String],
+            ["date_of_birth", Date],
+            ["prescribers", { "kind": "array", "spec": PdsPrescriber.spec }],
+            ["insurances", { "kind": "array", "spec": PdsInsurance.spec }],
+            ["pharmacies", { "kind": "array", "spec": PdsPharmacy.spec }],
+            ["medications", { "kind": "array", "spec": PdsMedication.spec }],
+        ] as const,
+    };
+}
+
+export namespace CampaignClass {
+    export const name = "campaign_class";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "name": string;
+        "description": string;
+        "type": CampaignType.t;
+        "practice_uid": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["name", String],
+            ["description", String],
+            ["type", CampaignType.spec],
+            ["practice_uid", String],
+        ] as const,
+    };
+}
+
+export namespace CampaignDetail {
+    export const name = "campaign_detail";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "person_uid": string;
+        "campaign_class_uid": string;
+        "first_name": string;
+        "last_name": string;
+        "program_uid": string;
+        "program_name": string;
+        "program_version": number;
+        "ft_state_uid": string;
+        "stored_metadata": any;
+        "state": CampaignState.t;
+        "message_count": number;
+        "practice_uid": string;
+        "medical_record_number": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["person_uid", String],
+            ["campaign_class_uid", String],
+            ["first_name", String],
+            ["last_name", String],
+            ["program_uid", String],
+            ["program_name", String],
+            ["program_version", Number],
+            ["ft_state_uid", String],
+            ["stored_metadata", Object],
+            ["state", CampaignState.spec],
+            ["message_count", Number],
+            ["practice_uid", String],
+            ["medical_record_number", String],
+        ] as const,
+    };
+}
+
+export namespace SyntheticMessageLog {
+    export const name = "synthetic_message_log";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "person_uid": string;
+        "last_updated_at": Date;
+        "temperament": string;
+        "occupation": string;
+        "age": number;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["person_uid", String],
+            ["last_updated_at", Date],
+            ["temperament", String],
+            ["occupation", String],
+            ["age", Number],
+        ] as const,
+    };
+}
+
+export namespace FtCronTask {
+    export const name = "ft_cron_task";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "ft_state_uid": string;
+        "cron_specifier": string;
+        "next_fire_at": Date;
+        "method_name": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["ft_state_uid", String],
+            ["cron_specifier", String],
+            ["next_fire_at", Date],
+            ["method_name", String],
+        ] as const,
+    };
+}
+
+export namespace Test {
+    export const name = "test";
+    
+    export type t = {
+        "ds": Date[];
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["ds", { "kind": "array", "spec": Date }],
+        ] as const,
+    };
+}
+
+export namespace Test2 {
+    export const name = "test_2";
+    
+    export type t = {
+        "array_agg": Test.t[];
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["array_agg", { "kind": "array", "spec": Test.spec }],
         ] as const,
     };
 }
@@ -2454,6 +2608,7 @@ export namespace PdsRegistrationProtocol {
         | "LOCAL_SFTP"
         | "REMOTE_SFTP"
         | "HTTPS"
+        | "SYNTHETIC_DATA"
         ;
     
     export const spec = {
@@ -2462,6 +2617,7 @@ export namespace PdsRegistrationProtocol {
             "LOCAL_SFTP",
             "REMOTE_SFTP",
             "HTTPS",
+            "SYNTHETIC_DATA",
         ] as const,
     };
 }
@@ -2552,14 +2708,16 @@ export namespace PipelineSource {
     
     export type t =
         | "PDS_PERSON"
-        | "SYSTEM_EVENT"
+        | "EL_CAMPAIGN_STATE_CHANGE"
+        | "EL_CAMPAIGN_REPORT"
         ;
     
     export const spec = {
         kind: "enum" as const,
         values: [
             "PDS_PERSON",
-            "SYSTEM_EVENT",
+            "EL_CAMPAIGN_STATE_CHANGE",
+            "EL_CAMPAIGN_REPORT",
         ] as const,
     };
 }
@@ -2570,12 +2728,14 @@ export namespace SystemEventKind {
     
     export type t =
         | "CAMPAIGN_STATE_CHANGE"
+        | "CAMPAIGN_REPORT"
         ;
     
     export const spec = {
         kind: "enum" as const,
         values: [
             "CAMPAIGN_STATE_CHANGE",
+            "CAMPAIGN_REPORT",
         ] as const,
     };
 }
@@ -2694,6 +2854,7 @@ export namespace ParserKey {
         | "SOMC_PATIENT_DATA"
         | "SOMC_WAC"
         | "SOMC_340B"
+        | "CRX_UPSERT"
         ;
     
     export const spec = {
@@ -2702,6 +2863,65 @@ export namespace ParserKey {
             "SOMC_PATIENT_DATA",
             "SOMC_WAC",
             "SOMC_340B",
+            "CRX_UPSERT",
+        ] as const,
+    };
+}
+
+
+export namespace CampaignType {
+    export const name = "campaign_type";
+    
+    export type t =
+        | "REFILL"
+        | "CAPTURE"
+        | "ENGAGEMENT"
+        | "OTHER"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "REFILL",
+            "CAPTURE",
+            "ENGAGEMENT",
+            "OTHER",
+        ] as const,
+    };
+}
+
+
+export namespace PdsRegistrationFormat {
+    export const name = "pds_registration_format";
+    
+    export type t =
+        | "CSV"
+        | "JSONL"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "CSV",
+            "JSONL",
+        ] as const,
+    };
+}
+
+
+export namespace PhoneKind {
+    export const name = "phone_kind";
+    
+    export type t =
+        | "SMS"
+        | "SYNTHETIC"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "SMS",
+            "SYNTHETIC",
         ] as const,
     };
 }

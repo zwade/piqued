@@ -1,7 +1,7 @@
 import { QueryResultRow } from "pg";
 
 import { ColumnOrderCache } from "../order-managment";
-import { parse } from "../parser";
+import { parse, parseTopLevel } from "../parser";
 import { SmartClient, StreamOptions, StreamShape } from "../smart-client";
 import { ParseSpec } from "../types";
 import {
@@ -136,7 +136,7 @@ export abstract class ExecutableQuery<T extends ResultState> {
                     if (parser.spec === null) {
                         result[key] = value;
                     } else {
-                        result[key] = parse(parser.spec, value, columnOrderCache);
+                        result[key] = parseTopLevel(parser.spec, value, columnOrderCache);
                     }
                     break;
                 }
@@ -147,7 +147,7 @@ export abstract class ExecutableQuery<T extends ResultState> {
                     if (parser.spec === null) {
                         parentObject[parser.parentColumnName] = value;
                     } else {
-                        parentObject[parser.parentColumnName] = parse(parser.spec, value, columnOrderCache);
+                        parentObject[parser.parentColumnName] = parseTopLevel(parser.spec, value, columnOrderCache);
                     }
                     break;
                 }
@@ -203,7 +203,7 @@ export abstract class ExecutableQuery<T extends ResultState> {
                 }
 
                 if (e instanceof ColumnExpression && needsParse(e.parser)) {
-                    return [[e.tableName, { kind: "single", spec: e.parser }]];
+                    return [[e.columnName, { kind: "single", spec: e.parser }]];
                 }
 
                 if (e instanceof FunctionOperation && needsParse(e.parser)) {

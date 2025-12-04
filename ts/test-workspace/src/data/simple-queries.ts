@@ -210,6 +210,36 @@ export namespace SelectArray {
 }
 
 
+export const GetArray: Query<GetArray.InputArray, GetArray.InputObject, GetArray.TemplateInputObject, GetArray.OutputArray, GetArray.OutputObject> = {
+    name: "get_array",
+    query: ` SELECT selected_fds FROM ft_state WHERE uid = $1;`,
+    params: [
+        "$0",
+    ],
+    templateParams: [],
+    spec: [
+        ["selected_fds", undefined],
+    ],
+    _brand: undefined as any,
+};
+
+export namespace GetArray {
+    export type InputArray = [
+    $0: string,
+];
+    export type InputObject = {
+    "$0": string,
+};
+    export type TemplateInputObject = {};
+    export type OutputArray = [
+    selected_fds: number[],
+];
+    export type OutputObject = {
+    "selected_fds": number[],
+};
+}
+
+
 export default EntityQueries({
     "reflect": Reflect,
     "reflect2": Reflect2,
@@ -218,5 +248,6 @@ export default EntityQueries({
     "several": Several,
     "getPractices": GetPractices,
     "selectArray": SelectArray,
+    "getArray": GetArray,
 })
 
