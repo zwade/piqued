@@ -15,10 +15,15 @@ interface PoolWithCache extends pg.Pool {
     [columnOrderCacheSymbol]: ColumnOrderCache;
 }
 
+export interface BuildColumnOrderCacheOptions {
+    verbose?: boolean;
+}
+
 export const buildColumnOrderCache = async (
     ns: Record<string, SingleNamespace>,
     pool: pg.Pool,
     namespace: string = "public",
+    options: BuildColumnOrderCacheOptions = {},
 ): Promise<void> => {
     // ~Same query as in piqued/src/query.rs
     const wellKnownTypes = await pool.query(
@@ -68,12 +73,14 @@ export const buildColumnOrderCache = async (
             // then we create a new spec with the correct order
             // and add it to our columnOrderCache, for `parse` to later use.
             if (fields.some(([fieldName], i) => fieldName !== trueColumns[i])) {
-                console.warn("Found mismatched column order for table", tableName);
-                console.warn(
-                    "Expected",
-                    fields.map(([fieldName]) => fieldName),
-                );
-                console.warn("Found", trueColumns);
+                if (options.verbose) {
+                    console.warn("Found mismatched column order for table", tableName);
+                    console.warn(
+                        "Expected",
+                        fields.map(([fieldName]) => fieldName),
+                    );
+                    console.warn("Found", trueColumns);
+                }
 
                 const newSpec: [string, ParseSpec][] = [];
                 for (const column of trueColumns) {

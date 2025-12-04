@@ -14,6 +14,7 @@ export interface ClientOptions {
     rootClient?: SmartClient;
     columnOrderCache?: ColumnOrderCache;
     queryLogger?: (query: string, values?: any[]) => void;
+    timeoutMs?: number;
 }
 
 export interface Disposable {
@@ -45,7 +46,12 @@ export class SmartClient {
 
     public columnOrderCache: ColumnOrderCache;
 
-    constructor(client: PoolClient, { txDepth = 0, rootClient, columnOrderCache, queryLogger }: ClientOptions = {}) {
+    #isLiving;
+
+    constructor(
+        client: PoolClient,
+        { txDepth = 0, rootClient, columnOrderCache, queryLogger, timeoutMs }: ClientOptions = {},
+    ) {
         this.client = client;
         this.txDepth = txDepth;
         this.active = true;
@@ -53,6 +59,30 @@ export class SmartClient {
         this.rootClient = rootClient ?? this;
         this.queryLogger = queryLogger;
         this.columnOrderCache = columnOrderCache ?? new WeakMap();
+        this.#isLiving = true;
+
+        if ((this.txDepth === 0) !== (this.rootClient === this)) {
+            console.warn(
+                "When constructing a `SmartClient`, please ensure that only the root client has a txDepth of 0",
+            );
+        }
+
+        const errorStack = new Error().stack;
+        if (this.rootClient === this && !!timeoutMs) {
+            setTimeout(() => {
+                if (this.#isLiving) {
+                    console.log(`SmartClient has been alive for more than ${timeoutMs}ms. Releasing it automatically.`);
+                    console.log(`Client was created at:`);
+                    console.log(errorStack);
+
+                    this.dispose();
+                }
+            }, timeoutMs);
+        }
+    }
+
+    public get isLiving() {
+        return this.rootClient.#isLiving;
     }
 
     protected async trigger(event: Event) {
@@ -84,10 +114,18 @@ export class SmartClient {
         };
     }
 
-    public async query<T extends QueryResultRow>(query: string, values?: any[]): Promise<QueryResult<T>> {
+    protected ensureLiving() {
+        if (!this.isLiving) {
+            throw new Error("This client has been released and can no longer be used.");
+        }
+
         if (this.active === false) {
             throw new Error("This client is in a transaction. Please do not use it until the transaction completes.");
         }
+    }
+
+    public async query<T extends QueryResultRow>(query: string, values?: any[]): Promise<QueryResult<T>> {
+        this.ensureLiving();
 
         try {
             this.queryLogger?.(query, values);
@@ -100,9 +138,7 @@ export class SmartClient {
     }
 
     public async queryArray<T extends any[]>(query: string, values?: any[]): Promise<QueryArrayResult<T>> {
-        if (this.active === false) {
-            throw new Error("This client is in a transaction. Please do not use it until the transaction completes.");
-        }
+        this.ensureLiving();
 
         try {
             this.queryLogger?.(query, values);
@@ -120,9 +156,7 @@ export class SmartClient {
         options: StreamOptions = {},
         mapperFn?: (row: unknown) => T,
     ): StreamShape<T, O> {
-        if (this.active === false) {
-            throw new Error("This client is in a transaction. Please do not use it until the transaction completes.");
-        }
+        this.ensureLiving();
 
         try {
             this.queryLogger?.(query, values);
@@ -191,6 +225,8 @@ export class SmartClient {
     }
 
     public async tx<T>(fn: (client: SmartClient) => T) {
+        this.ensureLiving();
+
         const newClient = new SmartClient(this.client, {
             txDepth: this.txDepth + 1,
             rootClient: this.rootClient,
@@ -290,9 +326,16 @@ export class SmartClient {
         return disposable;
     }
 
+    public dispose() {
+        if (this.rootClient === this && this.#isLiving) {
+            this.client.release();
+            this.active = false;
+            this.#isLiving = false;
+        }
+    }
+
     [Symbol.dispose]() {
-        this.client.release();
-        this.active = false;
+        this.dispose();
     }
 }
 
