@@ -201,6 +201,11 @@ impl CodeGenerator for TSGenerator {
                             c.with_duouble_quote(|c| c.write(&field.name));
                             c.write_symbol(": ");
                             c.write(&&native_type.get_type());
+
+                            if field.nullable {
+                                c.write(" | null");
+                            }
+
                             c.write_symbol(";");
                             c.write_line(None);
 

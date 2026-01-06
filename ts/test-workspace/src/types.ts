@@ -12,9 +12,9 @@ export namespace Person {
         "created_at": Date;
         "updated_at": Date;
         "email": string;
-        "phone_number": string;
-        "system_admin_witness": string;
-        "pds_person_uid": string;
+        "phone_number": string | null;
+        "system_admin_witness": string | null;
+        "pds_person_uid": string | null;
         "first_name": string;
         "last_name": string;
     };
@@ -65,9 +65,9 @@ export namespace AuthToken {
     
     export type t = {
         "token": string;
-        "user_auth_uid": string;
+        "user_auth_uid": string | null;
         "expires_at": Date;
-        "active_practice_uid": string;
+        "active_practice_uid": string | null;
     };
     
     export const spec = {
@@ -91,6 +91,7 @@ export namespace Practice {
         "name": string;
         "domain": string;
         "requires_two_factor": boolean;
+        "time_zone": string;
     };
     
     export const spec = {
@@ -102,6 +103,7 @@ export namespace Practice {
             ["name", String],
             ["domain", String],
             ["requires_two_factor", Boolean],
+            ["time_zone", String],
         ] as const,
     };
 }
@@ -112,7 +114,7 @@ export namespace ChatMessageData {
     export type t = {
         "uid": string;
         "created_at": Date;
-        "content": string;
+        "content": string | null;
     };
     
     export const spec = {
@@ -133,8 +135,8 @@ export namespace ChatMessage {
         "receiver_uid": string;
         "sequence_id": number;
         "created_at": Date;
-        "expires_at": Date;
-        "message_data_uid": string;
+        "expires_at": Date | null;
+        "message_data_uid": string | null;
     };
     
     export const spec = {
@@ -182,7 +184,7 @@ export namespace PersonAuthenticator {
         "transports": string[];
         "friendly_name": string;
         "created_at": Date;
-        "last_used": Date;
+        "last_used": Date | null;
     };
     
     export const spec = {
@@ -211,7 +213,7 @@ export namespace PharmacyItem {
         "updated_at": Date;
         "sku": string;
         "name": string;
-        "description": string;
+        "description": string | null;
     };
     
     export const spec = {
@@ -255,13 +257,13 @@ export namespace ShippingAddress {
         "uid": string;
         "created_at": Date;
         "updated_at": Date;
-        "person_uid": string;
+        "person_uid": string | null;
         "street": string;
-        "street2": string;
-        "street3": string;
-        "city": string;
-        "state": string;
-        "postal_code": string;
+        "street2": string | null;
+        "street3": string | null;
+        "city": string | null;
+        "state": string | null;
+        "postal_code": string | null;
         "country": string;
     };
     
@@ -291,10 +293,10 @@ export namespace ShippingOrder {
         "created_at": Date;
         "updated_at": Date;
         "status": ShippingStatus.t;
-        "shipping_address_uid": string;
-        "practice_uid": string;
-        "patient_uid": string;
-        "tracking_number": string;
+        "shipping_address_uid": string | null;
+        "practice_uid": string | null;
+        "patient_uid": string | null;
+        "tracking_number": string | null;
     };
     
     export const spec = {
@@ -340,9 +342,9 @@ export namespace PatientMedication {
         "created_at": Date;
         "updated_at": Date;
         "status": MedicationStatus.t;
-        "dosage": string;
-        "roa": string;
-        "date_last_script": Date;
+        "dosage": string | null;
+        "roa": string | null;
+        "date_last_script": Date | null;
     };
     
     export const spec = {
@@ -391,7 +393,7 @@ export namespace Fsm {
         "created_at": Date;
         "updated_at": Date;
         "name": string;
-        "description": string;
+        "description": string | null;
         "practice_uid": string;
     };
     
@@ -417,7 +419,7 @@ export namespace FsmNode {
         "updated_at": Date;
         "name": string;
         "kind": FsmNodeKind.t;
-        "description": string;
+        "description": string | null;
         "options": any;
         "fsm_uid": string;
         "is_start": boolean;
@@ -449,7 +451,7 @@ export namespace FsmEdge {
         "start_node_uid": string;
         "end_node_uid": string;
         "trigger": FsmEdgeTrigger.t;
-        "description": string;
+        "description": string | null;
         "options": any;
     };
     
@@ -502,8 +504,8 @@ export namespace Message {
         "uid": string;
         "created_at": Date;
         "updated_at": Date;
-        "sender_uid": string;
-        "recipient_uid": string;
+        "sender_uid": string | null;
+        "recipient_uid": string | null;
         "encrypted_content": string;
         "channel": Channel.t;
         "secure": boolean;
@@ -511,9 +513,9 @@ export namespace Message {
         "status": MessageStatus.t;
         "mode": MessageMode.t;
         "processed": boolean;
-        "campaign_uid": string;
+        "campaign_uid": string | null;
         "subject": string;
-        "practice_phone_uid": string;
+        "practice_phone_uid": string | null;
     };
     
     export const spec = {
@@ -553,6 +555,7 @@ export namespace Program {
         "llil": any;
         "mlil": any;
         "prompt": string;
+        "practice_uid": string | null;
     };
     
     export const spec = {
@@ -569,6 +572,7 @@ export namespace Program {
             ["llil", Object],
             ["mlil", Object],
             ["prompt", String],
+            ["practice_uid", String],
         ] as const,
     };
 }
@@ -662,11 +666,11 @@ export namespace PdsRegistration {
         "pds_system_uid": string;
         "credentials": string;
         "protocol": PdsRegistrationProtocol.t;
-        "uri": string;
+        "uri": string | null;
         "ingress": boolean;
         "egress": boolean;
         "delimiter": string;
-        "format": PdsRegistrationFormat.t;
+        "format": PdsRegistrationFormat.t | null;
     };
     
     export const spec = {
@@ -697,7 +701,7 @@ export namespace PdsFile {
         "status": PdsFileStatus.t;
         "name": string;
         "data": Buffer;
-        "pds_registration_uid": string;
+        "pds_registration_uid": string | null;
         "last_ingested_at": Date;
     };
     
@@ -754,11 +758,11 @@ export namespace PdsAddress {
         "updated_at": Date;
         "pds_system_uid": string;
         "entity_id": string;
-        "line1": string;
-        "line2": string;
-        "city": string;
-        "state": string;
-        "zip": string;
+        "line1": string | null;
+        "line2": string | null;
+        "city": string | null;
+        "state": string | null;
+        "zip": string | null;
     };
     
     export const spec = {
@@ -789,13 +793,14 @@ export namespace PdsPerson {
         "entity_id": string;
         "first_name": string;
         "last_name": string;
-        "email": string;
-        "phone": string;
-        "has_consent": boolean;
-        "medical_record_number": string;
-        "date_of_birth": Date;
-        "race": string;
-        "gender": string;
+        "email": string | null;
+        "phone": string | null;
+        "has_consent_marketing": boolean | null;
+        "medical_record_number": string | null;
+        "date_of_birth": Date | null;
+        "race": string | null;
+        "gender": string | null;
+        "has_consent_text": boolean | null;
     };
     
     export const spec = {
@@ -810,11 +815,12 @@ export namespace PdsPerson {
             ["last_name", String],
             ["email", String],
             ["phone", String],
-            ["has_consent", Boolean],
+            ["has_consent_marketing", Boolean],
             ["medical_record_number", String],
             ["date_of_birth", Date],
             ["race", String],
             ["gender", String],
+            ["has_consent_text", Boolean],
         ] as const,
     };
 }
@@ -850,7 +856,7 @@ export namespace PdsMedication {
         "pds_system_uid": string;
         "entity_id": string;
         "name": string;
-        "ndc": string;
+        "ndc": string | null;
     };
     
     export const spec = {
@@ -875,7 +881,6 @@ export namespace PdsPersonMedicationRelationship {
         "updated_at": Date;
         "pds_person_uid": string;
         "pds_medication_uid": string;
-        "diagnosis": string;
     };
     
     export const spec = {
@@ -885,7 +890,6 @@ export namespace PdsPersonMedicationRelationship {
             ["updated_at", Date],
             ["pds_person_uid", String],
             ["pds_medication_uid", String],
-            ["diagnosis", String],
         ] as const,
     };
 }
@@ -902,11 +906,11 @@ export namespace Campaign {
         "state": CampaignState.t;
         "stored_metadata": any;
         "practice_uid": string;
-        "experiment_uid": string;
-        "experiment_split_uid": string;
+        "experiment_uid": string | null;
+        "experiment_split_uid": string | null;
         "flags": any;
-        "practice_phone_uid": string;
-        "campaign_class_uid": string;
+        "practice_phone_uid": string | null;
+        "campaign_class_uid": string | null;
     };
     
     export const spec = {
@@ -1053,8 +1057,8 @@ export namespace PersonConsent {
         "updated_at": Date;
         "person_uid": string;
         "status": ConsentStatus.t;
-        "surface": ConsentSurface.t;
-        "consent_text": string;
+        "surface": ConsentSurface.t | null;
+        "consent_text": string | null;
     };
     
     export const spec = {
@@ -1076,8 +1080,8 @@ export namespace ConsentChannelFdMap {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "person_uid": string;
         "channel_fd_uid": string;
     };
@@ -1118,8 +1122,8 @@ export namespace EvalSpec {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "program_slug": string;
         "version": number;
         "spec": any;
@@ -1147,13 +1151,13 @@ export namespace EvalResult {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "eval_spec_uid": string;
         "program_uid": string;
         "status": EvalResultStatus.t;
-        "success_rate": number;
-        "result": any;
+        "success_rate": number | null;
+        "result": any | null;
     };
     
     export const spec = {
@@ -1176,12 +1180,12 @@ export namespace AnalyticsBatch {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "status": AnalyticsBatchStatus.t;
         "description": string;
-        "search_query": any;
-        "selected_analytics": any;
+        "search_query": any | null;
+        "selected_analytics": any | null;
         "kind": AnalyticsBatchKind.t;
     };
     
@@ -1205,8 +1209,8 @@ export namespace AnalyticsCampaignObservation {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "analytics_batch_uid": string;
         "campaign_uid": string;
         "done": boolean;
@@ -1238,7 +1242,7 @@ export namespace PdsSftpLocalEgressFile {
         "export_timestamp": Date;
         "file_name": string;
         "body": Buffer;
-        "is_deleted": boolean;
+        "is_deleted": boolean | null;
     };
     
     export const spec = {
@@ -1261,11 +1265,11 @@ export namespace Pipeline {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "name": string;
-        "description": string;
-        "last_indexed_record": Date;
+        "description": string | null;
+        "last_indexed_record": Date | null;
         "practice_uid": string;
         "source": PipelineSource.t;
         "active": boolean;
@@ -1292,8 +1296,8 @@ export namespace PipelineDefinition {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "pipeline_uid": string;
         "version": number;
         "definition": any;
@@ -1317,12 +1321,12 @@ export namespace PipelineBatchCache {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "pipeline_definition_uid": string;
         "rows": Buffer;
         "current_step": number;
-        "stage": number;
+        "stage": number | null;
     };
     
     export const spec = {
@@ -1349,8 +1353,8 @@ export namespace SystemEvent {
         "kind": SystemEventKind.t;
         "data": any;
         "practice_uid": string;
-        "person_uid": string;
-        "campaign_uid": string;
+        "person_uid": string | null;
+        "campaign_uid": string | null;
     };
     
     export const spec = {
@@ -1436,7 +1440,7 @@ export namespace PiquedHead {
     
     export type t = {
         "index_key": number;
-        "head": string;
+        "head": string | null;
     };
     
     export const spec = {
@@ -1486,10 +1490,10 @@ export namespace PatientList {
     export const name = "patient_list";
     
     export type t = {
-        "person_uid": string;
-        "practice_uid": string;
-        "person": Person.t;
-        "medications": PharmacyItem.t[];
+        "person_uid": string | null;
+        "practice_uid": string | null;
+        "person": Person.t | null;
+        "medications": PharmacyItem.t[] | null;
     };
     
     export const spec = {
@@ -1508,8 +1512,8 @@ export namespace PracticePerson {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "practice_uid": string;
         "person_uid": string;
     };
@@ -1531,8 +1535,8 @@ export namespace PracticePersonRole {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "practice_person_uid": string;
         "role": PersonRole.t;
     };
@@ -1553,17 +1557,17 @@ export namespace PracticePersonDetail {
     export const name = "practice_person_detail";
     
     export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "person_uid": string;
-        "first_name": string;
-        "last_name": string;
-        "email": string;
-        "phone_number": string;
-        "practice_uid": string;
-        "practice_name": string;
-        "roles": PersonRole.t[];
+        "uid": string | null;
+        "created_at": Date | null;
+        "updated_at": Date | null;
+        "person_uid": string | null;
+        "first_name": string | null;
+        "last_name": string | null;
+        "email": string | null;
+        "phone_number": string | null;
+        "practice_uid": string | null;
+        "practice_name": string | null;
+        "roles": PersonRole.t[] | null;
     };
     
     export const spec = {
@@ -1589,14 +1593,16 @@ export namespace Outreach {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "source": OutreachSource.t;
         "practice_uid": string;
         "target_uid": string;
-        "assigned_staff_uid": string;
+        "assigned_staff_uid": string | null;
+        "last_action_at": Date | null;
+        "status_detail": OutreachStatusDetail.t;
         "status": OutreachStatus.t;
-        "last_action_at": Date;
+        "outreach_class_uid": string;
     };
     
     export const spec = {
@@ -1609,8 +1615,10 @@ export namespace Outreach {
             ["practice_uid", String],
             ["target_uid", String],
             ["assigned_staff_uid", String],
-            ["status", OutreachStatus.spec],
             ["last_action_at", Date],
+            ["status_detail", OutreachStatusDetail.spec],
+            ["status", OutreachStatus.spec],
+            ["outreach_class_uid", String],
         ] as const,
     };
 }
@@ -1620,12 +1628,12 @@ export namespace OutreachEvent {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "outreach_uid": string;
         "type": OutreachEventType.t;
         "note": string;
-        "author_uid": string;
+        "author_uid": string | null;
         "hidden": boolean;
     };
     
@@ -1649,19 +1657,19 @@ export namespace Experiment {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "practice_uid": string;
         "name": string;
-        "description": string;
+        "description": string | null;
         "program_slug": string;
-        "program_version": number;
+        "program_version": number | null;
         "configuration_options": any;
         "feature_flags": any;
         "start_date": Date;
         "end_date": Date;
-        "paused": boolean;
-        "archived": boolean;
+        "paused": boolean | null;
+        "archived": boolean | null;
     };
     
     export const spec = {
@@ -1690,15 +1698,15 @@ export namespace ExperimentSplit {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "experiment_uid": string;
         "name": string;
         "percentage": number;
-        "program_slug": string;
-        "program_version": number;
-        "configuration_options": any;
-        "feature_flags": any;
+        "program_slug": string | null;
+        "program_version": number | null;
+        "configuration_options": any | null;
+        "feature_flags": any | null;
         "archived": boolean;
     };
     
@@ -1746,14 +1754,15 @@ export namespace PdsPrescriber {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "pds_system_uid": string;
         "entity_id": string;
-        "npi": string;
-        "dea": string;
-        "first_name": string;
-        "last_name": string;
+        "npi": string | null;
+        "dea": string | null;
+        "first_name": string | null;
+        "last_name": string | null;
+        "phone_number": string | null;
     };
     
     export const spec = {
@@ -1768,6 +1777,7 @@ export namespace PdsPrescriber {
             ["dea", String],
             ["first_name", String],
             ["last_name", String],
+            ["phone_number", String],
         ] as const,
     };
 }
@@ -1777,12 +1787,12 @@ export namespace PdsPharmacy {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "pds_system_uid": string;
         "entity_id": string;
-        "ncpdp": string;
-        "name": string;
+        "ncpdp": string | null;
+        "name": string | null;
     };
     
     export const spec = {
@@ -1804,8 +1814,8 @@ export namespace PdsInsurance {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "pds_system_uid": string;
         "entity_id": string;
         "plan_name": string;
@@ -1829,11 +1839,11 @@ export namespace PdsPersonPrescriberRelationship {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "pds_prescriber_uid": string;
         "pds_person_uid": string;
-        "last_visit": Date;
+        "last_visit": Date | null;
     };
     
     export const spec = {
@@ -1854,8 +1864,8 @@ export namespace PdsPersonInsuranceRelationship {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "pds_person_uid": string;
         "pds_insurance_uid": string;
     };
@@ -1877,17 +1887,22 @@ export namespace PdsPrescription {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "pds_person_uid": string;
         "pds_medication_uid": string;
-        "pds_prescriber_uid": string;
-        "pds_pharmacy_uid": string;
-        "pds_insurance_uid": string;
-        "description": string;
-        "written_at": Date;
+        "pds_prescriber_uid": string | null;
+        "pds_pharmacy_uid": string | null;
+        "pds_insurance_uid": string | null;
+        "description": string | null;
+        "written_at": Date | null;
         "refills": number;
-        "site": string;
+        "site": string | null;
+        "days_supply": number | null;
+        "diagnosis": string | null;
+        "system_sent_ingested_at": Date | null;
+        "expires_at": Date | null;
+        "uid_old": string | null;
     };
     
     export const spec = {
@@ -1905,6 +1920,11 @@ export namespace PdsPrescription {
             ["written_at", Date],
             ["refills", Number],
             ["site", String],
+            ["days_supply", Number],
+            ["diagnosis", String],
+            ["system_sent_ingested_at", Date],
+            ["expires_at", Date],
+            ["uid_old", String],
         ] as const,
     };
 }
@@ -1913,19 +1933,19 @@ export namespace PdsPrescriptionDetail {
     export const name = "pds_prescription_detail";
     
     export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "pds_person_uid": string;
-        "pds_medication_uid": string;
-        "pds_prescriber_uid": string;
-        "pds_pharmacy_uid": string;
-        "pds_insurance_uid": string;
-        "description": string;
-        "written_at": Date;
-        "pds_prescriber": PdsPrescriber.t;
-        "pds_pharmacy": PdsPharmacy.t;
-        "pds_insurance": PdsInsurance.t;
+        "uid": string | null;
+        "created_at": Date | null;
+        "updated_at": Date | null;
+        "pds_person_uid": string | null;
+        "pds_medication_uid": string | null;
+        "pds_prescriber_uid": string | null;
+        "pds_pharmacy_uid": string | null;
+        "pds_insurance_uid": string | null;
+        "description": string | null;
+        "written_at": Date | null;
+        "pds_prescriber": PdsPrescriber.t | null;
+        "pds_pharmacy": PdsPharmacy.t | null;
+        "pds_insurance": PdsInsurance.t | null;
     };
     
     export const spec = {
@@ -1952,13 +1972,13 @@ export namespace LatestCampaignObservation {
     export const name = "latest_campaign_observation";
     
     export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "analytics_batch_uid": string;
-        "campaign_uid": string;
-        "done": boolean;
-        "results": any;
+        "uid": string | null;
+        "created_at": Date | null;
+        "updated_at": Date | null;
+        "analytics_batch_uid": string | null;
+        "campaign_uid": string | null;
+        "done": boolean | null;
+        "results": any | null;
     };
     
     export const spec = {
@@ -1980,8 +2000,8 @@ export namespace OneTimePassword {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "expires_at": Date;
+        "created_at": Date | null;
+        "expires_at": Date | null;
         "email": string;
         "password": string;
     };
@@ -2029,9 +2049,9 @@ export namespace PdsMedicationPricing {
         "pds_system_uid": string;
         "entity_id": string;
         "ndc": string;
-        "description": string;
-        "price_wac": string;
-        "price_340b": string;
+        "description": string | null;
+        "price_wac": string | null;
+        "price_340b": string | null;
     };
     
     export const spec = {
@@ -2055,8 +2075,8 @@ export namespace AnalyticsPharmacyObservation {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "analytics_batch_uid": string;
         "pds_pharmacy_uid": string;
         "done": boolean;
@@ -2081,13 +2101,13 @@ export namespace LatestPharmacyObservation {
     export const name = "latest_pharmacy_observation";
     
     export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "analytics_batch_uid": string;
-        "pds_pharmacy_uid": string;
-        "done": boolean;
-        "results": any;
+        "uid": string | null;
+        "created_at": Date | null;
+        "updated_at": Date | null;
+        "analytics_batch_uid": string | null;
+        "pds_pharmacy_uid": string | null;
+        "done": boolean | null;
+        "results": any | null;
     };
     
     export const spec = {
@@ -2109,8 +2129,8 @@ export namespace AggregationCache {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "last_triggered_at": Date;
+        "created_at": Date | null;
+        "last_triggered_at": Date | null;
         "cache_key": string;
         "cache_value": any;
     };
@@ -2136,8 +2156,8 @@ export namespace PracticePhone {
         "updated_at": Date;
         "practice_uid": string;
         "phone_number": string;
-        "label": string;
-        "kind": PhoneKind.t;
+        "label": string | null;
+        "kind": PhoneKind.t | null;
     };
     
     export const spec = {
@@ -2154,60 +2174,15 @@ export namespace PracticePhone {
     };
 }
 
-export namespace PdsPersonDetail {
-    export const name = "pds_person_detail";
-    
-    export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "pds_system_uid": string;
-        "entity_id": string;
-        "first_name": string;
-        "last_name": string;
-        "email": string;
-        "phone": string;
-        "has_consent": boolean;
-        "medical_record_number": string;
-        "date_of_birth": Date;
-        "prescribers": PdsPrescriber.t[];
-        "insurances": PdsInsurance.t[];
-        "pharmacies": PdsPharmacy.t[];
-        "medications": PdsMedication.t[];
-    };
-    
-    export const spec = {
-        kind: "composite" as const,
-        fields: () => [
-            ["uid", String],
-            ["created_at", Date],
-            ["updated_at", Date],
-            ["pds_system_uid", String],
-            ["entity_id", String],
-            ["first_name", String],
-            ["last_name", String],
-            ["email", String],
-            ["phone", String],
-            ["has_consent", Boolean],
-            ["medical_record_number", String],
-            ["date_of_birth", Date],
-            ["prescribers", { "kind": "array", "spec": PdsPrescriber.spec }],
-            ["insurances", { "kind": "array", "spec": PdsInsurance.spec }],
-            ["pharmacies", { "kind": "array", "spec": PdsPharmacy.spec }],
-            ["medications", { "kind": "array", "spec": PdsMedication.spec }],
-        ] as const,
-    };
-}
-
 export namespace CampaignClass {
     export const name = "campaign_class";
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "name": string;
-        "description": string;
+        "description": string | null;
         "type": CampaignType.t;
         "practice_uid": string;
     };
@@ -2230,22 +2205,22 @@ export namespace CampaignDetail {
     export const name = "campaign_detail";
     
     export type t = {
-        "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
-        "person_uid": string;
-        "campaign_class_uid": string;
-        "first_name": string;
-        "last_name": string;
-        "program_uid": string;
-        "program_name": string;
-        "program_version": number;
-        "ft_state_uid": string;
-        "stored_metadata": any;
-        "state": CampaignState.t;
-        "message_count": number;
-        "practice_uid": string;
-        "medical_record_number": string;
+        "uid": string | null;
+        "created_at": Date | null;
+        "updated_at": Date | null;
+        "person_uid": string | null;
+        "campaign_class_uid": string | null;
+        "first_name": string | null;
+        "last_name": string | null;
+        "program_uid": string | null;
+        "program_name": string | null;
+        "program_version": number | null;
+        "ft_state_uid": string | null;
+        "stored_metadata": any | null;
+        "state": CampaignState.t | null;
+        "message_count": number | null;
+        "practice_uid": string | null;
+        "medical_record_number": string | null;
     };
     
     export const spec = {
@@ -2276,13 +2251,14 @@ export namespace SyntheticMessageLog {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "person_uid": string;
-        "last_updated_at": Date;
+        "last_updated_at": Date | null;
         "temperament": string;
         "occupation": string;
         "age": number;
+        "practice_phone_uid": string | null;
     };
     
     export const spec = {
@@ -2296,6 +2272,7 @@ export namespace SyntheticMessageLog {
             ["temperament", String],
             ["occupation", String],
             ["age", Number],
+            ["practice_phone_uid", String],
         ] as const,
     };
 }
@@ -2305,8 +2282,8 @@ export namespace FtCronTask {
     
     export type t = {
         "uid": string;
-        "created_at": Date;
-        "updated_at": Date;
+        "created_at": Date | null;
+        "updated_at": Date | null;
         "ft_state_uid": string;
         "cron_specifier": string;
         "next_fire_at": Date;
@@ -2327,32 +2304,298 @@ export namespace FtCronTask {
     };
 }
 
-export namespace Test {
-    export const name = "test";
+export namespace PracticeDoc {
+    export const name = "practice_doc";
     
     export type t = {
-        "ds": Date[];
+        "uid": string;
+        "created_at": Date | null;
+        "updated_at": Date | null;
+        "practice_uid": string;
+        "id": string;
+        "name": string;
+        "description": string | null;
+        "spec": any;
+        "letterhead_src": string | null;
+        "file_name": string | null;
+        "subtitle": string | null;
     };
     
     export const spec = {
         kind: "composite" as const,
         fields: () => [
-            ["ds", { "kind": "array", "spec": Date }],
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["practice_uid", String],
+            ["id", String],
+            ["name", String],
+            ["description", String],
+            ["spec", Object],
+            ["letterhead_src", String],
+            ["file_name", String],
+            ["subtitle", String],
         ] as const,
     };
 }
 
-export namespace Test2 {
-    export const name = "test_2";
+export namespace PracticeTwilioCredential {
+    export const name = "practice_twilio_credential";
     
     export type t = {
-        "array_agg": Test.t[];
+        "uid": string;
+        "created_at": Date | null;
+        "updated_at": Date | null;
+        "practice_uid": string;
+        "sid": string;
+        "auth_token": string;
     };
     
     export const spec = {
         kind: "composite" as const,
         fields: () => [
-            ["array_agg", { "kind": "array", "spec": Test.spec }],
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["practice_uid", String],
+            ["sid", String],
+            ["auth_token", String],
+        ] as const,
+    };
+}
+
+export namespace StreamChannelFdMap {
+    export const name = "stream_channel_fd_map";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "channel_fd_uid": string;
+        "person_uid": string;
+        "practice_phone_uid": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["channel_fd_uid", String],
+            ["person_uid", String],
+            ["practice_phone_uid", String],
+        ] as const,
+    };
+}
+
+export namespace OutreachClass {
+    export const name = "outreach_class";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date | null;
+        "updated_at": Date | null;
+        "practice_uid": string | null;
+        "type": OutreachType.t;
+        "name": string;
+        "description": string | null;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["practice_uid", String],
+            ["type", OutreachType.spec],
+            ["name", String],
+            ["description", String],
+        ] as const,
+    };
+}
+
+export namespace OutreachCampaignMap {
+    export const name = "outreach_campaign_map";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date | null;
+        "updated_at": Date | null;
+        "outreach_uid": string | null;
+        "campaign_uid": string | null;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["outreach_uid", String],
+            ["campaign_uid", String],
+        ] as const,
+    };
+}
+
+export namespace PdsPrescriptionFill {
+    export const name = "pds_prescription_fill";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "pds_prescription_uid": string;
+        "pds_pharmacy_uid": string | null;
+        "fill_number": number;
+        "filled_at": Date | null;
+        "picked_up_at": Date | null;
+        "cancelled": boolean;
+        "uid_old": string | null;
+        "pds_prescription_uid_old": string | null;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["pds_prescription_uid", String],
+            ["pds_pharmacy_uid", String],
+            ["fill_number", Number],
+            ["filled_at", Date],
+            ["picked_up_at", Date],
+            ["cancelled", Boolean],
+            ["uid_old", String],
+            ["pds_prescription_uid_old", String],
+        ] as const,
+    };
+}
+
+export namespace PdsPersonDetail {
+    export const name = "pds_person_detail";
+    
+    export type t = {
+        "uid": string | null;
+        "created_at": Date | null;
+        "updated_at": Date | null;
+        "pds_system_uid": string | null;
+        "entity_id": string | null;
+        "first_name": string | null;
+        "last_name": string | null;
+        "email": string | null;
+        "phone": string | null;
+        "has_consent_marketing": boolean | null;
+        "medical_record_number": string | null;
+        "date_of_birth": Date | null;
+        "race": string | null;
+        "gender": string | null;
+        "has_consent_text": boolean | null;
+        "prescribers": PdsPrescriber.t[] | null;
+        "insurances": PdsInsurance.t[] | null;
+        "pharmacies": PdsPharmacy.t[] | null;
+        "medications": PdsMedication.t[] | null;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["pds_system_uid", String],
+            ["entity_id", String],
+            ["first_name", String],
+            ["last_name", String],
+            ["email", String],
+            ["phone", String],
+            ["has_consent_marketing", Boolean],
+            ["medical_record_number", String],
+            ["date_of_birth", Date],
+            ["race", String],
+            ["gender", String],
+            ["has_consent_text", Boolean],
+            ["prescribers", { "kind": "array", "spec": PdsPrescriber.spec }],
+            ["insurances", { "kind": "array", "spec": PdsInsurance.spec }],
+            ["pharmacies", { "kind": "array", "spec": PdsPharmacy.spec }],
+            ["medications", { "kind": "array", "spec": PdsMedication.spec }],
+        ] as const,
+    };
+}
+
+export namespace FillIntent {
+    export const name = "fill_intent";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "message_at": Date;
+        "intent": Intent.t;
+        "comment": string | null;
+        "pds_prescription_uid": string;
+        "fill_number": number;
+        "pds_prescription_uid_old": string | null;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["message_at", Date],
+            ["intent", Intent.spec],
+            ["comment", String],
+            ["pds_prescription_uid", String],
+            ["fill_number", Number],
+            ["pds_prescription_uid_old", String],
+        ] as const,
+    };
+}
+
+export namespace NamedChannelFdMap {
+    export const name = "named_channel_fd_map";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date;
+        "updated_at": Date;
+        "channel_fd_uid": string;
+        "name": string;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["channel_fd_uid", String],
+            ["name", String],
+        ] as const,
+    };
+}
+
+export namespace RaisInsurance {
+    export const name = "rais_insurance";
+    
+    export type t = {
+        "uid": string;
+        "created_at": Date | null;
+        "updated_at": Date | null;
+        "plan_name": string | null;
+    };
+    
+    export const spec = {
+        kind: "composite" as const,
+        fields: () => [
+            ["uid", String],
+            ["created_at", Date],
+            ["updated_at", Date],
+            ["plan_name", String],
         ] as const,
     };
 }
@@ -2708,16 +2951,22 @@ export namespace PipelineSource {
     
     export type t =
         | "PDS_PERSON"
+        | "PDS_FILL"
+        | "FILL_INTENT"
         | "EL_CAMPAIGN_STATE_CHANGE"
         | "EL_CAMPAIGN_REPORT"
+        | "PDS_PRESCRIPTION"
         ;
     
     export const spec = {
         kind: "enum" as const,
         values: [
             "PDS_PERSON",
+            "PDS_FILL",
+            "FILL_INTENT",
             "EL_CAMPAIGN_STATE_CHANGE",
             "EL_CAMPAIGN_REPORT",
+            "PDS_PRESCRIPTION",
         ] as const,
     };
 }
@@ -2783,30 +3032,6 @@ export namespace OutreachSource {
 }
 
 
-export namespace OutreachStatus {
-    export const name = "outreach_status";
-    
-    export type t =
-        | "IN_PROGRESS"
-        | "SUCCESS"
-        | "DECLINED"
-        | "UNREACHABLE"
-        | "PAYOR_LOCKOUT"
-        ;
-    
-    export const spec = {
-        kind: "enum" as const,
-        values: [
-            "IN_PROGRESS",
-            "SUCCESS",
-            "DECLINED",
-            "UNREACHABLE",
-            "PAYOR_LOCKOUT",
-        ] as const,
-    };
-}
-
-
 export namespace OutreachEventType {
     export const name = "outreach_event_type";
     
@@ -2854,6 +3079,7 @@ export namespace ParserKey {
         | "SOMC_PATIENT_DATA"
         | "SOMC_WAC"
         | "SOMC_340B"
+        | "SOMC_RX_30"
         | "CRX_UPSERT"
         ;
     
@@ -2863,6 +3089,7 @@ export namespace ParserKey {
             "SOMC_PATIENT_DATA",
             "SOMC_WAC",
             "SOMC_340B",
+            "SOMC_RX_30",
             "CRX_UPSERT",
         ] as const,
     };
@@ -2877,6 +3104,7 @@ export namespace CampaignType {
         | "CAPTURE"
         | "ENGAGEMENT"
         | "OTHER"
+        | "ADHERENCE"
         ;
     
     export const spec = {
@@ -2886,6 +3114,7 @@ export namespace CampaignType {
             "CAPTURE",
             "ENGAGEMENT",
             "OTHER",
+            "ADHERENCE",
         ] as const,
     };
 }
@@ -2922,6 +3151,98 @@ export namespace PhoneKind {
         values: [
             "SMS",
             "SYNTHETIC",
+        ] as const,
+    };
+}
+
+
+export namespace OutreachType {
+    export const name = "outreach_type";
+    
+    export type t =
+        | "CAPTURE"
+        | "DATA_COLLECTION"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "CAPTURE",
+            "DATA_COLLECTION",
+        ] as const,
+    };
+}
+
+
+export namespace OutreachStatusDetail {
+    export const name = "outreach_status_detail";
+    
+    export type t =
+        | "ACTIVE"
+        | "WON"
+        | "DECLINED"
+        | "UNREACHABLE"
+        | "PAYOR_LOCKOUT"
+        | "AWAITING_PATIENT"
+        | "COMPLETED"
+        | "MEDICATION_DISCONTINUED"
+        | "ALREADY_ENROLLED"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "ACTIVE",
+            "WON",
+            "DECLINED",
+            "UNREACHABLE",
+            "PAYOR_LOCKOUT",
+            "AWAITING_PATIENT",
+            "COMPLETED",
+            "MEDICATION_DISCONTINUED",
+            "ALREADY_ENROLLED",
+        ] as const,
+    };
+}
+
+
+export namespace OutreachStatus {
+    export const name = "outreach_status";
+    
+    export type t =
+        | "IN_PROGRESS"
+        | "SUCCESS"
+        | "FAILURE"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "IN_PROGRESS",
+            "SUCCESS",
+            "FAILURE",
+        ] as const,
+    };
+}
+
+
+export namespace Intent {
+    export const name = "intent";
+    
+    export type t =
+        | "WANTS"
+        | "NO_WANTS"
+        | "UNDECIDED"
+        | "HAS_QUESTIONS"
+        ;
+    
+    export const spec = {
+        kind: "enum" as const,
+        values: [
+            "WANTS",
+            "NO_WANTS",
+            "UNDECIDED",
+            "HAS_QUESTIONS",
         ] as const,
     };
 }

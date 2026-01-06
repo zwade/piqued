@@ -25,7 +25,7 @@ const main = async () => {
     // console.log(result.array_agg);
     // console.log(await SimpleQueries.selectArray({ $0: [1, 2, 3] }).many())
 
-    const resultRaw = await pool.query("SELECT * FROM test_2");
+    const resultRaw = await pool.query("SELECT null::text");
     console.log(">>>", resultRaw.rows);
 
     const result =
