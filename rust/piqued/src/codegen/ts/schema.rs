@@ -198,6 +198,12 @@ impl CodeGenerator for TSGenerator {
                         for field in fields {
                             let native_type = self.resolve_type(ctx, &field.type_name);
 
+                            if let Some(comment) = &field.comment {
+                                c.write("/** ");
+                                c.write(comment);
+                                c.write_line(Some(" */"));
+                            }
+
                             c.with_duouble_quote(|c| c.write(&field.name));
                             c.write_symbol(": ");
                             c.write(&&native_type.get_type());

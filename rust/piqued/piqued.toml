@@ -1,2 +1,2 @@
 [postgres]
-uri="postgresql://postgres:hola12@localhost:5432/postgres"
+uri="postgres://postgres:password@localhost:5432/postgres"

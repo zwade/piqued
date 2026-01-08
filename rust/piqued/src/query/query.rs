@@ -32,6 +32,7 @@ pub struct Column {
     pub type_name: String,
     pub type_oid: u32,
     pub nullable: bool,
+    pub comment: Option<String>,
 }
 
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
@@ -166,6 +167,7 @@ impl Query {
                     type_name,
                     type_oid,
                     nullable,
+                    comment: None,
                 };
 
                 acc.entry(table_name).or_insert_with(Vec::new).push(column);
@@ -186,7 +188,8 @@ impl Query {
                     pg_attribute.attname as col_name,
                     pg_attribute.atttypid as col_type_oid,
                     col_type.typname as col_type_name,
-                    not pg_attribute.attnotnull as col_nullable
+                    not pg_attribute.attnotnull as col_nullable,
+                    pg_description.description
                 FROM pg_type
                 INNER JOIN pg_namespace
                     ON pg_type.typnamespace = pg_namespace.oid
@@ -194,6 +197,9 @@ impl Query {
                     ON pg_type.typrelid = pg_attribute.attrelid
                 INNER JOIN pg_type col_type
                     ON pg_attribute.atttypid = col_type.oid
+                LEFT JOIN pg_description
+                    ON pg_description.objoid = pg_attribute.attrelid
+                    AND pg_description.objsubid = pg_attribute.attnum
                 WHERE pg_namespace.nspname in ($1, 'pg_catalog')
                     AND pg_type.typcategory = 'C'
                     AND pg_attribute.attnum > 0
@@ -215,12 +221,14 @@ impl Query {
                 let col_type_oid = row.get(3);
                 let col_type_name = row.get(4);
                 let col_nullable = row.get(5);
+                let col_comment = row.get(6);
 
                 let column = Column {
                     name: col_name,
                     type_name: col_type_name,
                     type_oid: col_type_oid,
                     nullable: col_nullable,
+                    comment: col_comment,
                 };
 
                 let composite_type = acc.entry(type_oid).or_insert_with(|| CompositeType {

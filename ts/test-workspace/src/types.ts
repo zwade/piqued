@@ -11,10 +11,12 @@ export namespace Person {
         "uid": string;
         "created_at": Date;
         "updated_at": Date;
+        /** the person's email */
         "email": string;
         "phone_number": string | null;
         "system_admin_witness": string | null;
         "pds_person_uid": string | null;
+        /** the person's first_name */
         "first_name": string;
         "last_name": string;
     };
