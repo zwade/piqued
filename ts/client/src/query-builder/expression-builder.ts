@@ -159,6 +159,14 @@ export namespace Op {
         return new BinaryOperation<boolean, "?column?">("=", left, right);
     }
 
+    export function is(left: Expression, right: Expression) {
+        return new BinaryOperation<boolean, "?column?">("IS", left, right);
+    }
+
+    export function isNot(left: Expression, right: Expression) {
+        return new BinaryOperation<boolean, "?column?">("IS NOT", left, right);
+    }
+
     export function in_(left: Expression, right: Expression) {
         if (Array.isArray(right)) {
             right = tuple(right);
@@ -208,6 +216,14 @@ export namespace Op {
             return exp<number, "count">`count(${e})::integer as count`;
         }
     };
+
+    export function isNull(e: Expression) {
+        return exp<boolean, "?column?">`${e} IS NULL`;
+    }
+
+    export function isNotNull(e: Expression) {
+        return exp<boolean, "?column?">`${e} IS NOT NULL`;
+    }
 }
 
 type Despecify<
