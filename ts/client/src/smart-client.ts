@@ -146,7 +146,7 @@ export class SmartClient {
         this.ensureLiving();
 
         this.queryLogger?.(query, values);
-        const res = this.client.query<T>({ text: query, values, rowMode: "array" });
+        const res = await this.client.query<T>({ text: query, values, rowMode: "array" });
         this.checkIfAborted(res);
 
         return res;
