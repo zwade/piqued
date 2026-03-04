@@ -124,30 +124,32 @@ export class SmartClient {
         }
     }
 
+    protected checkIfAborted<T>(res: T) {
+        // client will only ever return undefined if the query was cancelled
+        if (res === undefined) {
+            this.dispose();
+            throw new Error("Query has been cancelled");
+        }
+    }
+
     public async query<T extends QueryResultRow>(query: string, values?: any[]): Promise<QueryResult<T>> {
         this.ensureLiving();
 
-        try {
-            this.queryLogger?.(query, values);
-            return this.client.query<T>(query, values);
-        } catch (e) {
-            console.error(`Query failed`);
-            console.error(query, values);
-            throw e;
-        }
+        this.queryLogger?.(query, values);
+        const res = await this.client.query<T>(query, values);
+        this.checkIfAborted(res);
+
+        return res;
     }
 
     public async queryArray<T extends any[]>(query: string, values?: any[]): Promise<QueryArrayResult<T>> {
         this.ensureLiving();
 
-        try {
-            this.queryLogger?.(query, values);
-            return this.client.query<T>({ text: query, values, rowMode: "array" });
-        } catch (e) {
-            console.error(`Query failed`);
-            console.error(query, values);
-            throw e;
-        }
+        this.queryLogger?.(query, values);
+        const res = this.client.query<T>({ text: query, values, rowMode: "array" });
+        this.checkIfAborted(res);
+
+        return res;
     }
 
     public queryStream<T, O extends StreamOptions>(
@@ -161,11 +163,17 @@ export class SmartClient {
         try {
             this.queryLogger?.(query, values);
             const cursor = this.client.query(new Cursor(query, values));
+            this.checkIfAborted(cursor);
+
+            const abortCheck = this.checkIfAborted.bind(this);
+
             const batchSize = options.batchSize;
             if (batchSize === undefined) {
                 const generator = async function* () {
                     while (true) {
                         const result = await cursor.read(1);
+                        abortCheck(result);
+
                         if (result.length === 0) {
                             break;
                         }
@@ -179,6 +187,8 @@ export class SmartClient {
                 const generator = async function* () {
                     while (true) {
                         const result = await cursor.read(batchSize);
+                        abortCheck(result);
+
                         if (result.length === 0) {
                             break;
                         }
@@ -237,16 +247,19 @@ export class SmartClient {
             this.inTx = true;
 
             if (this.txDepth === 0) {
-                await this.client.query("BEGIN;");
+                const res = await this.client.query("BEGIN;");
+                this.checkIfAborted(res);
             } else {
-                await this.client.query(`SAVEPOINT S${this.txDepth};`);
+                const res = await this.client.query(`SAVEPOINT S${this.txDepth};`);
+                this.checkIfAborted(res);
             }
 
             this.active = false;
             const result = await CurrentTransaction.run(newClient, () => fn(newClient));
 
             if (this.txDepth === 0) {
-                await this.client.query("COMMIT;");
+                const res = await this.client.query("COMMIT;");
+                this.checkIfAborted(res);
             }
 
             // This is a bit of a misnomer in the sense that if this `tx` is not at the root
@@ -265,13 +278,15 @@ export class SmartClient {
             console.error("Error in transaction", e);
 
             if (this.txDepth === 0) {
-                await this.client.query("ROLLBACK;");
+                const res = await this.client.query("ROLLBACK;");
+                this.checkIfAborted(res);
 
                 this.active = true;
                 await newClient.trigger("rollback");
                 await this.trigger("rollback");
             } else {
-                await this.client.query(`ROLLBACK TO S${this.txDepth - 1}`);
+                const res = await this.client.query(`ROLLBACK TO S${this.txDepth - 1}`);
+                this.checkIfAborted(res);
 
                 this.active = true;
                 await newClient.trigger("rollback");
