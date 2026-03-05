@@ -124,8 +124,8 @@ __metadata:
     pg-cursor: "*"
     zod: "*"
   bin:
-    pq-migration: ./dist/bin/pq-migration.js
-    pq-new: ./dist/bin/pq-new.js
+    piqued-migrate: ./dist/bin/piqued-migrate.js
+    pqm: ./dist/bin/piqued-migrate.js
   languageName: unknown
   linkType: soft
 

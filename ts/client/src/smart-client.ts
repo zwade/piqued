@@ -127,27 +127,15 @@ export class SmartClient {
     public async query<T extends QueryResultRow>(query: string, values?: any[]): Promise<QueryResult<T>> {
         this.ensureLiving();
 
-        try {
-            this.queryLogger?.(query, values);
-            return this.client.query<T>(query, values);
-        } catch (e) {
-            console.error(`Query failed`);
-            console.error(query, values);
-            throw e;
-        }
+        this.queryLogger?.(query, values);
+        return this.client.query<T>(query, values);
     }
 
     public async queryArray<T extends any[]>(query: string, values?: any[]): Promise<QueryArrayResult<T>> {
         this.ensureLiving();
 
-        try {
-            this.queryLogger?.(query, values);
-            return this.client.query<T>({ text: query, values, rowMode: "array" });
-        } catch (e) {
-            console.error(`Query failed`);
-            console.error(query, values);
-            throw e;
-        }
+        this.queryLogger?.(query, values);
+        return this.client.query<T>({ text: query, values, rowMode: "array" });
     }
 
     public queryStream<T, O extends StreamOptions>(
