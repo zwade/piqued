@@ -128,14 +128,14 @@ export class SmartClient {
         this.ensureLiving();
 
         this.queryLogger?.(query, values);
-        return await this.client.query<T>(query, values);
+        return this.client.query<T>(query, values);
     }
 
     public async queryArray<T extends any[]>(query: string, values?: any[]): Promise<QueryArrayResult<T>> {
         this.ensureLiving();
 
         this.queryLogger?.(query, values);
-        return await this.client.query<T>({ text: query, values, rowMode: "array" });
+        return this.client.query<T>({ text: query, values, rowMode: "array" });
     }
 
     public queryStream<T, O extends StreamOptions>(
@@ -149,13 +149,11 @@ export class SmartClient {
         try {
             this.queryLogger?.(query, values);
             const cursor = this.client.query(new Cursor(query, values));
-
             const batchSize = options.batchSize;
             if (batchSize === undefined) {
                 const generator = async function* () {
                     while (true) {
                         const result = await cursor.read(1);
-
                         if (result.length === 0) {
                             break;
                         }
@@ -169,7 +167,6 @@ export class SmartClient {
                 const generator = async function* () {
                     while (true) {
                         const result = await cursor.read(batchSize);
-
                         if (result.length === 0) {
                             break;
                         }
