@@ -2,7 +2,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { PoolClient, QueryArrayResult, QueryResult, QueryResultRow } from "pg";
 import { default as Cursor } from "pg-cursor";
 
-import { ColumnOrderCache } from "./order-managment";
+import { ColumnOrderCache } from "./order-managment.js";
 
 (Symbol as any).dispose ??= Symbol("Symbol.dispose");
 (Symbol as any).asyncDispose ??= Symbol("Symbol.asyncDispose");
@@ -41,6 +41,7 @@ export class SmartClient {
     protected inTx;
     protected rootClient: SmartClient;
     protected queryLogger?: (query: string, values?: any[]) => void;
+    protected timeoutMs?: number;
 
     protected events: Map<Event, Set<EventCallback<[SmartClient]>>> = new Map();
 
@@ -58,6 +59,7 @@ export class SmartClient {
         this.inTx = false;
         this.rootClient = rootClient ?? this;
         this.queryLogger = queryLogger;
+        this.timeoutMs = timeoutMs;
         this.columnOrderCache = columnOrderCache ?? new WeakMap();
         this.#isLiving = true;
 
@@ -124,17 +126,14 @@ export class SmartClient {
         }
     }
 
+    protected async _queryWithLog(query: string, values?: any[]) {
+        this.queryLogger?.(query, values);
+        return this.client.query(query, values);
+    }
+
     public async query<T extends QueryResultRow>(query: string, values?: any[]): Promise<QueryResult<T>> {
         this.ensureLiving();
-
-        try {
-            this.queryLogger?.(query, values);
-            return this.client.query<T>(query, values);
-        } catch (e) {
-            console.error(`Query failed`);
-            console.error(query, values);
-            throw e;
-        }
+        return await this._queryWithLog(query, values);
     }
 
     public async queryArray<T extends any[]>(query: string, values?: any[]): Promise<QueryArrayResult<T>> {
@@ -231,22 +230,24 @@ export class SmartClient {
             txDepth: this.txDepth + 1,
             rootClient: this.rootClient,
             columnOrderCache: this.columnOrderCache,
+            queryLogger: this.queryLogger,
+            timeoutMs: this.timeoutMs,
         });
 
         try {
             this.inTx = true;
 
             if (this.txDepth === 0) {
-                await this.client.query("BEGIN;");
+                await this._queryWithLog("BEGIN;");
             } else {
-                await this.client.query(`SAVEPOINT S${this.txDepth};`);
+                await this._queryWithLog(`SAVEPOINT S${this.txDepth};`);
             }
 
             this.active = false;
             const result = await CurrentTransaction.run(newClient, () => fn(newClient));
 
             if (this.txDepth === 0) {
-                await this.client.query("COMMIT;");
+                await this._queryWithLog("COMMIT;");
             }
 
             // This is a bit of a misnomer in the sense that if this `tx` is not at the root
@@ -265,13 +266,13 @@ export class SmartClient {
             console.error("Error in transaction", e);
 
             if (this.txDepth === 0) {
-                await this.client.query("ROLLBACK;");
+                await this._queryWithLog("ROLLBACK;");
 
                 this.active = true;
                 await newClient.trigger("rollback");
                 await this.trigger("rollback");
             } else {
-                await this.client.query(`ROLLBACK TO S${this.txDepth - 1}`);
+                await this._queryWithLog(`ROLLBACK TO S${this.txDepth};`);
 
                 this.active = true;
                 await newClient.trigger("rollback");

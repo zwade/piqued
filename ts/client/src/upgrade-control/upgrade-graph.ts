@@ -30,7 +30,6 @@ const constructSequence = (operations: PiquedUpgradeInstance[]): PiquedUpgradeIn
 
 export class PiquedUpgradeGraph {
     #nodes: Map<string, PiquedUpgradeInstance>;
-    #root: string;
     #edges: Map<string, string[]>;
 
     public static fromUpgrades(upgrades: PiquedUpgradeInstance[]) {
@@ -63,7 +62,6 @@ export class PiquedUpgradeGraph {
 
     public constructor(nodes: Map<string, PiquedUpgradeInstance>, root: string, edges: Map<string, string[]>) {
         this.#nodes = nodes;
-        this.#root = root;
         this.#edges = edges;
     }
 

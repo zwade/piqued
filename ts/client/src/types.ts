@@ -1,10 +1,10 @@
 import { Pool } from "pg";
 
-import { acquireColumnOrderCache } from "./order-managment";
-import { parseArray, parseObject } from "./parser";
-import { Expression, serializeExpression } from "./query-builder/expression-builder";
-import { MutableSerializationState } from "./query-builder/serialize";
-import { getCurrentClient, SmartClient, StreamOptions, StreamShape } from "./smart-client";
+import { acquireColumnOrderCache } from "./order-managment.js";
+import { parseArray, parseObject } from "./parser.js";
+import { Expression, serializeExpression } from "./query-builder/expression-builder.js";
+import { MutableSerializationState } from "./query-builder/serialize.js";
+import { getCurrentClient, SmartClient, StreamOptions, StreamShape } from "./smart-client.js";
 
 export type CustomParseSpec =
     | { kind: "composite"; fields: () => readonly (readonly [name: string, spec: ParseSpec])[] }

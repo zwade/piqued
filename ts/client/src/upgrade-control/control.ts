@@ -36,7 +36,7 @@ export class PiquedUpgradeControl {
 
             const buffer = await fs.readFile(filePath);
             return buffer.toString("utf-8");
-        } catch (e) {
+        } catch (_e) {
             return undefined;
         }
     }

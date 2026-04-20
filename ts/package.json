@@ -1,0 +1,28 @@
+{
+  "name": "@piqued/workspace",
+  "packageManager": "yarn@4.13.0",
+  "type": "module",
+  "workspaces": [
+    "client",
+    "lsp",
+    "liveview",
+    "test-workspace"
+  ],
+  "r": {
+    "lint": "yarn eslint {client,liveview,lsp}/src --fix",
+    "deploy": "yarn r client:deploy && yarn r liveview:deploy"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.5",
+    "@eslint/js": "^9.32.0",
+    "@types/eslint": "^8",
+    "@typescript-eslint/eslint-plugin": "^8.58.0",
+    "@typescript-eslint/parser": "^8.58.0",
+    "eslint": "^10.2.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.1.3",
+    "eslint-plugin-simple-import-sort": "^12.0.0",
+    "typescript": "^5.4.3",
+    "typescript-eslint": "^8.39.0"
+  }
+}

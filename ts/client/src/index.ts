@@ -1,4 +1,5 @@
-export { acquireColumnOrderCache, buildColumnOrderCache, ColumnOrderCache } from "./order-managment";
+export { EmitConfig, PiquedConfig, PostgresConfig, WorkspaceConfig } from "./config/piqued-config.js";
+export { acquireColumnOrderCache, buildColumnOrderCache, ColumnOrderCache } from "./order-managment.js";
 export {
     BinaryOperation,
     cast,
@@ -14,13 +15,15 @@ export {
     raw,
     RawExpression,
     serializeExpression,
+    serializeExpressionAsString,
     StructuredExpression,
     TableBuilder,
     TableExpression,
+    TableWith,
     tuple,
     TupleExpression,
     UnaryOperation,
-} from "./query-builder/expression-builder";
+} from "./query-builder/expression-builder.js";
 export {
     DecodeExpression,
     Delete,
@@ -33,8 +36,17 @@ export {
     Select,
     Update,
     UpdateState,
-} from "./query-builder/query-builder";
-export { ClientOptions, SmartClient } from "./smart-client";
-export { Retrieval as Cursor, EntityQueries, Query, QueryExecutor, QueryExecutors } from "./types";
-export { PiquedUpgradeControl } from "./upgrade-control/control";
+} from "./query-builder/query-builder.js";
+export { ClientOptions, SmartClient } from "./smart-client.js";
+export {
+    Retrieval as Cursor,
+    CustomParseSpec,
+    EntityQueries,
+    ParseSpec,
+    Query,
+    QueryExecutor,
+    QueryExecutors,
+    ResultSpec,
+} from "./types.js";
+export { PiquedUpgradeControl } from "./upgrade-control/control.js";
 export type { Pool } from "pg";

@@ -6,9 +6,9 @@ import * as os from "node:os";
 import path from "node:path";
 import { parseArgs } from "node:util";
 
-import { PiquedUpgradeControl } from "../upgrade-control/control";
-import { PiquedUpgradeInstance } from "../upgrade-control/upgrade-graph";
-import { RleMatrix, Segment } from "./render-buffer";
+import { PiquedUpgradeControl } from "../upgrade-control/control.js";
+import { PiquedUpgradeInstance } from "../upgrade-control/upgrade-graph.js";
+import { RleMatrix, Segment } from "./render-buffer.js";
 
 const help = () => {
     process.stdout.write(`Usage: piqued-migrate log <upgrade dir>

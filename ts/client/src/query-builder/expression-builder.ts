@@ -1,5 +1,5 @@
-import { CustomParseSpec, ParseSpec } from "../types";
-import { MutableSerializationState } from "./serialize";
+import { CustomParseSpec, ParseSpec } from "../types.js";
+import { MutableSerializationState } from "./serialize.js";
 
 export class ColumnExpression<_Result, Name extends string> {
     constructor(
@@ -51,10 +51,10 @@ export class InterpolatedExpression<_Result, _Name extends string> {
 }
 
 export class TupleExpression<_T, _Name extends string> {
-    constructor(public expressions: LiteralExpression[]) {}
+    constructor(public expressions: Expression[]) {}
 }
 
-export const tuple = (expressions: LiteralExpression[]) => {
+export const tuple = (expressions: Expression[]) => {
     return new TupleExpression(expressions);
 };
 
@@ -209,6 +209,10 @@ export namespace Op {
         return new BinaryOperation<boolean, "?column?">("or", lhs, rhs);
     };
 
+    export const concat = <T>(...args: Expression<T>[]) => {
+        return new FunctionOperation<T, "concat">("concat", args);
+    };
+
     export const count = (e?: Expression) => {
         if (!e) {
             return exp<number, "count">`count(*)::integer as count`;
@@ -296,6 +300,8 @@ export class TableBuilder<
     }
 }
 
+export type TableWith<Columns extends Record<string, any>> = TableBuilder & { c: Columns; star: any };
+
 export class Label<T = unknown, Name extends string = string> {
     constructor(
         public e: Expression<T, string>,
@@ -315,11 +321,12 @@ const addAndReturnParam = (state: MutableSerializationState, value: any) => {
 
 export interface SerializeOptions {
     inlineOnly?: boolean;
+    tableNameMap?: Record<string, string>;
 }
 
 export const serializeExpression = (
     e: Expression | Label,
-    state: MutableSerializationState,
+    state: MutableSerializationState = { paramCount: 0, paramValues: [] },
     options: SerializeOptions = {},
 ): string => {
     if (
@@ -340,11 +347,14 @@ export const serializeExpression = (
     }
 
     if (e instanceof TableExpression) {
-        return `"${e.name}"`;
+        const tableName = options.tableNameMap?.[e.name] ?? e.name;
+
+        return `"${tableName}"`;
     }
 
     if (e instanceof ColumnExpression) {
-        return `"${e.tableName}"."${e.columnName}"`;
+        const tableName = options.tableNameMap?.[e.tableName] ?? e.tableName;
+        return `"${tableName}"."${e.columnName}"`;
     }
 
     if (e instanceof UnaryOperation) {
@@ -379,7 +389,7 @@ export const serializeExpression = (
     }
 
     if (e instanceof Label) {
-        return `${serializeExpression(e.e, state)} as ${e.name}`;
+        return `${serializeExpression(e.e, state, options)} as ${e.name}`;
     }
 
     return addAndReturnParam(state, e);
@@ -427,11 +437,15 @@ export const serializeInlineExpression = (e: LiteralExpression): string => {
                 return `{${e.map(serializeInlineExpression).join(",")}}`;
             }
 
-            if (e instanceof TupleExpression) {
-                return `(${e.expressions.map(serializeInlineExpression).join(",")})`;
-            }
-
-            throw new Error("Unable to serialize expression", e);
+            throw new Error(`Unable to serialize expression: ${e}`);
         }
     }
+};
+
+export interface SerializeAsStringOptions {
+    tableNameMap?: Record<string, string>;
+}
+
+export const serializeExpressionAsString = (e: Expression | Label, options: SerializeAsStringOptions = {}): string => {
+    return serializeExpression(e, { paramCount: 0, paramValues: [] }, { inlineOnly: true, ...options });
 };

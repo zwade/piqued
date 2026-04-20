@@ -1,5 +1,6 @@
 {
     "name": "@piqued/test-workspace",
+    "type": "module",
     "devDependencies": {
         "@types/pg": "^8",
         "@types/pg-cursor": "^2",
@@ -7,12 +8,9 @@
         "typescript": "^5.8.2"
     },
     "dependencies": {
-        "@piqued/client": "portal:../client",
-        "pg": "^8.8.0",
+        "@piqued/client": "workspace:*",
+        "@piqued/liveview": "workspace:*",
+        "pg": "^8.16.0",
         "pg-cursor": "^2.13.1"
-    },
-    "resolutions": {
-        "@piqued/client": "portal:../client"
-    },
-    "packageManager": "yarn@3.3.0"
+    }
 }

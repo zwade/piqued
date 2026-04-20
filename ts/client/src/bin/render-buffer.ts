@@ -5,7 +5,7 @@
  * with the MIT license.
  */
 
-import chalk, { Chalk } from "chalk";
+import chalk, { Chalk, ChalkInstance } from "chalk";
 
 export interface Point {
     x: number;
@@ -25,7 +25,7 @@ export interface SegmentOptions extends AnsiStyles {
 }
 
 const render = (styles: AnsiStyles, data: string) => {
-    let c: Chalk = chalk;
+    let c: ChalkInstance = chalk;
 
     if (styles.color) {
         if (styles.color in chalk) {

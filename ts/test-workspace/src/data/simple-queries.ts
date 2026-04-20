@@ -1,4 +1,4 @@
-import { Practice } from "../types";
+import {  } from "../types.js";
 
 import { Query, EntityQueries } from "@piqued/client";
 
@@ -96,36 +96,6 @@ export namespace Query2 {
 }
 
 
-export const Test: Query<Test.InputArray, Test.InputObject, Test.TemplateInputObject, Test.OutputArray, Test.OutputObject> = {
-    name: "test",
-    query: ` SELECT first_name FROM person WHERE uid IN :__tmpl_uids OR $1;`,
-    params: [
-        "force",
-    ],
-    templateParams: ["uids"],
-    spec: [
-        ["first_name", undefined],
-    ],
-    _brand: undefined as any,
-};
-
-export namespace Test {
-    export type InputArray = [
-    force: boolean,
-];
-    export type InputObject = {
-    "force": boolean,
-};
-    export type TemplateInputObject = {"uids": any};
-    export type OutputArray = [
-    first_name: string,
-];
-    export type OutputObject = {
-    "first_name": string,
-};
-}
-
-
 export const Several: Query<Several.InputArray, Several.InputObject, Several.TemplateInputObject, Several.OutputArray, Several.OutputObject> = {
     name: "several",
     query: ` SELECT unnest('{1,2,3,4,5,6,7,8,9}'::int[]) as num;`,
@@ -149,33 +119,6 @@ export namespace Several {
 ];
     export type OutputObject = {
     "num": number,
-};
-}
-
-
-export const GetPractices: Query<GetPractices.InputArray, GetPractices.InputObject, GetPractices.TemplateInputObject, GetPractices.OutputArray, GetPractices.OutputObject> = {
-    name: "get_practices",
-    query: ` SELECT array_agg(practice) FROM practice;`,
-    params: [
-    ],
-    templateParams: [],
-    spec: [
-        ["array_agg", { "kind": "array", "spec": Practice.spec }],
-    ],
-    _brand: undefined as any,
-};
-
-export namespace GetPractices {
-    export type InputArray = [
-];
-    export type InputObject = {
-};
-    export type TemplateInputObject = {};
-    export type OutputArray = [
-    array_agg: Practice.t[],
-];
-    export type OutputObject = {
-    "array_agg": Practice.t[],
 };
 }
 
@@ -210,44 +153,11 @@ export namespace SelectArray {
 }
 
 
-export const GetArray: Query<GetArray.InputArray, GetArray.InputObject, GetArray.TemplateInputObject, GetArray.OutputArray, GetArray.OutputObject> = {
-    name: "get_array",
-    query: ` SELECT selected_fds FROM ft_state WHERE uid = $1;`,
-    params: [
-        "$0",
-    ],
-    templateParams: [],
-    spec: [
-        ["selected_fds", undefined],
-    ],
-    _brand: undefined as any,
-};
-
-export namespace GetArray {
-    export type InputArray = [
-    $0: string,
-];
-    export type InputObject = {
-    "$0": string,
-};
-    export type TemplateInputObject = {};
-    export type OutputArray = [
-    selected_fds: number[],
-];
-    export type OutputObject = {
-    "selected_fds": number[],
-};
-}
-
-
 export default EntityQueries({
     "reflect": Reflect,
     "reflect2": Reflect2,
     "query2": Query2,
-    "test": Test,
     "several": Several,
-    "getPractices": GetPractices,
     "selectArray": SelectArray,
-    "getArray": GetArray,
 })
 

@@ -1,5 +1,5 @@
-import { ColumnOrderCache } from "./order-managment";
-import { CustomParseSpec, ParseSpec, ResultSpec } from "./types";
+import { ColumnOrderCache } from "./order-managment.js";
+import { CustomParseSpec, ParseSpec, ResultSpec } from "./types.js";
 
 class PgParser {
     private idx = 0;

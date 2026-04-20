@@ -1,9 +1,9 @@
 import { QueryResultRow } from "pg";
 
-import { ColumnOrderCache } from "../order-managment";
-import { parse, parseTopLevel } from "../parser";
-import { SmartClient, StreamOptions, StreamShape } from "../smart-client";
-import { ParseSpec } from "../types";
+import { ColumnOrderCache } from "../order-managment.js";
+import { parse, parseTopLevel } from "../parser.js";
+import { SmartClient, StreamOptions, StreamShape } from "../smart-client.js";
+import { ParseSpec } from "../types.js";
 import {
     ColumnExpression,
     Expression,
@@ -13,8 +13,8 @@ import {
     serializeExpression,
     TableBuilder,
     TableExpression,
-} from "./expression-builder";
-import { MutableSerializationState } from "./serialize";
+} from "./expression-builder.js";
+import { MutableSerializationState } from "./serialize.js";
 
 export type ResultState = {
     results: Record<string, unknown>;
@@ -235,6 +235,7 @@ export namespace QueryState {
         joins: ["inner" | "left", TableBuilder, Expression<boolean>][];
         whereClauses: Expression<boolean>[];
         orderClauses: [Expression, "asc" | "desc"][];
+        groupByClauses: Expression[];
         limit: Expression<number> | null;
         offset: Expression<number> | null;
         forUpdate: boolean;
@@ -280,6 +281,10 @@ export class QueryState<T extends ResultState> extends ExecutableQuery<T> {
         return this.with({ orderClauses: [...this.#state.orderClauses, [condition, direction]] });
     }
 
+    public groupBy(condition: Expression) {
+        return this.with({ groupByClauses: [...this.#state.groupByClauses, condition] });
+    }
+
     public setLimit(limit: Expression<number>) {
         return this.with({ limit });
     }
@@ -323,6 +328,10 @@ export class QueryState<T extends ResultState> extends ExecutableQuery<T> {
 
         if (this.#state.orderClauses.length > 0) {
             accumulator += `order by ${this.#state.orderClauses.map(([e, dir]) => `${serializeExpression(e, state)} ${dir}`).join(", ")}\n`;
+        }
+
+        if (this.#state.groupByClauses.length > 0) {
+            accumulator += `group by ${this.#state.groupByClauses.map((e) => serializeExpression(e, state)).join(", ")}\n`;
         }
 
         if (this.#state.limit !== null) {
@@ -589,6 +598,7 @@ export const Select = <const T extends unknown[]>(...args: T): QueryState<{ resu
         joins: [],
         whereClauses: [],
         orderClauses: [],
+        groupByClauses: [],
         limit: null,
         offset: null,
         forUpdate: false,

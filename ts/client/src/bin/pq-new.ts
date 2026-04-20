@@ -6,7 +6,7 @@ import * as pathMod from "node:path";
 import { parseArgs } from "node:util";
 import * as toml from "smol-toml";
 
-import { PiquedMigrationToml, PiquedUpgradeControl } from "../upgrade-control/control";
+import { PiquedMigrationToml, PiquedUpgradeControl } from "../upgrade-control/control.js";
 
 const help = () => {
     process.stdout.write(`Usage: piqued-migrate new <upgrade dir> <new upgrade path>

@@ -1,6 +1,6 @@
 import type pg from "pg";
 
-import { CustomParseSpec, ParseSpec } from "./types";
+import { CustomParseSpec, ParseSpec } from "./types.js";
 
 const columnOrderCacheSymbol = Symbol.for("columnOrderCache");
 

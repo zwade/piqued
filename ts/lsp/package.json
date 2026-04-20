@@ -1,5 +1,5 @@
 {
-  "name": "piqued-lsp",
+  "name": "@piqued/lsp",
   "displayName": "piqued-lsp",
   "description": "Piqued Language Server",
   "version": "0.0.1",

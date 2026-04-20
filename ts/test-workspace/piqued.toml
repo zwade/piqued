@@ -1,6 +1,10 @@
 [postgres]
-uri = "postgresql://postgres:password@localhost:5432/postgres"
+uri = "postgresql://postgres:password@localhost:5432/piqued_test"
 
 [emit]
-typeFile = "./src/types"
-tableFile="./src/orm.ts"
+typeFile = "./types"
+tableFile="./orm.ts"
+moduleType = "esm"
+
+[workspace]
+root="./src"

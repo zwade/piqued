@@ -2,7 +2,7 @@
 
 import { parseArgs } from "node:util";
 
-import { PiquedUpgradeControl } from "../upgrade-control/control";
+import { PiquedUpgradeControl } from "../upgrade-control/control.js";
 
 const help = () => {
     process.stdout.write(`Usage: piqued-migrate legacy-upgrade <upgrade dir>
