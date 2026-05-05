@@ -231,6 +231,7 @@ FOR EACH ROW EXECUTE FUNCTION "piqued_liveview"."${callbackFnName}"();`,
 
                 const from = dep.from === "NOW" ? "NOW()" : dep.from;
                 const to = dep.to === "NOW" ? "NOW()" : dep.to;
+                const primaryKeyName = pkCol(entry);
 
                 const isExternal = depTable !== primaryTable;
 
@@ -256,8 +257,8 @@ FOR EACH ROW EXECUTE FUNCTION "piqued_liveview"."${callbackFnName}"();`,
                 emit({
                     kind: "time_trigger",
                     name: triggerName,
-                    sql: `INSERT INTO "piqued_liveview"."time_trigger_state" (name, entry_id, table_name, column_name, callback_name, start_time, end_time)
-VALUES (${serializeExpressionAsString(triggerName)}, ${serializeExpressionAsString(entry.id)}, ${serializeExpressionAsString(depTable)}, ${serializeExpressionAsString(colName)}, ${serializeExpressionAsString(callbackFnName)}, ${serializeExpressionAsString(from)}, ${serializeExpressionAsString(to)})
+                    sql: `INSERT INTO "piqued_liveview"."time_trigger_state" (name, entry_id, table_name, column_name, primary_key_name, callback_name, start_time, end_time)
+VALUES (${serializeExpressionAsString(triggerName)}, ${serializeExpressionAsString(entry.id)}, ${serializeExpressionAsString(depTable)}, ${serializeExpressionAsString(colName)}, ${serializeExpressionAsString(primaryKeyName)}, ${serializeExpressionAsString(callbackFnName)}, ${serializeExpressionAsString(from)}, ${serializeExpressionAsString(to)})
 ON CONFLICT (name) DO NOTHING;`,
                 });
             }

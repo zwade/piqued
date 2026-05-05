@@ -59,6 +59,9 @@ const main = async () => {
                 kind: "fn",
                 fn: async (client, dependencies) => {
                     console.log("Updated person:", dependencies.person);
+                    if (Math.random() < 0.1) {
+                        throw new Error("Random error for testing deadletter logic");
+                    }
                 },
             },
         ],

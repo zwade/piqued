@@ -223,7 +223,10 @@ VALUES (${view.id}, ${tsTypeToDbType(asset.kind)}, ${asset.name}, ${hash}, ${ass
                 return true;
             }
 
-            for (const { entry_id, primary_key, async_callback_name } of queueEntries.rows) {
+            const deadletteredEntries: { row: HarnessV1.HostFnQueue; error_message: string }[] = [];
+
+            for (const row of queueEntries.rows) {
+                const { id, entry_id, primary_key, async_callback_name } = row;
                 if (async_callback_name) {
                     this.log(`Executing async callback for entry [${entry_id}] with primary key "${primary_key}"`);
 
@@ -233,6 +236,9 @@ VALUES (${view.id}, ${tsTypeToDbType(asset.kind)}, ${asset.name}, ${hash}, ${ass
                         });
                     } catch (err) {
                         console.error(`Error executing async callback for entry ${entry_id}:`, err);
+                        deadletteredEntries.push({ row, error_message: String(err) });
+
+                        continue;
                     }
                 }
 
@@ -258,14 +264,25 @@ VALUES (${view.id}, ${tsTypeToDbType(asset.kind)}, ${asset.name}, ${hash}, ${ass
                             });
                         } catch (err) {
                             console.error(`Error executing callback for entry [${entry_id}]:`, err);
+                            deadletteredEntries.push({ row, error_message: String(err) });
+
+                            continue;
                         }
                     }
                 }
             }
 
+            for (const { row, error_message } of deadletteredEntries) {
+                await client.q`
+                    INSERT INTO "piqued_liveview"."host_fn_queue_deadletter" (entry_id, primary_key, async_callback_name, error_message)
+                    VALUES (${row.entry_id}, ${row.primary_key}, ${row.async_callback_name ?? null}, ${error_message});
+                `;
+            }
+
+            const idsToDelete = queueEntries.rows.map((row) => row.id);
             await client.query(`
                 DELETE FROM "piqued_liveview"."host_fn_queue"
-                WHERE id IN ${serializeExpressionAsString(tuple(queueEntries.rows.map((r) => r.id)))};
+                WHERE id IN ${serializeExpressionAsString(tuple(idsToDelete))};
             `);
 
             return queueEntries.rows.length !== 50;
@@ -277,7 +294,7 @@ VALUES (${view.id}, ${tsTypeToDbType(asset.kind)}, ${asset.name}, ${hash}, ${ass
             const timeTriggers = await client.q<HarnessV1.TimeTriggerState>`
                 SELECT *
                 FROM "piqued_liveview"."time_trigger_state"
-                WHERE (end_time IS NULL OR end_time > last_triggered)
+                WHERE (end_time IS NULL OR end_time > last_triggered_time)
                 FOR UPDATE SKIP LOCKED;
         `;
 
@@ -297,25 +314,38 @@ VALUES (${view.id}, ${tsTypeToDbType(asset.kind)}, ${asset.name}, ${hash}, ${ass
                             updates AS (
                                 SELECT
                                     "${trigger.table_name}"."${trigger.column_name}" as time,
+                                    "${trigger.table_name}"."${trigger.primary_key_name}"::text as primary_key,
                                     "piqued_liveview"."${trigger.callback_name}"("${trigger.table_name}") as _res
                                 FROM "${trigger.table_name}"
                                 CROSS JOIN trigger_state
-                                WHERE "${trigger.table_name}"."${trigger.column_name}" > trigger_state.last_triggered
+                                WHERE
+                                    ("${trigger.table_name}"."${trigger.column_name}", "${trigger.table_name}"."${trigger.primary_key_name}"::text) > (trigger_state.last_triggered_time, trigger_state.last_triggered_key)
                                     AND (trigger_state.start_time IS NULL OR "${trigger.table_name}"."${trigger.column_name}" >= trigger_state.start_time)
                                     AND (trigger_state.end_time IS NULL OR "${trigger.table_name}"."${trigger.column_name}" <= trigger_state.end_time)
-                                ORDER BY "${trigger.table_name}"."${trigger.column_name}" ASC
+                                ORDER BY
+                                    "${trigger.table_name}"."${trigger.column_name}" ASC,
+                                    "${trigger.table_name}"."${trigger.primary_key_name}"::text ASC
                                 LIMIT 50
                             ),
-                            stats AS (
-                                SELECT
-                                    max(time) as max_time,
-                                    count(*) as count
+                            stats_count AS (
+                                SELECT count(*) as count
                                 FROM updates
+                            ),
+                            stats_max AS (
+                                SELECT time as max_time, primary_key as max_key
+                                FROM updates
+                                ORDER BY time DESC, primary_key DESC
+                                LIMIT 1
                             )
                             UPDATE "piqued_liveview"."time_trigger_state"
-                            SET last_triggered = coalesce((SELECT max_time FROM stats), last_triggered)
+                            SET last_triggered_time = coalesce((SELECT max_time FROM stats_max), last_triggered_time),
+                                last_triggered_key = coalesce((SELECT max_key FROM stats_max), last_triggered_key)
                             WHERE name = $1
-                            RETURNING (SELECT count FROM stats) as count;
+                            RETURNING
+                                (SELECT count FROM stats_count) as count,
+                                (SELECT max_time FROM stats_max) as max_time,
+                                (SELECT max_key FROM stats_max) as max_key
+                                ;
                             `,
                             [trigger.name],
                         );
@@ -344,7 +374,8 @@ VALUES (${view.id}, ${tsTypeToDbType(asset.kind)}, ${asset.name}, ${hash}, ${ass
                     // TODO: Deadletter the lost updates
                     await client.q`
                         UPDATE "piqued_liveview"."time_trigger_state"
-                        SET last_triggered = ${new Date()}
+                        SET last_triggered_time = ${new Date()},
+                            last_triggered_key = ''
                         WHERE name = ${trigger.name};
                     `;
                 }

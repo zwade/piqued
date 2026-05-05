@@ -94,13 +94,12 @@ export const generateInverseJoinTopography = (entry: LiveviewEntry, startNode: s
         graph.set(to.name, existingReverse.set(from.name, toEdge));
     }
 
-    const queue = [startNode];
+    const queue: [string, JoinEdge[]][] = [[startNode, []]];
     const visited = new Set<string>();
 
-    const topology: JoinEdge[] = [];
-
     while (queue.length > 0) {
-        const fromTable = queue.shift()!;
+        const [fromTable, path] = queue.shift()!;
+
         if (visited.has(fromTable)) {
             continue;
         }
@@ -108,11 +107,10 @@ export const generateInverseJoinTopography = (entry: LiveviewEntry, startNode: s
         visited.add(fromTable);
 
         for (const [toTable, edge] of graph.get(fromTable) ?? []) {
-            topology.push(edge);
-            queue.push(edge[1].name);
+            queue.push([toTable, [...path, edge]]);
 
             if (toTable === entry.primaryTable.name) {
-                return Result.ok(topology);
+                return Result.ok([...path, edge]);
             }
         }
     }

@@ -13,13 +13,24 @@ export declare namespace HarnessV1 {
         created_at: Date;
     }
 
+    export interface HostFnQueueDeadletter {
+        id: number;
+        entry_id: string;
+        primary_key: string;
+        async_callback_name?: string;
+        created_at: Date;
+        error_message: string;
+    }
+
     export interface TimeTriggerState {
         name: string;
         entry_id: string;
         table_name: string;
         column_name: string;
+        primary_key_name: string;
         callback_name: string;
-        last_triggered: Date;
+        last_triggered_time: Date;
+        last_triggered_key: string;
         start_time?: Date;
         end_time?: Date;
     }
@@ -80,13 +91,24 @@ export const initializeHarnessV1 = async (client: SmartClient) => {
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             );
 
+            CREATE TABLE "piqued_liveview"."host_fn_queue_deadletter" (
+                id SERIAL PRIMARY KEY,
+                entry_id TEXT NOT NULL,
+                primary_key TEXT NOT NULL,
+                async_callback_name TEXT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                error_message TEXT NOT NULL
+            );
+
             CREATE TABLE "piqued_liveview"."time_trigger_state" (
                 name TEXT PRIMARY KEY,
                 entry_id TEXT NOT NULL,
                 table_name TEXT NOT NULL,
                 column_name TEXT NOT NULL,
+                primary_key_name TEXT NOT NULL,
                 callback_name TEXT NOT NULL,
-                last_triggered TIMESTAMPTZ NOT NULL DEFAULT '1970-01-01T00:00:00Z',
+                last_triggered_time TIMESTAMPTZ NOT NULL DEFAULT '1970-01-01T00:00:00Z',
+                last_triggered_key TEXT NOT NULL DEFAULT '',
                 start_time TIMESTAMPTZ,
                 end_time TIMESTAMPTZ
             );
