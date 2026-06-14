@@ -2,7 +2,7 @@ import { serializeExpressionAsString } from "@piqued/client";
 
 import { LiveviewAsset, LiveviewEntry } from "./liveview.js";
 import { generateJoinTopography } from "./topography.js";
-import { getPrimaryKeyColumn } from "./utils.js";
+import { getAssetName, getPrimaryKeyColumn } from "./utils.js";
 
 const generateFunctionSql = (
     functionName: string,
@@ -21,8 +21,8 @@ export const compileCallbacks = (entry: LiveviewEntry): { sync: LiveviewAsset; a
     const syncStatements: string[] = [];
     const asyncStatements: string[] = [];
 
-    const syncFunctionName = `liveview_sync_callback_${entry.id}`;
-    const asyncFunctionName = `liveview_async_callback_${entry.id}`;
+    const syncFunctionName = getAssetName(`liveview_sync_callback_${entry.id}`);
+    const asyncFunctionName = getAssetName(`liveview_async_callback_${entry.id}`);
 
     const joins = generateJoinTopography(entry);
     if (joins[0] === false) {

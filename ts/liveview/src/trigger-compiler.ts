@@ -3,14 +3,14 @@ import { serializeExpressionAsString } from "@piqued/client";
 import { compileCallbacks } from "./callback-compiler.js";
 import { LiveviewAsset, LiveviewEntry } from "./liveview.js";
 import { generateInverseJoinTopography } from "./topography.js";
-import { getPrimaryKeyColumn } from "./utils.js";
+import { getAssetName, getPrimaryKeyColumn } from "./utils.js";
 
 const primaryTableOf = (entry: LiveviewEntry) => entry.primaryTable.name;
 const pkCol = (entry: LiveviewEntry) => getPrimaryKeyColumn(entry).columnName;
 
 const compilePrimaryTriggerFunction = (entry: LiveviewEntry, callbackName: string): LiveviewAsset => {
     const table = primaryTableOf(entry);
-    const fnName = `liveview_trigger_fn_${entry.id}_${table}`;
+    const fnName = getAssetName(`liveview_trigger_fn_${entry.id}_${table}`);
     const col = pkCol(entry);
 
     const triggerSql = `CREATE OR REPLACE FUNCTION "piqued_liveview"."${fnName}"() RETURNS trigger AS $$
@@ -33,7 +33,7 @@ $$ LANGUAGE plpgsql;`;
 
 const compilePrimaryTimeTriggerFunction = (entry: LiveviewEntry, callbackName: string): LiveviewAsset => {
     const table = primaryTableOf(entry);
-    const fnName = `liveview_time_trigger_fn_${entry.id}_${table}`;
+    const fnName = getAssetName(`liveview_time_trigger_fn_${entry.id}_${table}`);
     const col = pkCol(entry);
 
     const triggerSql = `CREATE OR REPLACE FUNCTION "piqued_liveview"."${fnName}"(primary_row "${table}") RETURNS void AS $$
@@ -64,7 +64,7 @@ const compileJoinFunction = (entry: LiveviewEntry, depTableName: string, callbac
 
     const table = primaryTableOf(entry);
     const col = pkCol(entry);
-    const fnName = `liveview_join_${entry.id}_${depTableName}`;
+    const fnName = getAssetName(`liveview_join_${entry.id}_${depTableName}`);
 
     const tableNameMap: Record<string, string> = { [depTableName]: "_base_row" };
 
@@ -102,7 +102,7 @@ const compileJoinTrigger = (
     depTableName: string,
     callbackName: string,
 ): { fn: LiveviewAsset; trigger: LiveviewAsset } => {
-    const fnName = `liveview_join_trigger_fn_${entry.id}_${depTableName}`;
+    const fnName = getAssetName(`liveview_join_trigger_fn_${entry.id}_${depTableName}`);
 
     const joinFn = compileJoinFunction(entry, depTableName, callbackName);
 
@@ -161,7 +161,7 @@ export const compileTriggers = (entry: LiveviewEntry): LiveviewAsset[] => {
                         callbackFns.sync.name,
                     );
 
-                    triggerName = `liveview_trigger_${entry.id}_${depTable}`;
+                    triggerName = getAssetName(`liveview_trigger_${entry.id}_${depTable}`);
                     callbackFnName = joinFn.name;
 
                     emit(joinFn);
@@ -169,7 +169,7 @@ export const compileTriggers = (entry: LiveviewEntry): LiveviewAsset[] => {
                 } else {
                     const primaryTriggerFn = compilePrimaryTriggerFunction(entry, callbackFns.sync.name);
 
-                    triggerName = `liveview_trigger_${entry.id}_${primaryTable}_${colName}`;
+                    triggerName = getAssetName(`liveview_trigger_${entry.id}_${primaryTable}_${colName}`);
                     callbackFnName = primaryTriggerFn.name;
 
                     emit(primaryTriggerFn);
@@ -200,7 +200,7 @@ FOR EACH ROW EXECUTE FUNCTION "piqued_liveview"."${callbackFnName}"();`,
                         callbackFns.sync.name,
                     );
 
-                    triggerName = `liveview_trigger_${entry.id}_${depTable}`;
+                    triggerName = getAssetName(`liveview_trigger_${entry.id}_${depTable}`);
                     callbackFnName = joinFn.name;
 
                     emit(joinFn);
@@ -208,7 +208,7 @@ FOR EACH ROW EXECUTE FUNCTION "piqued_liveview"."${callbackFnName}"();`,
                 } else {
                     const primaryTriggerFn = compilePrimaryTriggerFunction(entry, callbackFns.sync.name);
 
-                    triggerName = `liveview_trigger_${entry.id}_${primaryTable}`;
+                    triggerName = getAssetName(`liveview_trigger_${entry.id}_${primaryTable}`);
                     callbackFnName = primaryTriggerFn.name;
 
                     emit(primaryTriggerFn);
@@ -241,14 +241,14 @@ FOR EACH ROW EXECUTE FUNCTION "piqued_liveview"."${callbackFnName}"();`,
                 if (isExternal) {
                     const joinFn = compileJoinFunction(entry, depTable, callbackFns.sync.name);
 
-                    triggerName = `liveview_time_trigger_${entry.id}_${depTable}_${colName}`;
+                    triggerName = getAssetName(`liveview_time_trigger_${entry.id}_${depTable}_${colName}`);
                     callbackFnName = joinFn.name;
 
                     emit(joinFn);
                 } else {
                     const primaryTriggerFn = compilePrimaryTimeTriggerFunction(entry, callbackFns.sync.name);
 
-                    triggerName = `liveview_time_trigger_${entry.id}_${primaryTable}_${colName}`;
+                    triggerName = getAssetName(`liveview_time_trigger_${entry.id}_${primaryTable}_${colName}`);
                     callbackFnName = primaryTriggerFn.name;
 
                     emit(primaryTriggerFn);

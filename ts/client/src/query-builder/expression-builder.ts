@@ -242,20 +242,27 @@ type Despecify<
           : never
       : never;
 
+export interface TableBuilderOptions {
+    originalName?: string;
+}
+
 export class TableBuilder<
     Spec extends CustomParseSpec & { kind: "composite" } = any,
     Result = unknown,
     const Name extends string = string,
 > {
+    /** Either the name or the alias. If an alias, originalName will have the tables internal name. */
     public name;
     public c: { [K in keyof Result]: K extends string ? ColumnExpression<Result[K], K> : never };
     public parser;
+    public originalName;
 
     private parseSpecByName;
 
-    public constructor(name: Name, parser: Spec) {
+    public constructor(name: Name, parser: Spec, options?: TableBuilderOptions) {
         this.name = name;
         this.parser = parser;
+        this.originalName = options?.originalName;
         this.parseSpecByName = Object.create(null) as { [K in keyof Result]: ParseSpec };
 
         for (const [key, value] of parser.fields()) {
@@ -299,6 +306,17 @@ export class TableBuilder<
         return results as Despecify<ReturnType<Spec["fields"]>, Result>;
     }
 }
+
+export const alias = <Spec extends CustomParseSpec & { kind: "composite" }, Result, Name extends string>(
+    table: TableBuilder<Spec, Result>,
+    aliasName: Name,
+    options?: TableBuilderOptions,
+) => {
+    return new TableBuilder<Spec, Result, Name>(aliasName, table.parser, {
+        ...options,
+        originalName: table.originalName ?? table.name,
+    });
+};
 
 export type TableWith<Columns extends Record<string, any>> = TableBuilder & { c: Columns; star: any };
 

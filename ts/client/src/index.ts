@@ -1,6 +1,7 @@
 export { EmitConfig, PiquedConfig, PostgresConfig, WorkspaceConfig } from "./config/piqued-config.js";
 export { acquireColumnOrderCache, buildColumnOrderCache, ColumnOrderCache } from "./order-managment.js";
 export {
+    alias,
     BinaryOperation,
     cast,
     CastExpression,

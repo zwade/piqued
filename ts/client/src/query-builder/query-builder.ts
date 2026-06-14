@@ -1,7 +1,7 @@
 import { QueryResultRow } from "pg";
 
 import { ColumnOrderCache } from "../order-managment.js";
-import { parse, parseTopLevel } from "../parser.js";
+import { parseTopLevel } from "../parser.js";
 import { SmartClient, StreamOptions, StreamShape } from "../smart-client.js";
 import { ParseSpec } from "../types.js";
 import {
@@ -316,10 +316,18 @@ export class QueryState<T extends ResultState> extends ExecutableQuery<T> {
         };
 
         let accumulator = "select " + this.buildSelectionList(state) + "\n";
-        accumulator += `from "${this.#state.fromTable.name}"\n`;
+        if (this.#state.fromTable.originalName === undefined) {
+            accumulator += `from "${this.#state.fromTable.name}"\n`;
+        } else {
+            accumulator += `from "${this.#state.fromTable.originalName}" as "${this.#state.fromTable.name}"\n`;
+        }
 
         for (const [kind, table, exp] of this.#state.joins) {
-            accumulator += `${kind} join "${table.name}" on ${serializeExpression(exp, state)}\n`;
+            if (table.originalName === undefined) {
+                accumulator += `${kind} join "${table.name}" on ${serializeExpression(exp, state)}\n`;
+            } else {
+                accumulator += `${kind} join "${table.originalName}" as "${table.name}" on ${serializeExpression(exp, state)}\n`;
+            }
         }
 
         if (this.#state.whereClauses.length > 0) {
@@ -421,7 +429,15 @@ export class InsertState<ColumnState, T extends ResultState = { results: {} }> e
         const columns = keys.join(", ");
         const values = keys.map((e) => serializeExpression(this.#state.values[e], state)).join(", ");
 
-        let accumulator = `insert into "${this.#state.table.name}" (${columns}) values (${values})\n`;
+        let accumulator = `insert into `;
+
+        if (this.#state.table.originalName === undefined) {
+            accumulator += `"${this.#state.table.name}"\n`;
+        } else {
+            accumulator += `"${this.#state.table.originalName}" as "${this.#state.table.name}"\n`;
+        }
+
+        accumulator += `(${columns}) values (${values})\n`;
 
         if (this.#state.conflictExpression !== null) {
             if (this.#state.conflictExpression.keys === undefined) {
@@ -510,7 +526,15 @@ export class UpdateState<ColumnState, T extends ResultState = { results: {} }> e
         const updates = Object.entries(this.#state.updates)
             .map(([key, value]) => `"${key}" = ${serializeExpression(value, state)}`)
             .join(", ");
-        let accumulator = `update "${this.#state.table.name}" set ` + updates + "\n";
+        let accumulator = `update `;
+
+        if (this.#state.table.originalName === undefined) {
+            accumulator += `"${this.#state.table.name}"\n`;
+        } else {
+            accumulator += `"${this.#state.table.originalName}" as "${this.#state.table.name}"\n`;
+        }
+
+        accumulator += `set ` + updates + "\n";
 
         if (this.#state.whereClauses.length > 0) {
             accumulator += `where ${this.#state.whereClauses.map((e) => serializeExpression(e, state)).join(" and ")}`;
@@ -564,7 +588,13 @@ export class DeleteState<T extends ResultState = { results: {} }> extends Execut
             paramValues: [],
         };
 
-        let accumulator = `delete from "${this.#state.table.name}"\n`;
+        let accumulator = `delete from `;
+
+        if (this.#state.table.originalName === undefined) {
+            accumulator += `"${this.#state.table.name}"\n`;
+        } else {
+            accumulator += `"${this.#state.table.originalName}" as "${this.#state.table.name}"\n`;
+        }
 
         if (this.#state.whereClauses.length > 0) {
             accumulator += `where ${this.#state.whereClauses.map((e) => serializeExpression(e, state)).join(" and ")}`;

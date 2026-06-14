@@ -1,6 +1,6 @@
 {
   "name": "@piqued/client",
-  "version": "0.8.0-beta.3",
+  "version": "0.8.0-beta.4",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
@@ -9,7 +9,7 @@
     "prepublish": "yarn r client:prepublish"
   },
   "r": {
-    "client:prepublish": "yarn @piqued/workspace->eslint src --fix && yarn tsc && chmod +x ./dist/bin/piqued-migrate.js",
+    "client:prepublish": "yarn tsc && chmod +x ./dist/bin/piqued-migrate.js",
     "client:watch": "yarn tsc -w",
     "client:deploy": "yarn r client:prepublish && npm publish --access public"
   },
