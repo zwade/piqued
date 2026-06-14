@@ -3,71 +3,74 @@
 // If you have some changes you want to make, check out the configuration options
 // Or file a bug report on our definitely-extant github
 
+import { TableBuilder } from "@piqued/client";
 
 export namespace PiquedHead {
     export const name = "_piqued_head";
-    
+
     export type t = {
-        "index_key": number;
-        "head": string | null;
+        index_key: number;
+        head: string | null;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
-        fields: () => [
-            ["index_key", Number],
-            ["head", String],
-        ] as const,
+        fields: () =>
+            [
+                ["index_key", Number],
+                ["head", String],
+            ] as const,
     };
 }
 
 export namespace Person {
     export const name = "person";
-    
+
     export type t = {
-        "id": number;
-        "created_at": Date;
-        "name": string | null;
-        "email": string;
-        "last_active_at": Date | null;
-        "first_name": string | null;
-        "last_name": string | null;
+        id: number;
+        created_at: Date;
+        name: string | null;
+        email: string;
+        last_active_at: Date | null;
+        first_name: string | null;
+        last_name: string | null;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
-        fields: () => [
-            ["id", Number],
-            ["created_at", Date],
-            ["name", String],
-            ["email", String],
-            ["last_active_at", Date],
-            ["first_name", String],
-            ["last_name", String],
-        ] as const,
+        fields: () =>
+            [
+                ["id", Number],
+                ["created_at", Date],
+                ["name", String],
+                ["email", String],
+                ["last_active_at", Date],
+                ["first_name", String],
+                ["last_name", String],
+            ] as const,
     };
 }
 
 export namespace Session {
     export const name = "session";
-    
+
     export type t = {
-        "id": number;
-        "session_token": string;
-        "created_at": Date;
-        "user_id": number;
-        "last_active_at": Date | null;
+        id: number;
+        session_token: string;
+        created_at: Date;
+        user_id: number;
+        last_active_at: Date | null;
     };
-    
+
     export const spec = {
         kind: "composite" as const,
-        fields: () => [
-            ["id", Number],
-            ["session_token", String],
-            ["created_at", Date],
-            ["user_id", Number],
-            ["last_active_at", Date],
-        ] as const,
+        fields: () =>
+            [
+                ["id", Number],
+                ["session_token", String],
+                ["created_at", Date],
+                ["user_id", Number],
+                ["last_active_at", Date],
+            ] as const,
     };
 }
-

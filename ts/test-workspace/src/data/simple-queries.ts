@@ -5,7 +5,7 @@ import { Query, EntityQueries } from "@piqued/client";
 
 export const Reflect: Query<Reflect.InputArray, Reflect.InputObject, Reflect.TemplateInputObject, Reflect.OutputArray, Reflect.OutputObject> = {
     name: "reflect",
-    query: ` SELECT $1::text || ' from postgres!' AS input;`,
+    query: ` SELECT $1::text || ' from postgres!' AS input`,
     params: [
         "$0",
     ],
@@ -35,7 +35,7 @@ export namespace Reflect {
 
 export const Reflect2: Query<Reflect2.InputArray, Reflect2.InputObject, Reflect2.TemplateInputObject, Reflect2.OutputArray, Reflect2.OutputObject> = {
     name: "reflect_2",
-    query: `SELECT $1::text || ' from another postgres!', $2 AS input;`,
+    query: ` SELECT $1::text || ' from another postgres!', $2 AS input`,
     params: [
         "first",
         "second",
@@ -71,7 +71,7 @@ export namespace Reflect2 {
 
 export const Query2: Query<Query2.InputArray, Query2.InputObject, Query2.TemplateInputObject, Query2.OutputArray, Query2.OutputObject> = {
     name: "query_2",
-    query: `SELECT 'This query has messy characters: \ \` ''';`,
+    query: `SELECT 'This query has messy characters: \ \` '''`,
     params: [
     ],
     templateParams: [],
@@ -98,7 +98,7 @@ export namespace Query2 {
 
 export const Several: Query<Several.InputArray, Several.InputObject, Several.TemplateInputObject, Several.OutputArray, Several.OutputObject> = {
     name: "several",
-    query: ` SELECT unnest('{1,2,3,4,5,6,7,8,9}'::int[]) as num;`,
+    query: ` SELECT unnest('{1,2,3,4,5,6,7,8,9}'::int[]) as num`,
     params: [
     ],
     templateParams: [],
@@ -125,7 +125,7 @@ export namespace Several {
 
 export const SelectArray: Query<SelectArray.InputArray, SelectArray.InputObject, SelectArray.TemplateInputObject, SelectArray.OutputArray, SelectArray.OutputObject> = {
     name: "select_array",
-    query: ` SELECT unnest($1::int[]) AS num;`,
+    query: ` SELECT unnest($1::int[]) AS num`,
     params: [
         "$0",
     ],
@@ -153,11 +153,39 @@ export namespace SelectArray {
 }
 
 
+export const UseFrag: Query<UseFrag.InputArray, UseFrag.InputObject, UseFrag.TemplateInputObject, UseFrag.OutputArray, UseFrag.OutputObject> = {
+    name: "use_frag",
+    query: ` SELECT * FROM (  SELECT 'hello world') sq`,
+    params: [
+    ],
+    templateParams: [],
+    spec: [
+        ["?column?", undefined],
+    ],
+    _brand: undefined as any,
+};
+
+export namespace UseFrag {
+    export type InputArray = [
+];
+    export type InputObject = {
+};
+    export type TemplateInputObject = {};
+    export type OutputArray = [
+    column: string,
+];
+    export type OutputObject = {
+    "?column?": string,
+};
+}
+
+
 export default EntityQueries({
     "reflect": Reflect,
     "reflect2": Reflect2,
     "query2": Query2,
     "several": Several,
     "selectArray": SelectArray,
+    "useFrag": UseFrag,
 })
 

@@ -1,4 +1,4 @@
-use std::{rc::Rc, sync::Arc};
+use std::collections::HashMap;
 
 use crate::utils::result::{PiquedError, Result};
 use pg_query::{
@@ -8,7 +8,7 @@ use pg_query::{
 use tower_lsp::lsp_types::{Position, Range};
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct RelocatedStmt {
+pub struct RelocatedQuery {
     pub stmt: Result<RawStmt>,
 
     pub range: Range,
@@ -16,13 +16,26 @@ pub struct RelocatedStmt {
     pub index_len: u32,
 
     pub variables: Vec<Node>,
-    pub details: ParsedDetails,
+    pub details: QueryDetails,
+    pub contents: String,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct RelocatedFragment {
+    pub stmt: Result<RawStmt>,
+
+    pub range: Range,
+    pub index_start: u32,
+    pub index_len: u32,
+
+    pub details: FragmentDetails,
     pub contents: String,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct ParsedFile {
-    pub statements: Vec<RelocatedStmt>,
+    pub queries: Vec<RelocatedQuery>,
+    pub fragments: HashMap<String, RelocatedFragment>,
     pub tokens: Vec<ScanToken>,
 }
 
@@ -33,18 +46,32 @@ pub struct Template {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct ParsedDetails {
+pub struct QueryDetails {
     pub comment: String,
     pub name: String,
     pub params: Option<Vec<String>>,
     pub templates: Vec<Template>,
 }
 
-pub fn parse_single_query<'a>(
+#[derive(Debug, PartialEq, Clone)]
+pub struct FragmentDetails {
+    pub comment: String,
+    pub name: String,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum SqlSegment {
+    Query(QueryDetails),
+    Fragment(FragmentDetails),
+}
+
+pub fn parse_single_query(
     query: &str,
     offset: usize,
     tokens: &Vec<ScanToken>,
-    details: &ParsedDetails,
+    params: &Option<Vec<String>>,
+    templates: &Vec<Template>,
+    fragments: &HashMap<String, RelocatedFragment>,
 ) -> Result<(RawStmt, String)> {
     let mut in_prepare = false;
 
@@ -59,19 +86,24 @@ pub fn parse_single_query<'a>(
         }
 
         let token = &tokens[i];
+        i += 1;
 
         match token.token() {
-            Token::WhitespaceP | Token::CComment | Token::SqlComment => {}
-            Token::Ascii58 if (!in_prepare && i + 1 < tokens.len()) => {
-                let start = tokens[i + 1].start as usize - offset;
-                let end = tokens[i + 1].end as usize - offset;
+            Token::WhitespaceP | Token::CComment | Token::SqlComment | Token::Ascii59 => {
+                last_end = Some(token.end as usize - offset);
+            }
+            Token::Ascii58 if (!in_prepare && i < tokens.len()) => {
+                let start = tokens[i].start as usize - offset;
+                let end = tokens[i].end as usize - offset;
                 let name = &query[start..end];
 
                 strings_with_examples.push(" ".to_string());
                 strings_with_variables.push(" ".to_string());
 
-                let param_idx = details
-                    .params
+                last_end = Some(end);
+                i += 1;
+
+                let param_idx = params
                     .as_ref()
                     .iter()
                     .flat_map(|param| param.iter())
@@ -80,24 +112,31 @@ pub fn parse_single_query<'a>(
                 if let Some(idx) = param_idx {
                     strings_with_examples.push(format!("${}", idx + 1));
                     strings_with_variables.push(format!("${}", idx + 1));
-                } else {
-                    let template_example =
-                        details.templates.iter().find(|templ| templ.name == name);
+                    continue;
+                }
 
-                    if let Some(tmpl) = template_example {
-                        strings_with_examples.push(tmpl.example.clone());
-                    } else {
-                        strings_with_examples.push(":".to_string());
-                        strings_with_examples.push(name.to_string());
-                    }
+                let x_template = templates.iter().find(|templ| templ.name == name);
+                if let Some(tmpl) = x_template {
+                    strings_with_examples.push(tmpl.example.clone());
 
                     strings_with_variables.push(":".to_string());
                     strings_with_variables.push("__tmpl_".to_string());
                     strings_with_variables.push(name.to_string());
+                    continue;
                 }
 
-                last_end = Some(end);
-                i += 1;
+                let fragment = fragments.get(name);
+                if let Some(frag) = fragment {
+                    strings_with_examples.push(frag.contents.clone());
+                    strings_with_variables.push(frag.contents.clone());
+                    continue;
+                }
+
+                strings_with_examples.push(":".to_string());
+                strings_with_examples.push(name.to_string());
+
+                strings_with_variables.push(":".to_string());
+                strings_with_variables.push(name.to_string());
             }
             tok => {
                 if tok == Token::Prepare {
@@ -130,8 +169,6 @@ pub fn parse_single_query<'a>(
                 }
             }
         }
-
-        i += 1;
     }
 
     let full_query = strings_with_examples.join("");
@@ -167,6 +204,7 @@ pub fn load_file(contents: &str) -> Result<ParsedFile> {
 
             let last_tok = vec.last().unwrap();
             let content = &contents[start_offset as usize..last_tok.end as usize];
+
             start_offset = last_tok.end;
 
             Some(content.to_string())
@@ -201,7 +239,7 @@ pub fn load_file(contents: &str) -> Result<ParsedFile> {
     let get_range =
         |start: u32, len: u32| Range::new(get_position(start), get_position(start + len));
 
-    let relocated_statements: Vec<RelocatedStmt> = queries
+    let (query_iter, fragment_iter): (Vec<_>, Vec<_>) = queries
         .iter()
         .enumerate()
         .zip(token_set.iter())
@@ -226,47 +264,100 @@ pub fn load_file(contents: &str) -> Result<ParsedFile> {
                 return None;
             }
 
-            let mut details =
-                get_details(tokens, query, location as usize, || format!("query_{}", i));
-            let stmt = parse_single_query(query, location as usize, tokens, &details);
+            let details = get_details(tokens, query, location as usize, || format!("query_{}", i));
 
-            let (parsed_stmt, contents, prep_name, variables) = match stmt {
-                Ok((stmt, templated_query)) => {
-                    let (stmt, name, args) = get_prepared_statement(stmt);
-                    (Ok(stmt), templated_query, name, args)
-                }
-                Err(e) => (Err(e), query.to_string(), None, vec![]),
-            };
-
-            if let Some(name) = prep_name {
-                details.name = name;
-            }
-
-            Some(RelocatedStmt {
-                stmt: parsed_stmt,
-                range: get_range(index_start, index_len),
-                index_start,
-                index_len,
-                details,
-                contents,
-                variables,
-            })
+            return Some((location, index_start, index_len, query, details, tokens));
         })
-        .collect();
+        .partition(|(_, _, _, _, details, _)| match details {
+            SqlSegment::Query(_) => true,
+            _ => false,
+        });
+
+    let mut fragments: HashMap<String, RelocatedFragment> = HashMap::new();
+    for (location, index_start, index_len, query, details, tokens) in fragment_iter {
+        match details {
+            SqlSegment::Query(_) => (),
+            SqlSegment::Fragment(details) => {
+                let stmt = parse_single_query(
+                    query,
+                    location as usize,
+                    &tokens,
+                    &None,
+                    &vec![],
+                    &fragments,
+                );
+
+                let (parsed_stmt, contents) = match stmt {
+                    Ok((stmt, templated_query)) => (Ok(stmt), templated_query),
+                    Err(e) => (Err(e), query.to_string()),
+                };
+
+                fragments.insert(
+                    details.name.clone(),
+                    RelocatedFragment {
+                        stmt: parsed_stmt,
+                        range: get_range(index_start, index_len),
+                        index_start,
+                        index_len,
+                        details,
+                        contents,
+                    },
+                );
+            }
+        };
+    }
+
+    let mut queries: Vec<RelocatedQuery> = vec![];
+    for (location, index_start, index_len, query, details, tokens) in query_iter {
+        match details {
+            SqlSegment::Query(mut details) => {
+                let stmt = parse_single_query(
+                    query,
+                    location as usize,
+                    tokens,
+                    &details.params,
+                    &details.templates,
+                    &fragments,
+                );
+
+                let (parsed_stmt, contents, prep_name, variables) = match stmt {
+                    Ok((stmt, templated_query)) => {
+                        let (stmt, name, args) = get_prepared_statement(stmt);
+                        (Ok(stmt), templated_query, name, args)
+                    }
+                    Err(e) => (Err(e), query.to_string(), None, vec![]),
+                };
+
+                if let Some(name) = prep_name {
+                    details.name = name;
+                }
+
+                queries.push(RelocatedQuery {
+                    stmt: parsed_stmt,
+                    range: get_range(index_start, index_len),
+                    index_start,
+                    index_len,
+                    details,
+                    contents,
+                    variables,
+                });
+            }
+            SqlSegment::Fragment(_) => (),
+        }
+    }
 
     return Ok(ParsedFile {
-        statements: relocated_statements,
+        queries,
+        fragments,
         tokens,
     });
 }
 
-fn parse_comment<F>(string: &String, default_name: F) -> ParsedDetails
+fn parse_comment<F>(string: &String, default_name: F) -> SqlSegment
 where
     F: FnOnce() -> String,
 {
-    let mut name: Option<String> = None;
-    let mut params: Option<Vec<String>> = None;
-    let mut templates: Vec<Template> = vec![];
+    let mut raw_attributes: HashMap<&str, Vec<Vec<String>>> = HashMap::new();
     let mut comment_lines: Vec<String> = vec![];
 
     for line in string.lines() {
@@ -281,34 +372,75 @@ where
 
         let components = trimmed_comment.split_whitespace().collect::<Vec<_>>();
 
-        match components.get(0) {
-            Some(&"@name") if components.len() > 1 => {
-                name = Some(components[1].to_string());
+        if let Some(name) = components.get(0) {
+            if Some('@') != name.chars().nth(0) {
+                comment_lines.push(trimmed_comment.to_string());
+                continue;
             }
-            Some(&"@params") => {
-                params = Some(components[1..].iter().map(|&s| s.to_string()).collect());
-            }
-            Some(&"@xtemplate") if components.len() > 2 => {
-                let name = components[1].to_string();
-                let example = components[2..].join(" ");
 
-                templates.push(Template { name, example });
+            let options = components[1..]
+                .iter()
+                .map(|&s| s.to_string())
+                .collect::<Vec<_>>();
+
+            if options.len() == 0 {
+                continue;
             }
-            _ => {
-                // If it doesn't match any special tag, just add the line to the comment
-                if !trimmed_comment.is_empty() {
-                    comment_lines.push(trimmed_comment.to_string());
-                }
+
+            if let Some(existing) = raw_attributes.get_mut(name) {
+                existing.push(options);
+            } else {
+                raw_attributes.insert(name, vec![options]);
             }
         }
     }
 
-    return ParsedDetails {
+    if let Some(mut names) = raw_attributes.remove(&"@fragment") {
+        let name = names.remove(0).remove(0);
+
+        return SqlSegment::Fragment(FragmentDetails {
+            comment: comment_lines.join("\n"),
+            name,
+        });
+    }
+
+    let name = if let Some(mut names) = raw_attributes.remove(&"@name") {
+        names.remove(0).remove(0)
+    } else {
+        default_name()
+    };
+
+    let params: Option<Vec<String>> = if let Some(param_list) = raw_attributes.remove(&"@params") {
+        let mut acc = vec![];
+        for mut param in param_list {
+            acc.append(&mut param);
+        }
+
+        Some(acc)
+    } else {
+        None
+    };
+
+    let templates: Vec<Template> = if let Some(template_list) = raw_attributes.remove(&"@xtemplate")
+    {
+        let mut acc = vec![];
+        for template in template_list {
+            let name = template[0].to_string();
+            let example = template[1..].join(" ");
+            acc.push(Template { name, example });
+        }
+
+        acc
+    } else {
+        vec![]
+    };
+
+    return SqlSegment::Query(QueryDetails {
         comment: comment_lines.join("\n"),
-        name: name.unwrap_or_else(default_name),
+        name,
         params,
         templates,
-    };
+    });
 }
 
 pub fn get_details<F>(
@@ -316,7 +448,7 @@ pub fn get_details<F>(
     content: &str,
     offset: usize,
     default_name: F,
-) -> ParsedDetails
+) -> SqlSegment
 where
     F: FnOnce() -> String,
 {

@@ -10,7 +10,7 @@ use tokio::fs;
 
 use crate::{
     config::config::Config,
-    parser::parser::{self, RelocatedStmt},
+    parser::parser::{self, RelocatedQuery},
     query::query::{CustomType, ProbeResponse, Query},
 };
 
@@ -24,7 +24,7 @@ pub struct SerializationResult {
     pub requires_import: Vec<String>,
 }
 
-pub struct QueryContext(pub RelocatedStmt, pub ProbeResponse);
+pub struct QueryContext(pub RelocatedQuery, pub ProbeResponse);
 
 pub trait CodeGenerator {
     fn serialize_import(
@@ -308,7 +308,7 @@ impl<'a> CodeGenerationContext<'a> {
         let statements = match data {
             Ok(data) => {
                 let mut results = vec![];
-                for stmt in data.statements.into_iter() {
+                for stmt in data.queries.into_iter() {
                     let probed_type = self.query.probe_type(&stmt).await.unwrap();
 
                     results.push(QueryContext(stmt, probed_type))

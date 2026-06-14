@@ -36,7 +36,7 @@ PREPARE test AS
 ";
 
     let stmts = load_file(input).unwrap();
-    let result = query.probe_type(&stmts.statements[3]).await.unwrap();
+    let result = query.probe_type(&stmts.queries[3]).await.unwrap();
 
     println!("Result: {:#?}", result);
 

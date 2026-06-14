@@ -158,7 +158,7 @@ impl Backend {
         }
 
         let statement = parsed
-            .statements
+            .queries
             .iter()
             .enumerate()
             .find(|(_i, stmt)| &stmt.range.start < position && &stmt.range.end > position);

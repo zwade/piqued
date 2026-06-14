@@ -8,7 +8,7 @@ use crate::{
         ts::schema::TSGenerator,
     },
     config::config::Config,
-    parser::parser::{self, RelocatedStmt},
+    parser::parser::{self, RelocatedQuery},
     query::query::Query,
     utils::result::{PiquedError, Result},
 };
@@ -58,7 +58,7 @@ impl Workspace {
         self.query = Query::new(config).await;
     }
 
-    pub async fn diagnostics_for_statment(&self, stmt: &RelocatedStmt) -> Result<()> {
+    pub async fn diagnostics_for_statment(&self, stmt: &RelocatedQuery) -> Result<()> {
         let query = match &self.query {
             Err(e) => return Err(e.clone()),
             Ok(q) => q,
@@ -78,7 +78,7 @@ impl Workspace {
         let parsed = parser::load_file(file_contents)?;
 
         let mut diagnostics: Vec<Diagnostic> = Vec::new();
-        for stmt in &parsed.statements {
+        for stmt in &parsed.queries {
             match self.diagnostics_for_statment(stmt).await {
                 Ok(_) => {}
                 Err(err) => {

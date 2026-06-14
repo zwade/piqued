@@ -12,3 +12,9 @@ PREPARE several AS
 
 PREPARE select_array AS
     SELECT unnest($1::int[]) AS num;
+
+-- @fragment test_frag
+SELECT 'hello world';
+
+-- @name use_frag
+SELECT * FROM (:test_frag) sq;
