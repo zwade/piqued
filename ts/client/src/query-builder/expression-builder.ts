@@ -1,5 +1,7 @@
 import { CustomParseSpec, ParseSpec } from "../types.js";
-import { MutableSerializationState } from "./serialize.js";
+import { MutableSerializationState, SerializeOptions, SubQuery } from "./serialize.js";
+
+export type { SerializeOptions };
 
 export class ColumnExpression<_Result, Name extends string> {
     constructor(
@@ -101,7 +103,8 @@ export type StructuredExpression<T, Name extends string> =
     | TupleExpression<T, Name>
     | InterpolatedExpression<T, Name>
     | RawExpression<T, Name>
-    | CastExpression<T, Name>;
+    | CastExpression<T, Name>
+    | SubQuery<T, Name>;
 
 export type LiteralExpression =
     | string
@@ -221,6 +224,14 @@ export namespace Op {
         }
     };
 
+    export function exists(query: SubQuery) {
+        return exp<boolean, "exists">`exists ${query}`;
+    }
+
+    export function notExists(query: SubQuery) {
+        return exp<boolean, "exists">`not exists ${query}`;
+    }
+
     export function isNull(e: Expression) {
         return exp<boolean, "?column?">`${e} IS NULL`;
     }
@@ -337,11 +348,6 @@ const addAndReturnParam = (state: MutableSerializationState, value: any) => {
     return `$${state.paramCount}`;
 };
 
-export interface SerializeOptions {
-    inlineOnly?: boolean;
-    tableNameMap?: Record<string, string>;
-}
-
 export const serializeExpression = (
     e: Expression | Label,
     state: MutableSerializationState = { paramCount: 0, paramValues: [] },
@@ -362,6 +368,10 @@ export const serializeExpression = (
         } else {
             return addAndReturnParam(state, e);
         }
+    }
+
+    if (e instanceof SubQuery) {
+        return `(${e.serializeInto(state, options).trim()})`;
     }
 
     if (e instanceof TableExpression) {

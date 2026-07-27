@@ -38,6 +38,7 @@ export {
     Update,
     UpdateState,
 } from "./query-builder/query-builder.js";
+export { MutableSerializationState, SerializeOptions, SubQuery } from "./query-builder/serialize.js";
 export { ClientOptions, SmartClient } from "./smart-client.js";
 export {
     Retrieval as Cursor,

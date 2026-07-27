@@ -6,10 +6,12 @@
     "client",
     "lsp",
     "liveview",
-    "test-workspace"
+    "test-workspace",
+    "test"
   ],
   "r": {
     "lint": "yarn eslint {client,liveview,lsp}/src --fix",
+    "test": "yarn r test:test",
     "deploy": "yarn r client:deploy && yarn r liveview:deploy"
   },
   "devDependencies": {

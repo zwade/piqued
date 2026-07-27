@@ -14,7 +14,7 @@ import {
     TableBuilder,
     TableExpression,
 } from "./expression-builder.js";
-import { MutableSerializationState } from "./serialize.js";
+import { MutableSerializationState, ScalarNameOf, ScalarValueOf, SerializeOptions, SubQuery } from "./serialize.js";
 
 export type ResultState = {
     results: Record<string, unknown>;
@@ -27,7 +27,10 @@ export type ParserKind =
       }
     | { kind: "mangled"; spec: ParseSpec | null; parentObjectName: string; parentColumnName: string };
 
-export abstract class ExecutableQuery<T extends ResultState> {
+export abstract class ExecutableQuery<T extends ResultState> extends SubQuery<
+    ScalarValueOf<T["results"]>,
+    ScalarNameOf<T["results"]>
+> {
     #parserMap: Record<string, ParserKind> | null = null;
 
     protected abstract selections: (Expression | Label)[];
@@ -37,9 +40,9 @@ export abstract class ExecutableQuery<T extends ResultState> {
      * Used with the new `experimentalMangle` feature to rewrite selection lists
      * (e.g. `SELECT ... FROM table`) to expand table selections into individual columns.
      */
-    protected buildSelectionList(state: MutableSerializationState) {
+    protected buildSelectionList(state: MutableSerializationState, options: SerializeOptions) {
         if (!this.experimentalMangle) {
-            return this.selections.map((e) => serializeExpression(e, state)).join(", ");
+            return this.selections.map((e) => serializeExpression(e, state, options)).join(", ");
         } else {
             const accumulator: string[] = [];
             for (const e of this.selections) {
@@ -49,12 +52,13 @@ export abstract class ExecutableQuery<T extends ResultState> {
                             serializeExpression(
                                 new Label(new ColumnExpression(e.name, colName, colParser), `_${e.name}__${colName}`),
                                 state,
+                                options,
                             ),
                         );
                     }
                 } else {
                     // TODO: Special handling of labeled table expressions
-                    accumulator.push(serializeExpression(e, state));
+                    accumulator.push(serializeExpression(e, state, options));
                 }
             }
 
@@ -71,7 +75,17 @@ export abstract class ExecutableQuery<T extends ResultState> {
         return this;
     }
 
-    public abstract serialize(): { data: string; values: any[] };
+    public serialize(): { data: string; values: any[] } {
+        const state: MutableSerializationState = {
+            paramCount: 0,
+            paramValues: [],
+        };
+
+        return {
+            data: this.serializeInto(state, {}) + ";",
+            values: state.paramValues,
+        };
+    }
 
     public async execute(client: SmartClient): Promise<void> {
         const { data, values } = this.serialize();
@@ -210,6 +224,16 @@ export abstract class ExecutableQuery<T extends ResultState> {
                     return [[e.name, { kind: "single", spec: e.parser }]];
                 }
 
+                if (e instanceof ExecutableQuery) {
+                    // A sub-query in a selection list yields a single column, so it takes the name
+                    // and the parser of whatever the sub-query itself selects.
+                    if (e.selections.length !== 1) {
+                        return [];
+                    }
+
+                    return getParser(e.selections[0]);
+                }
+
                 return [];
             };
 
@@ -305,17 +329,12 @@ export class QueryState<T extends ResultState> extends ExecutableQuery<T> {
         return this.with({ tablesample: { kind, args } });
     }
 
-    public serialize() {
+    public serializeInto(state: MutableSerializationState, options: SerializeOptions) {
         if (this.#state.fromTable === null) {
             throw new Error("Unable to serialize query without a from-table");
         }
 
-        const state: MutableSerializationState = {
-            paramCount: 0,
-            paramValues: [],
-        };
-
-        let accumulator = "select " + this.buildSelectionList(state) + "\n";
+        let accumulator = "select " + this.buildSelectionList(state, options) + "\n";
         if (this.#state.fromTable.originalName === undefined) {
             accumulator += `from "${this.#state.fromTable.name}"\n`;
         } else {
@@ -324,30 +343,30 @@ export class QueryState<T extends ResultState> extends ExecutableQuery<T> {
 
         for (const [kind, table, exp] of this.#state.joins) {
             if (table.originalName === undefined) {
-                accumulator += `${kind} join "${table.name}" on ${serializeExpression(exp, state)}\n`;
+                accumulator += `${kind} join "${table.name}" on ${serializeExpression(exp, state, options)}\n`;
             } else {
-                accumulator += `${kind} join "${table.originalName}" as "${table.name}" on ${serializeExpression(exp, state)}\n`;
+                accumulator += `${kind} join "${table.originalName}" as "${table.name}" on ${serializeExpression(exp, state, options)}\n`;
             }
         }
 
         if (this.#state.whereClauses.length > 0) {
-            accumulator += `where ${this.#state.whereClauses.map((e) => serializeExpression(e, state)).join(" and ")}\n`;
+            accumulator += `where ${this.#state.whereClauses.map((e) => serializeExpression(e, state, options)).join(" and ")}\n`;
         }
 
         if (this.#state.orderClauses.length > 0) {
-            accumulator += `order by ${this.#state.orderClauses.map(([e, dir]) => `${serializeExpression(e, state)} ${dir}`).join(", ")}\n`;
+            accumulator += `order by ${this.#state.orderClauses.map(([e, dir]) => `${serializeExpression(e, state, options)} ${dir}`).join(", ")}\n`;
         }
 
         if (this.#state.groupByClauses.length > 0) {
-            accumulator += `group by ${this.#state.groupByClauses.map((e) => serializeExpression(e, state)).join(", ")}\n`;
+            accumulator += `group by ${this.#state.groupByClauses.map((e) => serializeExpression(e, state, options)).join(", ")}\n`;
         }
 
         if (this.#state.limit !== null) {
-            accumulator += `limit ${serializeExpression(this.#state.limit, state)}\n`;
+            accumulator += `limit ${serializeExpression(this.#state.limit, state, options)}\n`;
         }
 
         if (this.#state.offset !== null) {
-            accumulator += `offset ${serializeExpression(this.#state.offset, state)}\n`;
+            accumulator += `offset ${serializeExpression(this.#state.offset, state, options)}\n`;
         }
 
         if (this.#state.forUpdate) {
@@ -359,13 +378,10 @@ export class QueryState<T extends ResultState> extends ExecutableQuery<T> {
         }
 
         if (this.#state.tablesample) {
-            accumulator += `tablesample ${this.#state.tablesample.kind} (${this.#state.tablesample.args.map((e) => serializeExpression(e, state)).join(", ")})\n`;
+            accumulator += `tablesample ${this.#state.tablesample.kind} (${this.#state.tablesample.args.map((e) => serializeExpression(e, state, options)).join(", ")})\n`;
         }
 
-        return {
-            data: accumulator + ";",
-            values: state.paramValues,
-        };
+        return accumulator;
     }
 }
 
@@ -419,15 +435,10 @@ export class InsertState<ColumnState, T extends ResultState = { results: {} }> e
         return this.with({ returning: args as Expression[] });
     }
 
-    public serialize() {
-        const state: MutableSerializationState = {
-            paramCount: 0,
-            paramValues: [],
-        };
-
+    public serializeInto(state: MutableSerializationState, options: SerializeOptions) {
         const keys = Object.keys(this.#state.values);
         const columns = keys.join(", ");
-        const values = keys.map((e) => serializeExpression(this.#state.values[e], state)).join(", ");
+        const values = keys.map((e) => serializeExpression(this.#state.values[e], state, options)).join(", ");
 
         let accumulator = `insert into `;
 
@@ -453,7 +464,7 @@ export class InsertState<ColumnState, T extends ResultState = { results: {} }> e
             } else {
                 accumulator += "do update set ";
                 accumulator += Object.entries(this.#state.conflictExpression.updates)
-                    .map(([key, value]) => `"${key}" = ${serializeExpression(value, state)}`)
+                    .map(([key, value]) => `"${key}" = ${serializeExpression(value, state, options)}`)
                     .join(", ");
             }
 
@@ -461,13 +472,10 @@ export class InsertState<ColumnState, T extends ResultState = { results: {} }> e
         }
 
         if (this.#state.returning !== null) {
-            accumulator += `returning ${this.buildSelectionList(state)}\n`;
+            accumulator += `returning ${this.buildSelectionList(state, options)}\n`;
         }
 
-        return {
-            data: accumulator + ";",
-            values: state.paramValues,
-        };
+        return accumulator;
     }
 }
 
@@ -517,14 +525,9 @@ export class UpdateState<ColumnState, T extends ResultState = { results: {} }> e
         return this.with({ returning: args as Expression[] });
     }
 
-    public serialize() {
-        const state: MutableSerializationState = {
-            paramCount: 0,
-            paramValues: [],
-        };
-
+    public serializeInto(state: MutableSerializationState, options: SerializeOptions) {
         const updates = Object.entries(this.#state.updates)
-            .map(([key, value]) => `"${key}" = ${serializeExpression(value, state)}`)
+            .map(([key, value]) => `"${key}" = ${serializeExpression(value, state, options)}`)
             .join(", ");
         let accumulator = `update `;
 
@@ -537,17 +540,14 @@ export class UpdateState<ColumnState, T extends ResultState = { results: {} }> e
         accumulator += `set ` + updates + "\n";
 
         if (this.#state.whereClauses.length > 0) {
-            accumulator += `where ${this.#state.whereClauses.map((e) => serializeExpression(e, state)).join(" and ")}`;
+            accumulator += `where ${this.#state.whereClauses.map((e) => serializeExpression(e, state, options)).join(" and ")}\n`;
         }
 
         if (this.#state.returning !== null) {
-            accumulator += `returning ${this.buildSelectionList(state)}`;
+            accumulator += `returning ${this.buildSelectionList(state, options)}\n`;
         }
 
-        return {
-            data: accumulator + ";",
-            values: state.paramValues,
-        };
+        return accumulator;
     }
 }
 
@@ -582,12 +582,7 @@ export class DeleteState<T extends ResultState = { results: {} }> extends Execut
         return this.with({ returning: args as Expression[] });
     }
 
-    public serialize() {
-        const state: MutableSerializationState = {
-            paramCount: 0,
-            paramValues: [],
-        };
-
+    public serializeInto(state: MutableSerializationState, options: SerializeOptions) {
         let accumulator = `delete from `;
 
         if (this.#state.table.originalName === undefined) {
@@ -597,17 +592,14 @@ export class DeleteState<T extends ResultState = { results: {} }> extends Execut
         }
 
         if (this.#state.whereClauses.length > 0) {
-            accumulator += `where ${this.#state.whereClauses.map((e) => serializeExpression(e, state)).join(" and ")}`;
+            accumulator += `where ${this.#state.whereClauses.map((e) => serializeExpression(e, state, options)).join(" and ")}\n`;
         }
 
         if (this.#state.returning !== null) {
-            accumulator += `returning ${this.buildSelectionList(state)}\n`;
+            accumulator += `returning ${this.buildSelectionList(state, options)}\n`;
         }
 
-        return {
-            data: accumulator + ";",
-            values: state.paramValues,
-        };
+        return accumulator;
     }
 }
 

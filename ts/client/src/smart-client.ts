@@ -248,6 +248,8 @@ export class SmartClient {
 
             if (this.txDepth === 0) {
                 await this._queryWithLog("COMMIT;");
+            } else {
+                await this._queryWithLog(`RELEASE SAVEPOINT S${this.txDepth};`);
             }
 
             // This is a bit of a misnomer in the sense that if this `tx` is not at the root

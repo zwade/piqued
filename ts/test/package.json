@@ -1,0 +1,23 @@
+{
+    "name": "@piqued/test",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "r": {
+        "test": "yarn vitest run",
+        "test:watch": "yarn vitest"
+    },
+    "devDependencies": {
+        "@types/pg": "^8",
+        "@types/pg-cursor": "^2",
+        "typescript": "^5.4.3",
+        "vitest": "^3.2.4"
+    },
+    "dependencies": {
+        "@piqued/client": "workspace:*",
+        "@piqued/liveview": "workspace:*",
+        "pg": "^8.16.0",
+        "pg-cursor": "^2.15.0",
+        "zod": "^3.24.4"
+    }
+}
