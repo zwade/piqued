@@ -67,8 +67,6 @@ export const generateJoinTopography = (entry: LiveviewEntry): Result<JoinEdge[]>
         .filter((tableName) => !visited.has(tableName!));
 
     if (unreachableDeps.length > 0) {
-        console.log(startNode, topology);
-
         return Result.err(
             new Error(
                 `Unable to resolve join topography, remaining unreachable dependencies: ${unreachableDeps.join(", ")}`,

@@ -3,9 +3,17 @@
     "compilerOptions": {
         "outDir": "./dist",
         "noEmit": true,
-        "types": ["vitest/globals"]
+        "types": ["vitest/globals"],
+        "baseUrl": ".",
+        "paths": {
+            "@piqued/client": ["../client/src/index.ts"],
+            "@piqued/client/dist/*": ["../client/src/*"],
+            "@piqued/liveview": ["../liveview/src/index.ts"],
+            "@piqued/liveview/dist/*": ["../liveview/src/*"]
+        }
     },
     "include": [
-        "src"
+        "src",
+        "vitest.config.ts"
     ]
 }

@@ -4,7 +4,7 @@
     "private": true,
     "type": "module",
     "r": {
-        "test": "yarn vitest run",
+        "test:test": "yarn vitest run",
         "test:watch": "yarn vitest"
     },
     "devDependencies": {
