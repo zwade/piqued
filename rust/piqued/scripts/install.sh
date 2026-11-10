@@ -4,6 +4,8 @@ set -e
 
 if [[ "$(arch)" == "arm64" ]]; then
     ARCH="aarch64"
+elif [[ "$(arch)" == "aarch64" ]]; then
+    ARCH="aarch64"
 elif [[ "$(arch)" == "x86_64" ]]; then
     ARCH="x86_64"
 else
