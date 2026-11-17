@@ -353,12 +353,12 @@ export class QueryState<T extends ResultState> extends ExecutableQuery<T> {
             accumulator += `where ${this.#state.whereClauses.map((e) => serializeExpression(e, state, options)).join(" and ")}\n`;
         }
 
-        if (this.#state.orderClauses.length > 0) {
-            accumulator += `order by ${this.#state.orderClauses.map(([e, dir]) => `${serializeExpression(e, state, options)} ${dir}`).join(", ")}\n`;
-        }
-
         if (this.#state.groupByClauses.length > 0) {
             accumulator += `group by ${this.#state.groupByClauses.map((e) => serializeExpression(e, state, options)).join(", ")}\n`;
+        }
+
+        if (this.#state.orderClauses.length > 0) {
+            accumulator += `order by ${this.#state.orderClauses.map(([e, dir]) => `${serializeExpression(e, state, options)} ${dir}`).join(", ")}\n`;
         }
 
         if (this.#state.limit !== null) {
