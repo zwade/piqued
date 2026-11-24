@@ -59,6 +59,7 @@ export const pqInit = async (directory: string) => {
     const options: PiquedMigrationToml = {
         version: version,
         isolatedTx: false,
+        nonTransactional: false,
         parents: [],
     };
 

@@ -5,6 +5,7 @@ export type PiquedUpgradeInstance = {
     downgrade: string | undefined;
     parents: string[];
     isolatedTx: boolean;
+    nonTransactional: boolean;
 };
 
 export type Operation = {
@@ -17,7 +18,7 @@ const constructSequence = (operations: PiquedUpgradeInstance[]): PiquedUpgradeIn
     const result: PiquedUpgradeInstance[][] = [[]];
 
     for (const operation of operations) {
-        if (operation.isolatedTx) {
+        if (operation.isolatedTx || operation.nonTransactional) {
             result.push([operation], []);
         } else {
             const lastSequence = result[result.length - 1];
@@ -76,6 +77,20 @@ export class PiquedUpgradeGraph {
         }
 
         return heads;
+    }
+
+    /** The single node whose ancestry is exactly `versions`: null if empty, undefined if none. */
+    public headOf(versions: Set<string>): string | null | undefined {
+        if (versions.size === 0) {
+            return null;
+        }
+
+        const heads = [...versions].filter((v) => !(this.#edges.get(v) ?? []).some((child) => versions.has(child)));
+        return heads.length === 1 ? heads[0] : undefined;
+    }
+
+    public ancestors(version: string): Set<string> {
+        return this.isolateSubgraph(version);
     }
 
     private isolateSubgraph(end: string): Set<string> {

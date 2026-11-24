@@ -1,3 +1,4 @@
 version = "person_name#0a02bb"
 isolatedTx = false
+nonTransactional = false
 parents = [ "test-data#159874" ]

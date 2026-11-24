@@ -1,6 +1,5 @@
 import { dispatchInit } from "./pq-init.js";
 import { dispatchLog } from "./pq-log.js";
-import { dispatchLegacyUpgrade } from "./pq-migration.js";
 import { dispatchNew } from "./pq-new.js";
 import { dispatchUpgrade } from "./pq-upgrade.js";
 
@@ -12,7 +11,6 @@ Commands:
     new               Generate a new migration
     log               Show the history of migrations
     upgrade           Upgrade the database to a specific version
-    legacy-upgrade    (Deprecated) Upgrade a set of migrations from the legacy format
 `);
 };
 
@@ -36,9 +34,6 @@ const main = async () => {
             break;
         case "upgrade":
             await dispatchUpgrade(process.argv.slice(3));
-            break;
-        case "legacy-upgrade":
-            await dispatchLegacyUpgrade(process.argv.slice(3));
             break;
         case "log":
             await dispatchLog(process.argv.slice(3));

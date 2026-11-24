@@ -1,3 +1,4 @@
 version = "test-data#159874"
 isolatedTx = false
+nonTransactional = false
 parents = [ "root#000000" ]

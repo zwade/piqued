@@ -9,7 +9,7 @@ import { PiquedUpgradeControl } from "../upgrade-control/control.js";
 const help = () => {
     process.stdout.write(`Usage: piqued-migrate upgrade <upgrade dir> [target] [--allow-downgrade|-d]
 Description:
-    Upgrades a set of legacy migrations (linear upgrades with no branches) to the new format.
+    Upgrades (or downgrades) the database to the target migration version.
 Arguments:
     upgrade dir             The directory containing the migrations
     target                  The target version to upgrade to. If not specified, upgrades to the latest version.

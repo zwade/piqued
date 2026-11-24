@@ -68,6 +68,7 @@ export const pqNew = async (directory: string, newUpgrade: string) => {
     const options: PiquedMigrationToml = {
         version: upgradeName,
         isolatedTx: false,
+        nonTransactional: false,
         parents: heads,
     };
 

@@ -4,18 +4,21 @@ import * as toml from "smol-toml";
 import { z } from "zod";
 
 import { SmartClient } from "../smart-client.js";
+import { splitStatements } from "./split-statements.js";
 import { Operation, PiquedUpgradeGraph, PiquedUpgradeInstance } from "./upgrade-graph.js";
 
 export type PiquedMigrationToml = {
     version: string;
     parents?: string[];
     isolatedTx?: boolean;
+    nonTransactional?: boolean;
 };
 
 export const ZPiquedMigrationToml = z.object({
     version: z.string(),
     parents: z.array(z.string()).optional(),
     isolatedTx: z.boolean().optional(),
+    nonTransactional: z.boolean().optional(),
 });
 
 export interface UpgradeOptions {
@@ -38,42 +41,6 @@ export class PiquedUpgradeControl {
             return buffer.toString("utf-8");
         } catch (_e) {
             return undefined;
-        }
-    }
-
-    public static async migrateUpgradeDir(upgradeDir: string) {
-        const legacyUpgrades = await fs.readdir(upgradeDir);
-
-        await fs.mkdir(pathMod.join(upgradeDir, "legacy"), { recursive: true });
-
-        // A legacy upgrade is a directory with a single numeric identifier, and no migration.toml
-        for (const upgrade of legacyUpgrades) {
-            const upgradeFile = await PiquedUpgradeControl.tryRead(upgradeDir, upgrade, "upgrade.sql");
-            const optionsTomlFile = await PiquedUpgradeControl.tryRead(upgradeDir, upgrade, "migration.toml");
-
-            if (upgradeFile === undefined) {
-                continue;
-            }
-
-            if (optionsTomlFile !== undefined) {
-                continue;
-            }
-
-            const upgradeAsInt = parseInt(upgrade, 10);
-            if (isNaN(upgradeAsInt)) {
-                console.warn(`Found invalid upgrade: ${upgrade}. Skipping`);
-                continue;
-            }
-
-            const newOptions: PiquedMigrationToml = {
-                version: `legacy_${upgrade}`,
-                parents: upgradeAsInt > 1 ? [`legacy_${upgradeAsInt - 1}`] : [],
-                isolatedTx: false,
-            };
-
-            const newOptionsFilePath = pathMod.join(upgradeDir, upgrade, "migration.toml");
-            await fs.writeFile(newOptionsFilePath, toml.stringify(newOptions));
-            await fs.rename(pathMod.join(upgradeDir, upgrade), pathMod.join(upgradeDir, "legacy", upgrade));
         }
     }
 
@@ -120,6 +87,7 @@ export class PiquedUpgradeControl {
                 upgrade: upgradeFile,
                 downgrade: downgradeFile,
                 isolatedTx: options.isolatedTx ?? false,
+                nonTransactional: options.nonTransactional ?? false,
                 parents: options.parents ?? [],
             });
         }
@@ -135,7 +103,12 @@ export class PiquedUpgradeControl {
         return PiquedUpgradeGraph.fromUpgrades(this.#upgrades);
     }
 
-    private async performOperation(client: SmartClient, operation: Operation, options: UpgradeOptions) {
+    private async performOperation(
+        client: SmartClient,
+        operation: Operation,
+        baseVersion: string | null,
+        options: UpgradeOptions,
+    ) {
         if (operation.upgrades.length === 0 && operation.downgrades.length === 0) {
             console.log("Nothing to do!");
             return true;
@@ -152,43 +125,76 @@ export class PiquedUpgradeControl {
             }
         }
 
-        for (const sequence of operation.upgrades) {
-            await client.tx(async (client) => {
-                const baseVersion = await this.takeVersionLock(client);
-                for (const upgrade of sequence) {
+        const graph = this.upgradeGraph;
+        let applied = baseVersion ? graph.ancestors(baseVersion) : new Set<string>();
+        let head = baseVersion;
+
+        const runSequence = async (sequence: PiquedUpgradeInstance[], direction: "upgrade" | "downgrade") => {
+            const nextApplied = new Set(applied);
+            for (const step of sequence) {
+                if (direction === "upgrade") nextApplied.add(step.version);
+                else nextApplied.delete(step.version);
+            }
+
+            // Only advance head when the applied set maps to a single node.
+            const nextHead = graph.headOf(nextApplied);
+
+            const apply = async (client: SmartClient) => {
+                for (const step of sequence) {
+                    const sql = direction === "upgrade" ? step.upgrade : step.downgrade!;
+                    // Sent one at a time so Postgres doesn't wrap them in an implicit tx.
+                    const statements = step.nonTransactional ? splitStatements(sql) : [sql];
+                    let done = 0;
                     try {
-                        console.log(`Performing upgrade: ${upgrade.name}`);
-                        await client.query(upgrade.upgrade);
+                        console.log(`Performing ${direction}: ${step.name}`);
+                        for (const statement of statements) {
+                            await client.query(statement);
+                            done++;
+                        }
                     } catch (e) {
-                        const base = this.#upgrades.find((x) => x.version === baseVersion);
-                        console.error(
-                            `Failed to upgrade to ${upgrade.name}. Rolling back to ${base?.name ?? baseVersion}.`,
-                        );
+                        if (step.nonTransactional) {
+                            console.error(
+                                `Failed to ${direction} ${step.name} at statement ${done + 1} of ${statements.length}. ` +
+                                    `It is non-transactional; the ${done} before it were applied.`,
+                            );
+                            console.error(statements[done]);
+                        } else {
+                            const base = this.#upgrades.find((x) => x.version === head);
+                            console.error(
+                                `Failed to ${direction} ${step.name}. Rolling back to ${base?.name ?? head}.`,
+                            );
+                        }
                         throw e;
                     }
                 }
-            });
+
+                if (nextHead !== undefined) {
+                    await this.updateVersion(client, nextHead);
+                }
+            };
+
+            if (sequence.length === 1 && sequence[0].nonTransactional) {
+                await apply(client);
+            } else {
+                await client.tx(apply);
+            }
+
+            applied = nextApplied;
+            if (nextHead !== undefined) head = nextHead;
+        };
+
+        for (const sequence of operation.upgrades) {
+            await runSequence(sequence, "upgrade");
         }
 
         for (const sequence of operation.downgrades) {
-            await client.tx(async (client) => {
-                const baseVersion = await this.takeVersionLock(client);
-                for (const downgrade of sequence) {
-                    try {
-                        console.log(`Performing downgrade: ${downgrade.name}`);
-                        await client.query(downgrade.downgrade!);
-                    } catch (e) {
-                        const base = this.#upgrades.find((x) => x.version === baseVersion);
-                        console.error(
-                            `Failed to downgrade to ${downgrade.name}. Rolling back to ${base?.name ?? baseVersion}.`,
-                        );
-                        throw e;
-                    }
-                }
-            });
+            await runSequence(sequence, "downgrade");
         }
 
-        await this.updateVersion(client, operation.target);
+        if (head !== operation.target) {
+            await this.updateVersion(client, operation.target);
+        }
+
         return true;
     }
 
@@ -197,7 +203,7 @@ export class PiquedUpgradeControl {
      * current version to the desired version (or latest if none is specified)
      *
      * Will throw an error if the path isn't specified (i.e. missing downgrade)
-     * Takes a table level-lock to ensure multiple instances don't conflict.
+     * Takes a session-level advisory lock to ensure multiple instances don't conflict.
      *
      * Returns true if the operation was successful, false if it was cancelled.
      */
@@ -206,59 +212,43 @@ export class PiquedUpgradeControl {
         targetVersion: string | undefined = undefined,
         options: UpgradeOptions = {},
     ): Promise<boolean> {
-        const operation: Operation = await client.tx(async (client) => {
-            await this.initializePiqued(client);
-            const head = await this.takeVersionLock(client);
+        // Session-level so it spans the per-sequence txs and non-transactional steps.
+        await client.q`SELECT pg_advisory_lock(hashtext('_piqued_head'))`;
+        try {
+            const { operation, head } = await client.tx(async (client) => {
+                await this.initializePiqued(client);
+                const head = await this.takeVersionLock(client);
 
-            const upgradeGraph = PiquedUpgradeGraph.fromUpgrades(this.#upgrades);
-            const graphHeads = upgradeGraph.heads;
+                const upgradeGraph = PiquedUpgradeGraph.fromUpgrades(this.#upgrades);
+                const graphHeads = upgradeGraph.heads;
 
-            if (graphHeads.length === 0) {
-                console.log("Found no heads in upgrade graph. Do you have a cycle?");
-            }
+                if (graphHeads.length === 0) {
+                    console.log("Found no heads in upgrade graph. Do you have a cycle?");
+                }
 
-            if (graphHeads.length > 1) {
-                console.log("Found multiple heads in upgrade graph. Cannot proceed.");
-                return { upgrades: [], downgrades: [], target: null };
-            }
+                if (graphHeads.length > 1) {
+                    console.log("Found multiple heads in upgrade graph. Cannot proceed.");
+                    return { head, operation: { upgrades: [], downgrades: [], target: null } as Operation };
+                }
 
-            const [graphHead] = graphHeads;
+                const [graphHead] = graphHeads;
 
-            if (head) {
-                console.log(`Attempting migration from ${head} to ${targetVersion ?? graphHead}`);
-                return upgradeGraph.getUpgradePlan(head, targetVersion ?? graphHead);
-            } else {
-                console.log("No version found. Initializing to target version.");
-                return upgradeGraph.getInitializationPlan(targetVersion ?? graphHead);
-            }
-        });
+                if (head) {
+                    console.log(`Attempting migration from ${head} to ${targetVersion ?? graphHead}`);
+                    return { head, operation: upgradeGraph.getUpgradePlan(head, targetVersion ?? graphHead) };
+                } else {
+                    console.log("No version found. Initializing to target version.");
+                    return { head, operation: upgradeGraph.getInitializationPlan(targetVersion ?? graphHead) };
+                }
+            });
 
-        return await this.performOperation(client, operation, options);
+            return await this.performOperation(client, operation, head, options);
+        } finally {
+            await client.q`SELECT pg_advisory_unlock(hashtext('_piqued_head'))`;
+        }
     }
 
     private async initializePiqued(client: SmartClient): Promise<void> {
-        const tables = await client.q`
-            SELECT table_name
-            FROM information_schema.tables
-            WHERE table_name in ('_piqued_version', '_piqued_head');
-        `;
-
-        const knownTables = tables.rows.map((x) => x.table_name);
-        if (knownTables.includes("_piqued_head")) {
-            return;
-        }
-
-        let initialVersion: string | null = null;
-        if (knownTables.includes("_piqued_version")) {
-            const version = await client.q1<{ version: number }>`
-                SELECT version
-                FROM _piqued_version
-                WHERE index_key = 1;
-            `;
-
-            initialVersion = `legacy_${version.version.toString()}`;
-        }
-
         await client.q`
             CREATE TABLE IF NOT EXISTS _piqued_head (
                 index_key int PRIMARY KEY,
@@ -268,7 +258,7 @@ export class PiquedUpgradeControl {
 
         await client.q`
             INSERT INTO _piqued_head (index_key, head)
-            VALUES (1, ${initialVersion})
+            VALUES (1, NULL)
             ON CONFLICT (index_key) DO NOTHING;
         `;
     }
